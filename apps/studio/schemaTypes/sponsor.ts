@@ -1,4 +1,4 @@
-import {defineType, defineField} from 'sanity'
+import {defineField, defineType} from 'sanity'
 import {HeartIcon} from '@sanity/icons'
 
 export const sponsor = defineType({
@@ -164,6 +164,7 @@ export const sponsor = defineType({
           {title: 'Presented by {logo}', value: 'presentedBy'},
           {title: '{logo} presents', value: 'presents'},
         ],
+        layout: 'radio',
       },
       description: 'Default template (can be overridden per article)',
     }),

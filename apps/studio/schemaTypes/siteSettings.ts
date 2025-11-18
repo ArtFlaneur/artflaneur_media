@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const siteSettings = defineType({
   name: 'siteSettings',
@@ -16,14 +16,14 @@ export const siteSettings = defineType({
       title: 'Navigation Menu',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             {name: 'label', type: 'string', title: 'Label'},
             {name: 'url', type: 'string', title: 'URL'},
             {name: 'page', type: 'reference', to: [{type: 'review'}, {type: 'guide'}, {type: 'artistStory'}, {type: 'landingPage'}], title: 'Page'},
           ],
-        },
+        }),
       ],
     }),
     defineField({
@@ -36,13 +36,13 @@ export const siteSettings = defineType({
           type: 'array',
           title: 'Footer Links',
           of: [
-            {
+            defineArrayMember({
               type: 'object',
               fields: [
                 {name: 'label', type: 'string', title: 'Label'},
                 {name: 'url', type: 'string', title: 'URL'},
               ],
-            },
+            }),
           ],
         },
         {name: 'copyright', type: 'string', title: 'Copyright Text'},
@@ -64,13 +64,13 @@ export const siteSettings = defineType({
       title: 'City Selector',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             {name: 'name', type: 'string', title: 'City Name'},
             {name: 'slug', type: 'slug', title: 'Slug'},
           ],
-        },
+        }),
       ],
     }),
     defineField({
@@ -88,9 +88,17 @@ export const siteSettings = defineType({
         },
         {
           name: 'showSponsorBadge',
-          type: 'boolean',
+          type: 'string',
           title: 'Show "Sponsored" Badge',
-          initialValue: true,
+          options: {
+            list: [
+              {title: 'Show badge', value: 'show'},
+              {title: 'Hide badge', value: 'hide'},
+            ],
+            layout: 'radio',
+          },
+          description: 'Controls whether a “Sponsored” badge should appear by default.',
+          initialValue: 'show',
         },
         {
           name: 'badgeStyle',
@@ -103,6 +111,7 @@ export const siteSettings = defineType({
               {title: 'Minimal', value: 'minimal'},
               {title: 'Card', value: 'card'},
             ],
+            layout: 'radio',
           },
           initialValue: 'subtle',
         },
@@ -117,6 +126,7 @@ export const siteSettings = defineType({
               {title: 'Presented by {logo}', value: 'presentedBy'},
               {title: '{logo} presents', value: 'presents'},
             ],
+            layout: 'radio',
           },
           initialValue: 'supportedBy',
           description: 'Default template if not specified by sponsor',

@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const artistStory = defineType({
   name: 'artistStory',
@@ -47,7 +47,7 @@ export const artistStory = defineType({
       title: 'Artwork Gallery',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'image',
           options: {hotspot: true},
           fields: [
@@ -56,20 +56,20 @@ export const artistStory = defineType({
             {name: 'title', type: 'string', title: 'Artwork Title'},
             {name: 'year', type: 'string', title: 'Year'},
           ],
-        },
+        }),
       ],
     }),
     defineField({
       name: 'relatedExhibitions',
       title: 'Related Exhibitions',
       type: 'array',
-      of: [{type: 'reference', to: [{type: 'exhibition'}]}],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'exhibition'}]})],
     }),
     defineField({
       name: 'upcomingExhibitions',
       title: 'Upcoming Exhibitions',
       type: 'array',
-      of: [{type: 'reference', to: [{type: 'exhibition'}]}],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'exhibition'}]})],
     }),
     defineField({
       name: 'publishedAt',
@@ -92,23 +92,31 @@ export const artistStory = defineType({
           {title: '🕐 Scheduled', value: 'scheduled'},
           {title: '✅ Published', value: 'published'},
         ],
+        layout: 'radio',
       },
       initialValue: 'draft',
     }),
     defineField({
-      name: 'isSponsored',
+      name: 'sponsorshipStatus',
       title: 'Sponsored Content',
-      type: 'boolean',
-      initialValue: false,
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Not Sponsored', value: 'notSponsored'},
+          {title: 'Sponsored Content', value: 'sponsored'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'notSponsored',
     }),
     defineField({
       name: 'sponsor',
       title: 'Sponsor',
       type: 'reference',
       to: [{type: 'sponsor'}],
-      hidden: ({document}) => !document?.isSponsored,
+      hidden: ({document}) => document?.sponsorshipStatus !== 'sponsored',
       validation: (Rule) => Rule.custom((sponsor, context) => {
-        const isSponsored = (context.document as any)?.isSponsored
+        const isSponsored = (context.document as any)?.sponsorshipStatus === 'sponsored'
         if (isSponsored && !sponsor) {
           return 'Please select a sponsor for sponsored content'
         }
@@ -119,7 +127,7 @@ export const artistStory = defineType({
       name: 'sponsorBadgeSettings',
       title: 'Sponsor Badge Settings',
       type: 'object',
-      hidden: ({document}) => !document?.isSponsored,
+      hidden: ({document}) => document?.sponsorshipStatus !== 'sponsored',
       fields: [
         {
           name: 'template',
@@ -132,6 +140,7 @@ export const artistStory = defineType({
               {title: 'In partnership with {logo}', value: 'partnershipWith'},
               {title: 'Custom text', value: 'custom'},
             ],
+            layout: 'radio',
           },
           initialValue: 'default',
         },
@@ -152,6 +161,7 @@ export const artistStory = defineType({
               {title: 'After title', value: 'afterTitle'},
               {title: 'Bottom', value: 'bottom'},
             ],
+            layout: 'radio',
           },
           initialValue: 'afterTitle',
         },
@@ -165,6 +175,7 @@ export const artistStory = defineType({
               {title: 'Subtle', value: 'subtle'},
               {title: 'Bold', value: 'bold'},
             ],
+            layout: 'radio',
           },
           initialValue: 'default',
         },
@@ -179,6 +190,7 @@ export const artistStory = defineType({
               {title: 'Vertical', value: 'vertical'},
               {title: 'Square', value: 'square'},
             ],
+            layout: 'radio',
           },
           initialValue: 'auto',
         },
@@ -187,9 +199,33 @@ export const artistStory = defineType({
           type: 'object',
           title: 'Custom Logo Size',
           fields: [
-            {name: 'enabled', type: 'boolean', title: 'Use Custom Size', initialValue: false},
-            {name: 'maxWidth', type: 'number', title: 'Max Width (px)', hidden: ({parent}) => !parent?.enabled},
-            {name: 'maxHeight', type: 'number', title: 'Max Height (px)', hidden: ({parent}) => !parent?.enabled},
+            defineField({
+              name: 'mode',
+              type: 'string',
+              title: 'Sizing Mode',
+              options: {
+                list: [
+                  {title: 'Use default size', value: 'default'},
+                  {title: 'Custom size', value: 'custom'},
+                ],
+                layout: 'radio',
+              },
+              initialValue: 'default',
+            }),
+            defineField({
+              name: 'maxWidth',
+              type: 'number',
+              title: 'Max Width (px)',
+              hidden: ({parent}) => parent?.mode !== 'custom',
+              validation: (Rule) => Rule.min(20).max(500),
+            }),
+            defineField({
+              name: 'maxHeight',
+              type: 'number',
+              title: 'Max Height (px)',
+              hidden: ({parent}) => parent?.mode !== 'custom',
+              validation: (Rule) => Rule.min(20).max(200),
+            }),
           ],
         },
       ],
@@ -209,11 +245,11 @@ export const artistStory = defineType({
       title: 'title',
       artist: 'artist.name',
       media: 'portrait',
-      isSponsored: 'isSponsored',
+      sponsorshipStatus: 'sponsorshipStatus',
     },
     prepare(selection) {
-      const {artist, isSponsored} = selection
-      const sponsorLabel = isSponsored ? '💰 ' : ''
+      const {artist, sponsorshipStatus} = selection
+      const sponsorLabel = sponsorshipStatus === 'sponsored' ? '💰 ' : ''
       return {...selection, subtitle: `${sponsorLabel}${artist || 'No artist'}`}
     },
   },

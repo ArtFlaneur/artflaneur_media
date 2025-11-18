@@ -1,5 +1,5 @@
 
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const homepageContent = defineType({
   name: 'homepageContent',
@@ -26,7 +26,7 @@ export const homepageContent = defineType({
       name: 'latestReviews',
       title: 'Latest Reviews',
       type: 'array',
-      of: [{type: 'reference', to: [{type: 'review'}]}],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'review'}]})],
       validation: (Rule) => Rule.max(6),
     }),
     defineField({

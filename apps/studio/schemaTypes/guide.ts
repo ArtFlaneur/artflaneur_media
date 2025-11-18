@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const guide = defineType({
   name: 'guide',
@@ -40,7 +40,7 @@ export const guide = defineType({
       title: 'Locations',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             {name: 'image', type: 'image', title: 'Image', options: {hotspot: true}},
@@ -51,7 +51,7 @@ export const guide = defineType({
             {name: 'address', type: 'string', title: 'Address'},
             {name: 'workingHours', type: 'text', title: 'Working Hours', rows: 2},
           ],
-        },
+        }),
       ],
     }),
     defineField({
@@ -66,26 +66,57 @@ export const guide = defineType({
       type: 'datetime',
     }),
     defineField({
-      name: 'isSponsored',
+      name: 'sponsorshipStatus',
       title: 'Sponsored Content',
-      type: 'boolean',
-      initialValue: false,
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Not Sponsored', value: 'notSponsored'},
+          {title: 'Sponsored Content', value: 'sponsored'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'notSponsored',
     }),
     defineField({
       name: 'sponsor',
       title: 'Sponsor',
       type: 'reference',
       to: [{type: 'sponsor'}],
-      hidden: ({document}) => !document?.isSponsored,
+      hidden: ({document}) => document?.sponsorshipStatus !== 'sponsored',
     }),
     defineField({
       name: 'sponsorBadgeSettings',
       title: 'Sponsor Badge Settings',
       type: 'object',
-      hidden: ({document}) => !document?.isSponsored,
+      hidden: ({document}) => document?.sponsorshipStatus !== 'sponsored',
       fields: [
-        {name: 'template', type: 'string', title: 'Badge Template', options: {list: [{title: 'Use sponsor default', value: 'default'}, {title: 'Supported by {logo}', value: 'supportedBy'}]}},
-        {name: 'placement', type: 'string', title: 'Placement', options: {list: [{title: 'Top', value: 'top'}, {title: 'Bottom', value: 'bottom'}]}, initialValue: 'top'},
+        {
+          name: 'template',
+          type: 'string',
+          title: 'Badge Template',
+          options: {
+            list: [
+              {title: 'Use sponsor default', value: 'default'},
+              {title: 'Supported by {logo}', value: 'supportedBy'},
+            ],
+            layout: 'radio',
+          },
+          initialValue: 'default',
+        },
+        {
+          name: 'placement',
+          type: 'string',
+          title: 'Placement',
+          options: {
+            list: [
+              {title: 'Top', value: 'top'},
+              {title: 'Bottom', value: 'bottom'},
+            ],
+            layout: 'radio',
+          },
+          initialValue: 'top',
+        },
       ],
     }),
   ],
@@ -93,12 +124,12 @@ export const guide = defineType({
     select: {
       title: 'title',
       media: 'coverImage',
-      isSponsored: 'isSponsored',
+      sponsorshipStatus: 'sponsorshipStatus',
     },
     prepare(selection) {
-      const {title, media, isSponsored} = selection
+      const {title, media, sponsorshipStatus} = selection
       return {
-        title: `${isSponsored ? '💰 ' : ''}${title}`,
+        title: `${sponsorshipStatus === 'sponsored' ? '💰 ' : ''}${title}`,
         media: media,
       }
     },

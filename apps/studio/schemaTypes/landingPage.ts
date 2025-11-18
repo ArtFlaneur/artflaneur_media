@@ -1,5 +1,5 @@
 
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const landingPage = defineType({
   name: 'landingPage',
@@ -31,6 +31,7 @@ export const landingPage = defineType({
           {title: 'For Galleries', value: 'forGalleries'},
           {title: 'For Events', value: 'forEvents'},
         ],
+        layout: 'radio',
       },
     }),
     defineField({
@@ -50,14 +51,14 @@ export const landingPage = defineType({
       title: 'Problem Cards',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             {name: 'title', type: 'string', title: 'Title'},
             {name: 'description', type: 'text', title: 'Description', rows: 3},
-            {name: 'icon', type: 'image', title: 'Icon'},
+            {name: 'icon', type: 'image', title: 'Icon', options: {hotspot: true}},
           ],
-        },
+        }),
       ],
     }),
     defineField({
@@ -65,15 +66,20 @@ export const landingPage = defineType({
       title: 'Packages',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             {name: 'name', type: 'string', title: 'Package Name'},
             {name: 'price', type: 'string', title: 'Price'},
-            {name: 'features', type: 'array', of: [{type: 'string'}], title: 'Features'},
+            {
+              name: 'features',
+              type: 'array',
+              title: 'Features',
+              of: [defineArrayMember({type: 'string'})],
+            },
             {name: 'ctaText', type: 'string', title: 'CTA Text'},
           ],
-        },
+        }),
       ],
     }),
     defineField({
@@ -81,15 +87,15 @@ export const landingPage = defineType({
       title: 'Testimonials',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             {name: 'quote', type: 'text', title: 'Quote', rows: 3},
             {name: 'author', type: 'string', title: 'Author'},
             {name: 'role', type: 'string', title: 'Role'},
-            {name: 'photo', type: 'image', title: 'Photo'},
+            {name: 'photo', type: 'image', title: 'Photo', options: {hotspot: true}},
           ],
-        },
+        }),
       ],
     }),
     defineField({
@@ -97,13 +103,13 @@ export const landingPage = defineType({
       title: 'FAQ',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             {name: 'question', type: 'string', title: 'Question'},
             {name: 'answer', type: 'text', title: 'Answer', rows: 3},
           ],
-        },
+        }),
       ],
     }),
     defineField({

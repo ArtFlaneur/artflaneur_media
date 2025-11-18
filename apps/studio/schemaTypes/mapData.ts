@@ -1,5 +1,5 @@
 
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const mapData = defineType({
   name: 'mapData',
@@ -16,13 +16,13 @@ export const mapData = defineType({
       name: 'galleries',
       title: 'Galleries',
       type: 'array',
-      of: [{type: 'reference', to: [{type: 'gallery'}]}],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'gallery'}]})],
     }),
     defineField({
       name: 'artEvents',
       title: 'Art Events',
       type: 'array',
-      of: [{type: 'reference', to: [{type: 'artEvent'}]}],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'artEvent'}]})],
     }),
     defineField({
       name: 'defaultCenter',

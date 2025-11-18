@@ -21,6 +21,7 @@ export const pageTemplate = defineType({
           {title: 'Artist Story', value: 'artistStory'},
           {title: 'Guide', value: 'guide'},
         ],
+        layout: 'radio',
       },
       validation: (Rule) => Rule.required(),
     }),

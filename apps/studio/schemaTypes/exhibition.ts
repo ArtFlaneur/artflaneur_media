@@ -1,4 +1,4 @@
-import {defineType, defineField} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 import {CalendarIcon} from '@sanity/icons'
 
 export const exhibition = defineType({
@@ -62,13 +62,13 @@ export const exhibition = defineType({
       name: 'artists',
       title: 'Artists',
       type: 'array',
-      of: [{type: 'reference', to: [{type: 'artist'}]}],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'artist'}]})],
     }),
     defineField({
       name: 'curators',
       title: 'Curators',
       type: 'array',
-      of: [{type: 'reference', to: [{type: 'curator'}]}],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'curator'}]})],
     }),
     defineField({
       name: 'description',

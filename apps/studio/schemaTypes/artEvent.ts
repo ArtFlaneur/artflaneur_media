@@ -1,5 +1,5 @@
 
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const artEvent = defineType({
   name: 'artEvent',
@@ -57,7 +57,7 @@ export const artEvent = defineType({
       name: 'artists',
       title: 'Artists',
       type: 'array',
-      of: [{type: 'reference', to: [{type: 'artist'}]}],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'artist'}]})],
     }),
     defineField({
       name: 'ticketPrice',

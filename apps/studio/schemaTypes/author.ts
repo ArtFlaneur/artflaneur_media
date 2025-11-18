@@ -46,6 +46,7 @@ export const author = defineType({
           {title: 'Editor', value: 'editor'},
           {title: 'Chief Editor', value: 'chiefEditor'},
         ],
+        layout: 'radio',
       },
       initialValue: 'author',
     }),

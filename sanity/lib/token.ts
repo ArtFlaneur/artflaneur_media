@@ -1,5 +1,5 @@
 export const token = process.env.SANITY_API_READ_TOKEN
 
 if (!token) {
-  throw new Error('Missing SANITY_API_READ_TOKEN')
+  console.warn('SANITY_API_READ_TOKEN is not set. Draft queries will be limited to public content.')
 }

@@ -45,7 +45,7 @@ export const structure = (S: StructureBuilder) =>
                 .child(
                   S.documentList()
                     .title('All Sponsored Content')
-                    .filter('_type in ["review", "artistStory", "guide"] && isSponsored == true')
+                    .filter('(_type == "review" && sponsorshipEnabled == "yes") || (_type in ["artistStory", "guide"] && sponsorshipStatus == "sponsored")')
                 ),
             ])
         ),

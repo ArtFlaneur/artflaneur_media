@@ -1,9 +1,26 @@
-import { client } from "@/sanity/lib/client";
-import { token } from "@/sanity/lib/token"
-import { defineLive } from "next-sanity/live";
+import type {ClientPerspective} from '@sanity/client'
 
-export const { sanityFetch, SanityLive } = defineLive({
-  client,
-  browserToken: token,
-  serverToken: token,
-});
+import {client} from './client'
+import {token} from './token'
+
+type LiveFetchOptions = {
+  perspective?: ClientPerspective
+  useDraftToken?: boolean
+}
+
+export async function sanityFetch<T>(
+  query: string,
+  params: Record<string, unknown> = {},
+  options: LiveFetchOptions = {}
+) {
+  return client.fetch<T>(query, params, {
+    perspective: options.perspective || (options.useDraftToken ? 'previewDrafts' : 'published'),
+    token: options.useDraftToken ? token : undefined,
+  })
+}
+
+export const SanityLive = {
+  subscribe: () => {
+    throw new Error('Sanity live preview is not initialized yet. Implement Presentation Tool wiring in apps/web.')
+  },
+}

@@ -1,34 +1,13 @@
 {
-    "name": "art-flaneur-media",
-    "version": "1.0.0",
-    "scripts": {
-        "dev": "sanity dev",
-        "build": "sanity build",
-        "deploy": "sanity deploy",
-        "import-json": "tsx scripts/importFromJSON.ts",
-        "typegen": "sanity schema extract && sanity typegen generate --enforce-required-fields",
-        "typecheck": "tsc --noEmit"
-    },
-    "dependencies": {
-        "@sanity/color-input": "^3.x.x",
-        "@sanity/dashboard": "^5.0.0",
-        "@sanity/document-internationalization": "^4.1.0",
-        "@sanity/google-maps-input": "^4.2.0",
-        "@sanity/icons": "^3.7.4",
-        "@sanity/presentation": "^2.0.0",
-        "@sanity/table": "^2.0.0",
-        "@sanity/vision": "^3.x.x",
-        "react": "^18.0.0",
-        "react-dom": "^18.0.0",
-        "sanity": "^3.x.x",
-        "sanity-plugin-asset-source-unsplash": "^3.1.0",
-        "sanity-plugin-media": "^4.0.0",
-        "sanity-plugin-social-preview": "^1.1.0",
-        "sanity-plugin-workflow": "^1.0.5",
-        "styled-components": "^6.1.19"
-    },
-    "devDependencies": {
-        "@types/react": "^18.0.0",
-        "tsx": "^4.0.0"
-    }
+  "name": "artflaneur-media",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter studio dev",
+    "build": "pnpm --filter studio build",
+    "typecheck": "pnpm --filter studio typecheck",
+    "typegen": "pnpm --filter studio typegen"
+  }
 }
