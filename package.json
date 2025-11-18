@@ -6,8 +6,13 @@
   ],
   "scripts": {
     "dev": "pnpm --filter studio dev",
-    "build": "pnpm --filter studio build",
-    "typecheck": "pnpm --filter studio typecheck",
-    "typegen": "pnpm --filter studio typegen"
+    "studio:dev": "pnpm --filter studio dev",
+    "studio:build": "pnpm --filter studio build",
+    "studio:typecheck": "pnpm --filter studio typecheck",
+    "studio:typegen": "pnpm --filter studio typegen",
+    "web:dev": "pnpm --filter web dev",
+    "web:build": "pnpm --filter web build",
+    "web:start": "pnpm --filter web start",
+    "web:lint": "pnpm --filter web lint"
   }
 }
