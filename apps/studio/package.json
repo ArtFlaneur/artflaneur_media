@@ -1,12 +1,12 @@
 {
-    "name": "studio",
+    "name": "@artflaneur/studio",
     "version": "1.0.0",
     "scripts": {
         "dev": "sanity dev",
         "build": "sanity build",
         "deploy": "sanity deploy",
         "import-json": "tsx scripts/importFromJSON.ts",
-        "typegen": "sanity schema extract && sanity typegen generate --enforce-required-fields",
+        "typegen": "sanity schema extract --path=../web/sanity-schema.json && sanity typegen generate --enforce-required-fields",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

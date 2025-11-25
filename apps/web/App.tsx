@@ -1,0 +1,64 @@
+import React from 'react';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { Header, Footer } from './components/Layout';
+import Home from './pages/Home';
+import ArticleView from './pages/ArticleView';
+import Partners from './pages/Partners';
+import MapPage from './pages/MapPage';
+import ListingPage from './pages/ListingPage';
+import GuideView from './pages/GuideView';
+import ArtistView from './pages/ArtistView';
+import AmbassadorView from './pages/AmbassadorView';
+import About from './pages/About';
+
+// ScrollToTop component - прокручивает страницу наверх при смене маршрута
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <ScrollToTop />
+      <div className="min-h-screen bg-white text-art-black font-sans selection:bg-art-blue selection:text-white flex flex-col">
+        <Header />
+        <main className="flex-grow">
+            <Routes>
+                <Route path="/" element={<Home />} />
+                
+                {/* Listings */}
+                <Route path="/reviews" element={<ListingPage title="Reviews" type="reviews" />} />
+                <Route path="/exhibitions" element={<ListingPage title="Exhibitions" type="exhibitions" />} />
+                <Route path="/artists" element={<ListingPage title="Artists" type="artists" />} />
+                <Route path="/guides" element={<ListingPage title="City Guides" type="guides" />} />
+                <Route path="/ambassadors" element={<ListingPage title="Ambassadors" type="ambassadors" />} />
+                
+                {/* Details */}
+                <Route path="/reviews/:id" element={<ArticleView />} />
+                <Route path="/exhibitions/:id" element={<ArticleView />} /> {/* Reusing ArticleView for now, could be specific */}
+                <Route path="/guides/:id" element={<GuideView />} />
+                <Route path="/artists/:id" element={<ArtistView />} />
+                <Route path="/ambassadors/:id" element={<AmbassadorView />} />
+                
+                {/* Static & Utility */}
+                <Route path="/partners/galleries" element={<Partners type="gallery" />} />
+                <Route path="/partners/events" element={<Partners type="event" />} />
+                <Route path="/map" element={<MapPage />} />
+                <Route path="/about" element={<About />} />
+                
+                <Route path="*" element={<Home />} />
+            </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
+  );
+};
+
+export default App;

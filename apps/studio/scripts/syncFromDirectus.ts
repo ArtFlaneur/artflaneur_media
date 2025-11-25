@@ -42,7 +42,7 @@ async function syncUsedGalleriesOnly() {
   
   // Получите уникальные gallery_id из exhibitions
   const exhibitions = await fetchFromDirectus('exhibitions')
-  const uniqueGalleryIds = [...new Set(exhibitions.map(e => e.gallery_id).filter(Boolean))]
+  const uniqueGalleryIds = [...new Set(exhibitions.map((e: any) => e.gallery_id).filter(Boolean))]
   
   console.log(`Found ${uniqueGalleryIds.length} unique galleries in use`)
   

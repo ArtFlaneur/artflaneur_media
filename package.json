@@ -5,14 +5,27 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "pnpm --filter studio dev",
-    "studio:dev": "pnpm --filter studio dev",
-    "studio:build": "pnpm --filter studio build",
-    "studio:typecheck": "pnpm --filter studio typecheck",
-    "studio:typegen": "pnpm --filter studio typegen",
-    "web:dev": "pnpm --filter web dev",
-    "web:build": "pnpm --filter web build",
-    "web:start": "pnpm --filter web start",
-    "web:lint": "pnpm --filter web lint"
+    "dev": "npm run dev:all",
+    "dev:all": "concurrently \"npm --prefix apps/studio run dev\" \"npm --prefix apps/web run dev\"",
+    "dev:studio": "npm --prefix apps/studio run dev",
+    "dev:web": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/studio run build && npm --prefix apps/web run build",
+    "build:studio": "npm --prefix apps/studio run build",
+    "build:web": "npm --prefix apps/web run build",
+    "typegen": "npm --prefix apps/studio run typegen",
+    "typecheck": "npm --prefix apps/studio run typecheck && npm --prefix apps/web run typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@remix-run/router": "^1.23.0",
+    "react-is": "^18.3.1"
+  },
+  "overrides": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-is": "^18.3.1"
   }
 }
