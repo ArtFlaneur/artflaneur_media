@@ -22,7 +22,8 @@ export const EntityCard: React.FC<{
     data: Article | Artist | Exhibition | Guide | Author; 
     type: 'article' | 'artist' | 'exhibition' | 'guide' | 'author';
     variant?: 'vertical' | 'horizontal';
-}> = ({ data, type, variant = 'vertical' }) => {
+    imageAspect?: 'square' | 'portrait' | 'landscape' | 'default';
+}> = ({ data, type, variant = 'vertical', imageAspect = 'square' }) => {
     
     // RENDER: ARTIST CARD
     if (type === 'artist') {
@@ -47,7 +48,7 @@ export const EntityCard: React.FC<{
         const exhibitionSlug = exhibition.slug || exhibition.id;
         return (
             <Link to={`/exhibitions/${exhibitionSlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,85,212,1)] transition-all duration-200 h-full flex flex-col">
-                <div className="relative aspect-[3/2] overflow-hidden border-b-2 border-black">
+                <div className="relative aspect-square overflow-hidden border-b-2 border-black">
                     <img src={exhibition.image} alt={exhibition.title} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" />
                     <div className="absolute top-0 right-0 bg-art-yellow px-2 py-1 text-xs font-mono font-bold border-l-2 border-b-2 border-black">
                         {exhibition.city}
@@ -88,14 +89,20 @@ export const EntityCard: React.FC<{
     }
 
     // RENDER: ARTICLE / GUIDE (Default)
-    const article = data as Article;
+        const article = data as Article;
     const articleSlug = article.slug || article.id;
     const guideSlug = type === 'guide' ? articleSlug : null;
     const reviewSlug = type !== 'guide' ? articleSlug : null;
+        const aspectClass =
+            imageAspect === 'square' || imageAspect === 'default'
+                ? 'aspect-square'
+                : imageAspect === 'landscape'
+                    ? 'aspect-[16/9]'
+                    : 'aspect-[4/5]';
     
     return (
         <Link to={type === 'guide' ? `/guides/${guideSlug}` : `/reviews/${reviewSlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
-          <div className="relative aspect-[4/5] border-b-2 border-black overflow-hidden">
+                    <div className={`relative ${aspectClass} border-b-2 border-black overflow-hidden`}>
             <img 
               src={article.image} 
               alt={article.title} 
@@ -121,8 +128,8 @@ export const EntityCard: React.FC<{
     );
 };
 
-export const ArticleCard: React.FC<{ article: Article; variant?: 'vertical' | 'horizontal' }> = ({ article, variant }) => {
-    return <EntityCard data={article} type="article" variant={variant} />;
+export const ArticleCard: React.FC<{ article: Article; variant?: 'vertical' | 'horizontal'; imageAspect?: 'square' | 'portrait' | 'landscape' | 'default' }> = ({ article, variant, imageAspect = 'square' }) => {
+    return <EntityCard data={article} type="article" variant={variant} imageAspect={imageAspect} />;
 };
 
 export const NewsletterSection: React.FC = () => {
@@ -282,8 +289,8 @@ export const AiTeaser: React.FC = () => (
                          </div>
                          <div className="bg-art-blue/10 p-3 border border-art-blue text-art-blue">
                              <p className="mb-2 font-bold">&gt; I recommend &quot;Raw Flesh&quot; at The Basement Gallery.</p>
-                             <div className="aspect-video bg-black grayscale mix-blend-multiply mb-2 overflow-hidden">
-                                 <img src="https://picsum.photos/400/200?random=20" className="w-full h-full object-cover opacity-80" alt="Preview"/>
+                             <div className="aspect-square bg-black grayscale mix-blend-multiply mb-2 overflow-hidden">
+                                 <img src="https://picsum.photos/400/400?random=20" className="w-full h-full object-cover opacity-80" alt="Preview"/>
                              </div>
                              <p>It matches your interest in brutalism.</p>
                          </div>

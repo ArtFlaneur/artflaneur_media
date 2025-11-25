@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { SectionHeader, ArticleCard, NewsletterSection, AiTeaser } from '../components/Shared';
-import { MOCK_ARTICLES } from '../constants';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { client } from '../sanity/lib/client';
 import { HOMEPAGE_QUERY, LATEST_REVIEWS_QUERY } from '../sanity/lib/queries';
-import { HOMEPAGE_QUERYResult, LATEST_REVIEWS_QUERYResult } from '../sanity/types';
+import { HOMEPAGE_QUERYResult, LATEST_REVIEWS_QUERYResult } from '../sanity/queryResults';
 import { Article, ContentType } from '../types';
 
 type HomepageData = NonNullable<HOMEPAGE_QUERYResult>;
@@ -13,9 +12,10 @@ type HeroSection = NonNullable<HomepageData['heroSection']>;
 type FeaturedReviewNode = NonNullable<HeroSection['featuredReview']>;
 type LatestReviewNode = NonNullable<HomepageData['latestReviews']>[number];
 type ReviewSource = FeaturedReviewNode | LatestReviewNode | LATEST_REVIEWS_QUERYResult[number];
+type ReviewWithSlug = ReviewSource & { slug: { current: string } };
+type FeaturedArtistStory = NonNullable<HomepageData['featuredArtistStory']>;
+type WeekendGuide = NonNullable<HomepageData['weekendGuide']>;
 
-const FALLBACK_FEATURED_ARTICLE = MOCK_ARTICLES[0];
-const FALLBACK_LATEST_ARTICLES = MOCK_ARTICLES.slice(1, 4);
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
   month: 'short',
@@ -25,13 +25,16 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleDateString('en-US', DATE_FORMAT) : undefined;
 
-const mapReviewToArticle = (review: ReviewSource): Article => ({
+const hasSlug = (review: ReviewSource | undefined | null): review is ReviewWithSlug =>
+  Boolean(review?.slug?.current);
+
+const mapReviewToArticle = (review: ReviewWithSlug): Article => ({
   id: review._id,
-  slug: review.slug?.current ?? review._id,
+  slug: review.slug.current,
   type: ContentType.REVIEW,
   title: review.title ?? 'Untitled Review',
   subtitle: review.excerpt ?? '',
-  image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/800/600`,
+  image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/600/600`,
   date: formatDate(review.publishedAt),
   author: review.author
     ? {
@@ -44,8 +47,10 @@ const mapReviewToArticle = (review: ReviewSource): Article => ({
 });
 
 const Home: React.FC = () => {
-  const [featuredArticle, setFeaturedArticle] = useState<Article>(FALLBACK_FEATURED_ARTICLE);
-  const [latestReviews, setLatestReviews] = useState<Article[]>(FALLBACK_LATEST_ARTICLES);
+  const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null);
+  const [latestReviews, setLatestReviews] = useState<Article[]>([]);
+  const [featuredStory, setFeaturedStory] = useState<FeaturedArtistStory | null>(null);
+  const [weekendGuide, setWeekendGuide] = useState<WeekendGuide | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,28 +66,30 @@ const Home: React.FC = () => {
 
         if (!isMounted) return;
 
-        const curatedLatest: ReviewSource[] | undefined =
-          homepageData?.latestReviews && homepageData.latestReviews.length > 0
-            ? (homepageData.latestReviews as ReviewSource[])
-            : (fallbackReviews as ReviewSource[]);
+        const curatedLatest = homepageData?.latestReviews?.length
+          ? (homepageData.latestReviews as ReviewSource[])
+          : (fallbackReviews as ReviewSource[]);
 
-        const heroReview = (homepageData?.heroSection?.featuredReview ?? curatedLatest?.[0]) as
-          | ReviewSource
-          | undefined;
+        const filteredLatest = (curatedLatest ?? []).filter(hasSlug) as ReviewWithSlug[];
 
-        setFeaturedArticle(heroReview ? mapReviewToArticle(heroReview) : FALLBACK_FEATURED_ARTICLE);
-        setLatestReviews(
-          curatedLatest && curatedLatest.length > 0
-            ? curatedLatest.map((review) => mapReviewToArticle(review))
-            : FALLBACK_LATEST_ARTICLES,
-        );
+        const heroCandidate = homepageData?.heroSection?.featuredReview;
+        const heroReview = hasSlug(heroCandidate)
+          ? heroCandidate
+          : filteredLatest[0];
+
+  setFeaturedArticle(heroReview ? mapReviewToArticle(heroReview) : null);
+  setLatestReviews(filteredLatest.length ? filteredLatest.map(mapReviewToArticle) : []);
+  setFeaturedStory(homepageData?.featuredArtistStory ?? null);
+  setWeekendGuide(homepageData?.weekendGuide ?? null);
         setError(null);
       } catch (err) {
         console.error('❌ Error fetching Sanity data:', err);
         if (!isMounted) return;
-        setError('Unable to load the latest editor picks. Showing curated highlights instead.');
-        setFeaturedArticle(FALLBACK_FEATURED_ARTICLE);
-        setLatestReviews(FALLBACK_LATEST_ARTICLES);
+        setError('Unable to load the latest editor picks right now.');
+  setFeaturedArticle(null);
+  setLatestReviews([]);
+  setFeaturedStory(null);
+  setWeekendGuide(null);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -96,6 +103,8 @@ const Home: React.FC = () => {
       isMounted = false;
     };
   }, []);
+
+  const heroArticle = featuredArticle;
 
   return (
     <div className="min-h-screen">
@@ -114,29 +123,47 @@ const Home: React.FC = () => {
                 
                 {/* Title Block */}
                 <div className="p-8 md:p-12 flex flex-col justify-center bg-art-paper h-full">
-                    <div className="mb-6 flex gap-2">
-                        <span className="bg-black text-white px-2 py-1 text-xs font-mono uppercase">{featuredArticle.type}</span>
-                        <span className="border border-black px-2 py-1 text-xs font-mono uppercase">{featuredArticle.date}</span>
-                    </div>
-                    <h1 className="text-4xl md:text-6xl font-black uppercase leading-[0.9] mb-6">
-                        {featuredArticle.title}
-                    </h1>
-                    <p className="font-serif text-xl md:text-2xl italic text-gray-600 mb-8 border-l-4 border-art-yellow pl-4">
-                        {featuredArticle.subtitle}
-                    </p>
-                    <Link to={`/reviews/${featuredArticle.slug ?? featuredArticle.id}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
-                        Read Full Story <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-                    </Link>
+                    {heroArticle ? (
+                      <>
+                        <div className="mb-6 flex gap-2">
+                            <span className="bg-black text-white px-2 py-1 text-xs font-mono uppercase">{heroArticle.type}</span>
+                            <span className="border border-black px-2 py-1 text-xs font-mono uppercase">{heroArticle.date}</span>
+                        </div>
+                        <h1 className="text-4xl md:text-6xl font-black uppercase leading-[0.9] mb-6">
+                            {heroArticle.title}
+                        </h1>
+                        <p className="font-serif text-xl md:text-2xl italic text-gray-600 mb-8 border-l-4 border-art-yellow pl-4">
+                            {heroArticle.subtitle}
+                        </p>
+            <Link to={`/reviews/${heroArticle.slug}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
+                            Read Full Story <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                        </Link>
+                      </>
+                    ) : (
+                      <div className="animate-pulse space-y-6">
+                        <div className="flex gap-2">
+                          <div className="bg-black/20 h-6 w-20" />
+                          <div className="border border-black/20 h-6 w-28" />
+                        </div>
+                        <div className="bg-black/10 h-24 w-3/4" />
+                        <div className="bg-black/5 h-20 w-full" />
+                        <div className="bg-black/20 h-10 w-48" />
+                      </div>
+                    )}
                 </div>
             </div>
 
             {/* Left: Featured Image (Big Block) - показывается вторым на мобильных */}
             <div className="lg:col-span-7 border-b-2 lg:border-b-0 lg:border-r-2 border-black relative group overflow-hidden h-[50vh] lg:h-auto order-2 lg:order-1">
-                 <img 
-                    src={featuredArticle.image} 
-                    alt="Featured" 
+                {heroArticle ? (
+                  <img 
+                    src={heroArticle.image} 
+                    alt={heroArticle.title}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 grayscale group-hover:grayscale-0"
-                />
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                )}
             </div>
         </div>
       </section>
@@ -150,9 +177,9 @@ const Home: React.FC = () => {
         {loading && !latestReviews.length ? (
           <p className="font-mono text-gray-500">Loading editor picks…</p>
         ) : latestReviews.length ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {latestReviews.map((article) => (
-              <ArticleCard key={article.slug ?? article.id} article={article} />
+              <ArticleCard key={article.slug ?? article.id} article={article} imageAspect="square" />
             ))}
           </div>
         ) : (
@@ -160,56 +187,81 @@ const Home: React.FC = () => {
         )}
       </section>
 
-      {/* Featured Artist Story (Split) */}
-      <section className="border-y-2 border-black bg-white">
-         <div className="grid grid-cols-1 md:grid-cols-2">
-             <div className="p-12 md:p-24 flex flex-col justify-between border-b-2 md:border-b-0 md:border-r-2 border-black">
-                 <div>
-                    <span className="font-mono text-art-blue font-bold uppercase tracking-widest text-xs mb-4 block">Artist Profile</span>
-                    <h2 className="text-5xl md:text-7xl font-serif mb-8 leading-none">The Architecture of Light</h2>
-                    <p className="font-mono text-gray-600 text-sm mb-12 leading-loose max-w-md">
-                        We visited the studio of renowned installation artist Sarah Sze to discuss how she captures the ephemeral nature of digital memory in physical space.
-                    </p>
-                 </div>
-                 <Link to="/artists/art1" className="inline-block self-start border-2 border-black text-black px-8 py-3 font-bold uppercase hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none">
-                     Read Story
-                 </Link>
-             </div>
-             <div className="h-[600px] relative grayscale hover:grayscale-0 transition-all duration-500">
-                 <img 
-                     src="https://picsum.photos/600/800?random=50" 
-                     className="w-full h-full object-cover" 
-                     alt="Artist Studio"
-                 />
-                 <div className="absolute inset-0 border-inset border-2 border-transparent"></div>
-             </div>
-         </div>
-      </section>
+      {featuredStory?.artist?.slug?.current && (
+        <section className="border-y-2 border-black bg-white">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className="p-12 md:p-24 flex flex-col justify-between border-b-2 md:border-b-0 md:border-r-2 border-black">
+              <div>
+                <span className="font-mono text-art-blue font-bold uppercase tracking-widest text-xs mb-4 block">
+                  Artist Profile
+                </span>
+                <h2 className="text-5xl md:text-7xl font-serif mb-8 leading-none">
+                  {featuredStory.title ?? featuredStory.artist?.name ?? 'Featured Artist'}
+                </h2>
+                <p className="font-mono text-gray-600 text-sm mb-12 leading-loose max-w-md">
+                  Step inside the world of {featuredStory.artist?.name ?? 'this artist'} and discover the ideas shaping their latest work.
+                </p>
+              </div>
+              <Link
+                to={`/artists/${featuredStory.artist.slug?.current}`}
+                className="inline-block self-start border-2 border-black text-black px-8 py-3 font-bold uppercase hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+              >
+                Read Story
+              </Link>
+            </div>
+            <div className="h-[600px] relative grayscale hover:grayscale-0 transition-all duration-500">
+              {featuredStory.portrait?.asset?.url ? (
+                <img
+                  src={featuredStory.portrait.asset.url}
+                  className="w-full h-full object-cover"
+                  alt={featuredStory.title ?? featuredStory.artist?.name ?? 'Artist portrait'}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center font-mono text-xs uppercase">
+                  Portrait coming soon
+                </div>
+              )}
+              <div className="absolute inset-0 border-inset border-2 border-transparent"></div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <AiTeaser />
 
-      {/* Weekend Guide Teaser */}
-      <section className="py-24 container mx-auto px-4 md:px-6">
+      {weekendGuide?.slug?.current && (
+        <section className="py-24 container mx-auto px-4 md:px-6">
           <SectionHeader title="Weekend Guides" linkText="All Cities" linkTo="/guides" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               <Link to="/guides/g2" className="relative h-[450px] border-2 border-black group cursor-pointer overflow-hidden bg-gray-100 block">
-                   <div className="absolute top-4 left-4 z-20 bg-white border-2 border-black px-3 py-1 font-mono text-xs uppercase font-bold">Paris</div>
-                   <img src="https://picsum.photos/800/600?random=60" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="Paris" />
-                   <div className="absolute bottom-0 left-0 right-0 bg-white border-t-2 border-black p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                       <h3 className="text-2xl font-black uppercase mb-1">Hidden Paris</h3>
-                       <p className="font-mono text-xs text-gray-600">5 Galleries • 2 Museums • 1 Hidden Cafe</p>
-                   </div>
-               </Link>
-               <Link to="/guides/g1" className="relative h-[450px] border-2 border-black group cursor-pointer overflow-hidden bg-gray-100 block">
-                   <div className="absolute top-4 left-4 z-20 bg-white border-2 border-black px-3 py-1 font-mono text-xs uppercase font-bold">Berlin</div>
-                   <img src="https://picsum.photos/800/600?random=61" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="New York" />
-                   <div className="absolute bottom-0 left-0 right-0 bg-white border-t-2 border-black p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                       <h3 className="text-2xl font-black uppercase mb-1">Mitte District</h3>
-                       <p className="font-mono text-xs text-gray-600">Blue Chip Tour • 8 Galleries</p>
-                   </div>
-               </Link>
+            <Link
+              to={`/guides/${weekendGuide.slug.current}`}
+              className="relative h-[450px] border-2 border-black group cursor-pointer overflow-hidden bg-gray-100 block"
+            >
+              <div className="absolute top-4 left-4 z-20 bg-white border-2 border-black px-3 py-1 font-mono text-xs uppercase font-bold">
+                {weekendGuide.title ?? 'Featured trail'}
+              </div>
+              {weekendGuide.coverImage?.asset?.url ? (
+                <img
+                  src={weekendGuide.coverImage.asset.url}
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                  alt={weekendGuide.title ?? 'Weekend guide'}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center font-mono text-xs uppercase">
+                  Guide preview coming soon
+                </div>
+              )}
+              <div className="absolute bottom-0 left-0 right-0 bg-white border-t-2 border-black p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                <h3 className="text-2xl font-black uppercase mb-1">{weekendGuide.ctaText ?? 'Explore the route'}</h3>
+                <p className="font-mono text-xs text-gray-600">Tap to view the full itinerary</p>
+              </div>
+            </Link>
+            <div className="relative h-[450px] border-2 border-dashed border-black flex items-center justify-center text-center p-8 font-mono text-xs text-gray-500">
+              Curating more trails. Check back soon.
+            </div>
           </div>
-      </section>
+        </section>
+      )}
 
       <NewsletterSection />
     </div>

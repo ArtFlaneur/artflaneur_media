@@ -230,15 +230,6 @@ export const artistStory = defineType({
         },
       ],
     }),
-    defineField({
-      name: 'pageTemplate',
-      title: 'Page Template',
-      type: 'reference',
-      to: [{type: 'pageTemplate'}],
-      options: {
-        filter: 'templateType == "artistStory"',
-      },
-    }),
   ],
   preview: {
     select: {

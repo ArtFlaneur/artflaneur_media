@@ -88,6 +88,45 @@ export const exhibition = defineType({
       type: 'datetime',
       validation: (Rule) => Rule.required(),
     }),
+    defineField({
+      name: 'ticketing',
+      title: 'Ticketing',
+      type: 'object',
+      description: 'Control how ticket CTAs appear for this exhibition',
+      fields: [
+        defineField({
+          name: 'access',
+          title: 'Access Type',
+          type: 'string',
+          options: {
+            list: [
+              {title: 'Free entry', value: 'free'},
+              {title: 'Paid / ticketed', value: 'ticketed'},
+            ],
+            layout: 'radio',
+          },
+          initialValue: 'free',
+        }),
+        defineField({
+          name: 'ticketPrice',
+          title: 'Ticket Price',
+          type: 'string',
+          description: 'Displayed on the CTA when access is ticketed',
+        }),
+        defineField({
+          name: 'bookingUrl',
+          title: 'Booking URL',
+          type: 'url',
+          description: 'Link to purchase tickets',
+        }),
+        defineField({
+          name: 'ctaLabel',
+          title: 'CTA Label',
+          type: 'string',
+          description: 'Optional override for the default “Buy tickets” label',
+        }),
+      ],
+    }),
   ],
   preview: {
     select: {

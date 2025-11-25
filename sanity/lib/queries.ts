@@ -74,73 +74,6 @@ export const REVIEW_QUERY = defineQuery(`*[
   publishedAt
 }`)
 
-// Posts queries
-export const POSTS_QUERY = defineQuery(`*[
-  _type == "post"
-  && publishStatus == "published"
-] | order(publishedAt desc) [0...10] {
-  _id,
-  title,
-  slug,
-  excerpt,
-  mainImage {
-    asset->{
-      _id,
-      url
-    },
-    alt
-  },
-  author->{
-    _id,
-    name,
-    photo {
-      asset->{
-        url
-      }
-    }
-  },
-  categories[]->{
-    _id,
-    title,
-    slug
-  },
-  publishedAt
-}`)
-
-export const POST_QUERY = defineQuery(`*[
-  _type == "post"
-  && slug.current == $slug
-][0] {
-  _id,
-  title,
-  slug,
-  excerpt,
-  mainImage {
-    asset->{
-      _id,
-      url
-    },
-    alt
-  },
-  body,
-  author->{
-    _id,
-    name,
-    photo {
-      asset->{
-        url
-      }
-    },
-    bio
-  },
-  categories[]->{
-    _id,
-    title,
-    slug
-  },
-  publishedAt
-}`)
-
 // Exhibitions queries
 export const EXHIBITIONS_QUERY = defineQuery(`*[
   _type == "exhibition"
@@ -165,11 +98,17 @@ export const EXHIBITIONS_QUERY = defineQuery(`*[
     name,
     slug
   },
-  mainImage {
+  "mainImage": image{
     asset->{
       url
     },
     alt
+  },
+  ticketing{
+    access,
+    ticketPrice,
+    bookingUrl,
+    ctaLabel
   }
 }`)
 
@@ -204,18 +143,17 @@ export const EXHIBITION_QUERY = defineQuery(`*[
       }
     }
   },
-  mainImage {
+  "mainImage": image{
     asset->{
       url
     },
     alt
   },
-  images[] {
-    asset->{
-      url
-    },
-    alt,
-    caption
+  ticketing{
+    access,
+    ticketPrice,
+    bookingUrl,
+    ctaLabel
   }
 }`)
 
@@ -314,33 +252,123 @@ export const ARTIST_QUERY = defineQuery(`*[
 // Homepage content query
 export const HOMEPAGE_QUERY = defineQuery(`*[
   _type == "homepageContent"
+  && !(_id in path("drafts.**"))
 ][0] {
   _id,
-  heroTitle,
-  heroSubtitle,
-  featuredReviews[]->{
+  title,
+  heroSection{
+    featuredReview->{
+      _id,
+      title,
+      slug,
+      excerpt,
+      publishedAt,
+      mainImage{
+        asset->{
+          url
+        },
+        alt
+      },
+      author->{
+        _id,
+        name,
+        photo{
+          asset->{
+            url
+          }
+        }
+      }
+    },
+    weeklyStory->{
+      _id,
+      title,
+      slug,
+      excerpt,
+      portrait{
+        asset->{
+          url
+        },
+        alt
+      },
+      artist->{
+        _id,
+        name,
+        slug
+      }
+    }
+  },
+  latestReviews[]->{
     _id,
     title,
     slug,
     excerpt,
-    mainImage {
+    publishedAt,
+    mainImage{
       asset->{
         url
       },
       alt
     },
-    rating
+    author->{
+      _id,
+      name,
+      photo{
+        asset->{
+          url
+        }
+      }
+    }
   },
-  featuredExhibitions[]->{
+  featuredArtistStory->{
     _id,
     title,
     slug,
-    startDate,
-    endDate,
-    gallery->{
+    portrait{
+      asset->{
+        url
+      },
+      alt
+    },
+    artist->{
+      _id,
       name,
-      city
+      slug
     }
+  },
+  weekendGuide->{
+    _id,
+    title,
+    slug,
+    city,
+    description,
+    ctaText,
+    coverImage{
+      asset->{
+        url
+      },
+      alt
+    },
+    sponsorshipStatus,
+    sponsor->{
+      _id,
+      name,
+      logo{
+        asset->{
+          url
+        }
+      }
+    }
+  },
+  aiChatbotTeaser{
+    headline,
+    description,
+    ctaText
+  },
+  newsletterSignup{
+    headline,
+    description,
+    placeholder,
+    submitText
   }
 }`)
 

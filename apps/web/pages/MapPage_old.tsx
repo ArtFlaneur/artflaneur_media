@@ -200,7 +200,7 @@ const MapPage: React.FC = () => {
                 {selectedPoint && selectedGallery && (
                     <div className="absolute bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-80 bg-white p-0 shadow-2xl animate-in slide-in-from-bottom-5 z-30">
                         <div className="h-32 bg-gray-100 relative">
-                             <img src={`https://picsum.photos/400/200?random=${selectedPoint}`} className="w-full h-full object-cover" alt={selectedGallery.name} />
+                            <img src={`https://picsum.photos/400/400?random=${selectedPoint}`} className="w-full h-full object-cover" alt={selectedGallery.name} />
                              <button className="absolute top-2 right-2 bg-white/80 p-1 rounded-full hover:bg-white" onClick={() => setSelectedPoint(null)}>✕</button>
                         </div>
                         <div className="p-6">

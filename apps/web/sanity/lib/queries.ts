@@ -131,73 +131,6 @@ export const LATEST_REVIEWS_QUERY = defineQuery(`*[
   rating
 }`)
 
-// Posts queries
-export const POSTS_QUERY = defineQuery(`*[
-  _type == "post"
-  && publishStatus == "published"
-] | order(publishedAt desc) [0...10] {
-  _id,
-  title,
-  slug,
-  excerpt,
-  mainImage {
-    asset->{
-      _id,
-      url
-    },
-    alt
-  },
-  author->{
-    _id,
-    name,
-    photo {
-      asset->{
-        url
-      }
-    }
-  },
-  categories[]->{
-    _id,
-    title,
-    slug
-  },
-  publishedAt
-}`)
-
-export const POST_QUERY = defineQuery(`*[
-  _type == "post"
-  && slug.current == $slug
-][0] {
-  _id,
-  title,
-  slug,
-  excerpt,
-  mainImage {
-    asset->{
-      _id,
-      url
-    },
-    alt
-  },
-  body,
-  author->{
-    _id,
-    name,
-    photo {
-      asset->{
-        url
-      }
-    },
-    bio
-  },
-  categories[]->{
-    _id,
-    title,
-    slug
-  },
-  publishedAt
-}`)
-
 // Exhibitions queries
 export const EXHIBITIONS_QUERY = defineQuery(`*[
   _type == "exhibition"
@@ -222,11 +155,17 @@ export const EXHIBITIONS_QUERY = defineQuery(`*[
     name,
     slug
   },
-  mainImage {
+  "mainImage": image{
     asset->{
       url
     },
     alt
+  },
+  ticketing{
+    access,
+    ticketPrice,
+    bookingUrl,
+    ctaLabel
   }
 }`)
 
@@ -261,18 +200,17 @@ export const EXHIBITION_QUERY = defineQuery(`*[
       }
     }
   },
-  mainImage {
+  "mainImage": image{
     asset->{
       url
     },
     alt
   },
-  images[] {
-    asset->{
-      url
-    },
-    alt,
-    caption
+  ticketing{
+    access,
+    ticketPrice,
+    bookingUrl,
+    ctaLabel
   }
 }`)
 
@@ -348,6 +286,7 @@ export const ARTIST_QUERY = defineQuery(`*[
   slug,
   bio,
   birthYear,
+  country,
   photo {
     asset->{
       url
@@ -459,6 +398,8 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
     _id,
     title,
     slug,
+    city,
+    description,
     ctaText,
     coverImage{
       asset->{
@@ -539,12 +480,42 @@ export const GUIDES_QUERY = defineQuery(`*[
   coverImage {
     asset->{
       url
+    },
+    alt
+  },
+  ctaText,
+  sponsorshipStatus,
+  sponsor->{
+    _id,
+    name,
+    logo {
+      asset->{
+        url
+      }
     }
   },
   stops[] {
     _key,
     title,
-    description,
+    summary,
+    address,
+    notes,
+    image {
+      asset->{
+        url
+      },
+      alt
+    },
+    gallery->{
+      _id,
+      name,
+      address
+    },
+    exhibition->{
+      _id,
+      title,
+      slug
+    },
     location {
       lat,
       lng
@@ -561,15 +532,39 @@ export const GUIDE_QUERY = defineQuery(`*[
   title,
   city,
   description,
+  ctaText,
+  sponsorshipStatus,
+  sponsor->{
+    _id,
+    name,
+    logo {
+      asset->{
+        url
+      }
+    }
+  },
+  sponsorBadgeSettings{
+    template,
+    placement
+  },
   coverImage {
     asset->{
       url
-    }
+    },
+    alt
   },
   stops[] {
     _key,
     title,
-    description,
+    summary,
+    address,
+    notes,
+    image {
+      asset->{
+        url
+      },
+      alt
+    },
     location {
       lat,
       lng
@@ -578,6 +573,11 @@ export const GUIDE_QUERY = defineQuery(`*[
       _id,
       name,
       address
+    },
+    exhibition->{
+      _id,
+      title,
+      slug
     }
   }
 }`)

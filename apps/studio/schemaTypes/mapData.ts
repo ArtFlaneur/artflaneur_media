@@ -19,10 +19,11 @@ export const mapData = defineType({
       of: [defineArrayMember({type: 'reference', to: [{type: 'gallery'}]})],
     }),
     defineField({
-      name: 'artEvents',
-      title: 'Art Events',
+      name: 'exhibitions',
+      title: 'Featured Exhibitions',
+      description: 'Optional highlighted exhibitions to surface on the map UI',
       type: 'array',
-      of: [defineArrayMember({type: 'reference', to: [{type: 'artEvent'}]})],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'exhibition'}]})],
     }),
     defineField({
       name: 'defaultCenter',

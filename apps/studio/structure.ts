@@ -56,7 +56,6 @@ export const structure = (S: StructureBuilder) =>
       S.documentTypeListItem('artistStory').title('Artist Stories'),
       S.documentTypeListItem('guide').title('Guides'),
       S.documentTypeListItem('exhibition').title('Exhibitions'),
-      S.documentTypeListItem('artEvent').title('Art Events'),
       
       S.divider(),
       
@@ -87,7 +86,6 @@ export const structure = (S: StructureBuilder) =>
             .items([
               S.documentTypeListItem('siteSettings').title('General Settings'),
               S.documentTypeListItem('homepageContent').title('Homepage Content'),
-              S.documentTypeListItem('pageTemplate').title('Page Templates'),
               S.documentTypeListItem('mapData').title('Map Configuration'),
             ])
         ),

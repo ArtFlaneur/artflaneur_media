@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { EntityCard } from '../components/Shared';
-import { MOCK_ARTICLES, MOCK_ARTISTS, MOCK_EXHIBITIONS, AUTHORS, MOCK_GUIDES } from '../constants';
 import { client } from '../sanity/lib/client';
 import { REVIEWS_QUERY, EXHIBITIONS_QUERY, ARTISTS_QUERY, AUTHORS_QUERY, GUIDES_QUERY } from '../sanity/lib/queries';
-import { REVIEWS_QUERYResult, EXHIBITIONS_QUERYResult, ARTISTS_QUERYResult, GUIDES_QUERYResult, AUTHORS_QUERYResult } from '../sanity/types';
+import { REVIEWS_QUERYResult, EXHIBITIONS_QUERYResult, ARTISTS_QUERYResult, GUIDES_QUERYResult, AUTHORS_QUERYResult } from '../sanity/queryResults';
 import { Article, Artist, Exhibition, Guide, Author, ContentType } from '../types';
 
 interface ListingPageProps {
@@ -28,7 +27,7 @@ const mapReviewToArticle = (review: REVIEWS_QUERYResult[number]): Article => ({
   type: ContentType.REVIEW,
   title: review.title ?? 'Untitled Review',
   subtitle: review.excerpt ?? '',
-  image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/800/600`,
+  image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/600/600`,
   date: formatDate(review.publishedAt),
   author: review.author
     ? {
@@ -46,7 +45,7 @@ const mapExhibitionToCard = (exhibition: EXHIBITIONS_QUERYResult[number]): Exhib
   title: exhibition.title ?? 'Untitled Exhibition',
   gallery: exhibition.gallery?.name ?? 'Gallery',
   city: exhibition.gallery?.city ?? 'City',
-  image: `https://picsum.photos/seed/${exhibition._id}/800/600`,
+  image: `https://picsum.photos/seed/${exhibition._id}/600/600`,
   startDate: formatDate(exhibition.startDate) ?? 'TBC',
   endDate: formatDate(exhibition.endDate) ?? 'TBC',
   description: exhibition.description ?? '',
@@ -56,11 +55,11 @@ const mapArtistToCard = (artist: ARTISTS_QUERYResult[number]): Artist => ({
   id: artist._id,
   slug: artist.slug?.current ?? artist._id,
   name: artist.name ?? 'Unknown Artist',
-  image: artist.photo?.asset?.url ?? `https://picsum.photos/seed/${artist._id}/600/800`,
+  image: artist.photo?.asset?.url ?? `https://picsum.photos/seed/${artist._id}/600/600`,
   bio: artist.bio ?? '',
   discipline: [],
   location: '',
-  featuredWork: artist.photo?.asset?.url ?? `https://picsum.photos/seed/${artist._id}-work/800/600`,
+  featuredWork: artist.photo?.asset?.url ?? `https://picsum.photos/seed/${artist._id}-work/600/600`,
 });
 
 const mapGuideToCard = (guide: GUIDES_QUERYResult[number]): Guide => ({
@@ -68,11 +67,17 @@ const mapGuideToCard = (guide: GUIDES_QUERYResult[number]): Guide => ({
   slug: guide.slug?.current ?? guide._id,
   type: ContentType.GUIDE,
   title: guide.title ?? 'Untitled Guide',
-  subtitle: guide.description ?? '',
+  subtitle: guide.description ?? guide.stops?.[0]?.summary ?? '',
   city: guide.city ?? 'City',
-  image: guide.coverImage?.asset?.url ?? `https://picsum.photos/seed/${guide._id}/1200/800`,
+  image: guide.coverImage?.asset?.url ?? `https://picsum.photos/seed/${guide._id}/600/600`,
   author: undefined,
-  steps: [],
+  steps: (guide.stops ?? []).map((stop) => ({
+    id: stop._key ?? `${guide._id}-stop`,
+    title: stop.title ?? 'Featured stop',
+    description: stop.summary ?? stop.notes ?? '',
+    image: stop.image?.asset?.url ?? guide.coverImage?.asset?.url ?? `https://picsum.photos/seed/${guide._id}-stop/600/600`,
+    location: stop.address ?? guide.city ?? 'City',
+  })),
 });
 
 const ROLE_LABELS: Record<string, string> = {
@@ -89,14 +94,6 @@ const mapAuthorToCard = (author: AUTHORS_QUERYResult[number]): Author => ({
   image: author.photo?.asset?.url ?? `https://picsum.photos/seed/${author._id}/400/400`,
   bio: author.bio ?? '',
 });
-
-const FALLBACK_DATA = {
-  reviews: MOCK_ARTICLES,
-  exhibitions: MOCK_EXHIBITIONS,
-  artists: MOCK_ARTISTS,
-  guides: MOCK_GUIDES,
-  ambassadors: AUTHORS,
-} as Record<ListingPageProps['type'], ListingEntity[]>;
 
 const CARD_TYPE_MAP = {
   reviews: 'article',
@@ -153,16 +150,16 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         if (!isMounted) return;
 
         if (!mapped.length) {
-          setData(FALLBACK_DATA[type]);
-          setError('No published entries yet. Showing editorial picks instead.');
+          setData([]);
+          setError('No published entries yet.');
         } else {
           setData(mapped);
         }
       } catch (err) {
         console.error(`❌ Error fetching ${type}:`, err);
         if (!isMounted) return;
-        setError('Unable to sync from Sanity. Showing editorial picks instead.');
-        setData(FALLBACK_DATA[type]);
+        setError('Unable to sync from Sanity right now.');
+        setData([]);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -203,7 +200,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
             {loading ? (
               <p className="font-mono text-sm text-gray-600">Loading curated selections…</p>
             ) : data.length ? (
-              <div className={`grid gap-6 ${type === 'artists' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 {data.map((item) => (
                   <EntityCard key={getCardKey(item)} data={item} type={cardType} />
                 ))}

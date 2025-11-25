@@ -498,7 +498,7 @@ const MapPage: React.FC = () => {
                                     alt={selectedPoint.name}
                                     onError={(e) => {
                                         // Fallback если изображение не загрузилось
-                                        e.currentTarget.src = `https://picsum.photos/400/200?random=${selectedPoint.id}`;
+                                        e.currentTarget.src = `https://picsum.photos/400/400?random=${selectedPoint.id}`;
                                     }}
                                 />
                             ) : (

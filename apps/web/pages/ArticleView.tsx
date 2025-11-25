@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { MOCK_ARTICLES } from '../constants';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { Facebook, Twitter, Linkedin, MapPin, Clock, Ticket } from 'lucide-react';
 import { ArticleCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
-import { BlockContent, REVIEW_QUERYResult, REVIEWS_QUERYResult } from '../sanity/types';
+import { BlockContent } from '../sanity/types';
+import { REVIEW_QUERYResult, REVIEWS_QUERYResult } from '../sanity/queryResults';
 import { Article, ContentType } from '../types';
 
 // Функция для определения платформы пользователя
@@ -25,9 +25,6 @@ const getAppStoreLink = () => {
   // По умолчанию для десктопа - App Store
   return 'https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783';
 };
-
-const FALLBACK_ARTICLE = MOCK_ARTICLES[0];
-const FALLBACK_RELATED = MOCK_ARTICLES.slice(1, 4);
 
 type ReviewLike = REVIEW_QUERYResult | REVIEWS_QUERYResult[number];
 
@@ -53,7 +50,7 @@ const mapReviewToArticle = (review: ReviewLike): Article => {
     type: ContentType.REVIEW,
     title: review.title ?? 'Untitled Review',
     subtitle: review.excerpt ?? '',
-    image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/1200/900`,
+    image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/600/600`,
     date: formatDate(review.publishedAt),
     location: galleryName ? `${galleryName}${galleryCity ? `, ${galleryCity}` : ''}` : undefined,
     author: review.author
@@ -122,10 +119,12 @@ const getSponsorBadge = (review: REVIEW_QUERYResult | null) => {
   };
 };
 
+type SharePlatform = 'facebook' | 'twitter' | 'linkedin';
+
 const ArticleView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [review, setReview] = useState<REVIEW_QUERYResult | null>(null);
-  const [relatedArticles, setRelatedArticles] = useState<Article[]>(FALLBACK_RELATED);
+  const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,9 +141,9 @@ const ArticleView: React.FC = () => {
         if (!isMounted) return;
 
         if (!reviewData) {
-          setError('We could not find this review. Showing an archive highlight instead.');
+          setError('We could not find this review.');
           setReview(null);
-          setRelatedArticles(FALLBACK_RELATED);
+          setRelatedArticles([]);
           setLoading(false);
           return;
         }
@@ -156,13 +155,13 @@ const ArticleView: React.FC = () => {
           .filter((r) => r._id !== reviewData._id)
           .slice(0, 3)
           .map(mapReviewToArticle);
-        setRelatedArticles(related.length ? related : FALLBACK_RELATED);
+        setRelatedArticles(related);
       } catch (err) {
         console.error('❌ Error fetching review:', err);
         if (!isMounted) return;
-        setError('Unable to sync the latest review. Showing a curated highlight instead.');
+        setError('Unable to load this review right now.');
         setReview(null);
-        setRelatedArticles(FALLBACK_RELATED);
+        setRelatedArticles([]);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -177,12 +176,54 @@ const ArticleView: React.FC = () => {
     };
   }, [id]);
 
-  const article = useMemo(() => (review ? mapReviewToArticle(review) : FALLBACK_ARTICLE), [review]);
   const sponsorBadge = useMemo(() => getSponsorBadge(review), [review]);
-  const articleBody = review ? portableTextToPlain(review.body) : article.content;
+  const article = useMemo(() => (review ? mapReviewToArticle(review) : null), [review]);
+  const articleBody = review ? portableTextToPlain(review.body) : '';
   const location = getLocationLabel(review);
   const galleryAddress = review?.gallery?.address;
   const galleryWebsite = review?.gallery?.website;
+
+  const handleShare = useCallback(
+    (platform: SharePlatform) => {
+      if (typeof window === 'undefined') return;
+      const pageUrl = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent(article?.title ?? 'Art Flâneur review');
+
+      const links: Record<SharePlatform, string> = {
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`,
+        twitter: `https://twitter.com/intent/tweet?url=${pageUrl}&text=${text}`,
+        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}`,
+      };
+
+      const shareLink = links[platform];
+      window.open(shareLink, '_blank', 'noopener,noreferrer');
+    },
+    [article?.title],
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-art-paper">
+        <p className="font-mono text-sm uppercase tracking-[0.3em]">Loading review…</p>
+      </div>
+    );
+  }
+
+  if (!review || !article) {
+    return (
+      <div className="min-h-screen bg-art-paper flex items-center justify-center text-center p-6">
+        <div className="space-y-4">
+          <p className="font-mono text-sm uppercase tracking-[0.3em]">{error ?? 'Review not found'}</p>
+          <Link
+            to="/reviews"
+            className="inline-flex items-center gap-3 px-6 py-3 border-2 border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+          >
+            Back to reviews
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-art-paper">
@@ -230,9 +271,30 @@ const ArticleView: React.FC = () => {
                  <div>
                     <span className="text-gray-500 block mb-1">Share</span>
                     <div className="flex gap-2">
-                        <span className="hover:text-art-blue cursor-pointer">FB</span>
-                        <span className="hover:text-art-blue cursor-pointer">TW</span>
-                        <span className="hover:text-art-blue cursor-pointer">LN</span>
+                        <button
+                          type="button"
+                          onClick={() => handleShare('facebook')}
+                          className="hover:text-art-blue cursor-pointer font-bold"
+                          aria-label="Share on Facebook"
+                        >
+                          FB
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleShare('twitter')}
+                          className="hover:text-art-blue cursor-pointer font-bold"
+                          aria-label="Share on Twitter"
+                        >
+                          TW
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleShare('linkedin')}
+                          className="hover:text-art-blue cursor-pointer font-bold"
+                          aria-label="Share on LinkedIn"
+                        >
+                          LN
+                        </button>
                     </div>
                 </div>
             </div>
@@ -315,8 +377,8 @@ const ArticleView: React.FC = () => {
                         <p>
                             In the second room, the tone shifts. The stark white walls are replaced by a dimly lit environment where video works play in an endless loop. It suggests a trap, a cycle from which we cannot escape. Yet, there is beauty in the repetition.
                         </p>
-                        <div className="my-12 border-2 border-black p-2">
-                             <img src="https://picsum.photos/800/500?random=88" alt="Detail view" className="w-full grayscale hover:grayscale-0 transition-all" />
+            <div className="my-12 border-2 border-black p-2">
+              <img src="https://picsum.photos/600/600?random=88" alt="Detail view" className="w-full grayscale hover:grayscale-0 transition-all" />
                              <p className="font-mono text-xs text-gray-500 mt-2 uppercase">Fig 1. Installation View, 2024</p>
                         </div>
                         <p>
@@ -335,7 +397,7 @@ const ArticleView: React.FC = () => {
                   <span className="w-4 h-4 bg-art-yellow border border-black"></span>
                   Related Stories
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                   {relatedArticles.map(a => (
                       <ArticleCard key={a.id} article={a} variant="vertical" />
                   ))}
