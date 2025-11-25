@@ -27,6 +27,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
             if (sanityData && sanityData.length > 0) {
               setData(sanityData.map((review: any) => ({
                 id: review._id,
+                slug: review.slug?.current || review._id,
                 title: review.title,
                 subtitle: review.excerpt || '',
                 image: review.mainImage?.asset?.url || `https://picsum.photos/400/300?random=${review._id}`,
@@ -53,6 +54,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
             if (sanityData && sanityData.length > 0) {
               setData(sanityData.map((exhibition: any) => ({
                 id: exhibition._id,
+                slug: exhibition.slug?.current || exhibition._id,
                 title: exhibition.title,
                 artist: exhibition.artist?.name || 'Various Artists',
                 gallery: exhibition.gallery?.name || 'Gallery',
@@ -71,6 +73,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
             if (sanityData && sanityData.length > 0) {
               setData(sanityData.map((artist: any) => ({
                 id: artist._id,
+                slug: artist.slug?.current || artist._id,
                 name: artist.name,
                 image: artist.photo?.asset?.url || `https://picsum.photos/300/400?random=${artist._id}`,
                 bio: artist.bio || '',
@@ -103,6 +106,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
             if (sanityData && sanityData.length > 0) {
               setData(sanityData.map((author: any) => ({
                 id: author._id,
+                slug: author.slug?.current || author._id,
                 name: author.name,
                 role: author.role || 'Contributor',
                 image: author.photo?.asset?.url || `https://picsum.photos/200/200?random=${author._id}`,

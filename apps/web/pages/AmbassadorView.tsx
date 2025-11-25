@@ -1,13 +1,63 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { AUTHORS, MOCK_ARTICLES } from '../constants';
+import { MOCK_ARTICLES } from '../constants';
 import { EntityCard } from '../components/Shared';
 import { Instagram, Twitter, Mail } from 'lucide-react';
+import { client } from '../sanity/lib/client';
+import { AUTHOR_QUERY } from '../sanity/lib/queries';
 
 const AmbassadorView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const author = AUTHORS.find(a => a.id === id) || AUTHORS[0];
+  const [author, setAuthor] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const authorArticles = MOCK_ARTICLES; // In real app, filter by author ID
+
+  useEffect(() => {
+    const fetchAuthor = async () => {
+      if (!id) return;
+      
+      try {
+        console.log('🔍 Fetching author with slug:', id);
+        const authorData = await client.fetch(AUTHOR_QUERY, { slug: id });
+        console.log('📦 Author data received:', authorData);
+        
+        if (authorData) {
+          setAuthor({
+            id: authorData._id,
+            name: authorData.name,
+            role: authorData.role || 'Contributor',
+            image: authorData.photo?.asset?.url || 'https://picsum.photos/400/400',
+            bio: authorData.email ? `Contact: ${authorData.email}` : 'Bio coming soon'
+          });
+        } else {
+          console.warn('⚠️ No author found with slug:', id);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('❌ Error fetching author:', error);
+        setLoading(false);
+      }
+    };
+    
+    fetchAuthor();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="font-mono text-lg">Loading ambassador...</p>
+      </div>
+    );
+  }
+
+  if (!author) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="font-mono text-lg">Ambassador not found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-art-paper min-h-screen">

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Smartphone } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
+import { client } from '../sanity/lib/client';
+import { SITE_SETTINGS_QUERY } from '../sanity/lib/queries';
 
 // The Art Flaneur Logo Component
 const BrandLogo = () => (
@@ -25,22 +27,50 @@ const BrandLogo = () => (
   </div>
 );
 
-const Ticker = () => (
-    <div className="bg-art-black text-white py-2 overflow-hidden border-b border-white relative z-50">
-        <div className="whitespace-nowrap animate-marquee flex gap-8 items-center font-mono text-xs tracking-widest uppercase">
-            <span>• Contemporary Art Guide</span>
-            <span>• Available on iOS & Android</span>
-            <span>• New Exhibition Reviews Weekly</span>
-            <span>• Weekend Guide: Berlin</span>
-            <span>• Featured Artist: Sarah Sze</span>
-            <span>• Contemporary Art Guide</span>
-            <span>• Available on iOS & Android</span>
-            <span>• New Exhibition Reviews Weekly</span>
-            <span>• Weekend Guide: Berlin</span>
-            <span>• Featured Artist: Sarah Sze</span>
-        </div>
+interface TickerMessage {
+  message: string;
+  isActive: boolean;
+}
+
+const Ticker: React.FC = () => {
+  const [messages, setMessages] = useState<string[]>([
+    '• Contemporary Art Guide',
+    '• Available on iOS & Android',
+    '• New Exhibition Reviews Weekly',
+  ]);
+
+  useEffect(() => {
+    const fetchTickerMessages = async () => {
+      try {
+        const settings = await client.fetch(SITE_SETTINGS_QUERY);
+        if (settings?.tickerMessages) {
+          const activeMessages = settings.tickerMessages
+            .filter((msg: TickerMessage) => msg.isActive)
+            .map((msg: TickerMessage) => `• ${msg.message}`);
+          
+          if (activeMessages.length > 0) {
+            // Дублируем сообщения для бесшовной анимации
+            setMessages([...activeMessages, ...activeMessages]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching ticker messages:', error);
+      }
+    };
+
+    fetchTickerMessages();
+  }, []);
+
+  return (
+    <div className="bg-art-blue text-white py-2 overflow-hidden border-b border-white relative z-50">
+      <div className="whitespace-nowrap animate-marquee flex gap-8 items-center font-mono text-xs tracking-widest uppercase">
+        {messages.map((message, index) => (
+          <span key={index}>{message}</span>
+        ))}
+      </div>
     </div>
-);
+  );
+};
 
 export const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,20 +97,20 @@ export const Header: React.FC = () => {
     <>
     <Ticker />
     <header className="sticky top-0 left-0 right-0 z-40 bg-art-paper border-b-2 border-black">
-      <div className="container mx-auto px-4 md:px-0 flex items-stretch justify-between h-20">
+      <div className="flex items-stretch h-16">
         
-        {/* Logo Section */}
-        <Link to="/" className="flex items-center pl-4 md:pl-6 md:border-r-2 border-black pr-8 hover:bg-gray-100 transition-colors">
+        {/* Logo Section - выровнен по центру левого пространства */}
+        <Link to="/" className="flex items-center pl-8 md:pl-12 md:border-r-2 border-black pr-8 hover:bg-gray-100 transition-colors">
            <BrandLogo />
         </Link>
 
-        {/* Desktop Nav */}
+        {/* Desktop Nav - растягивается до ширины изображения hero */}
         <nav className="hidden lg:flex items-stretch flex-1">
           {NAV_ITEMS.map((item) => (
             <Link 
               key={item.path} 
               to={item.path}
-              className="flex items-center justify-center px-6 border-r-2 border-black text-sm font-bold uppercase tracking-widest hover:bg-art-yellow hover:text-black transition-colors relative group"
+              className="flex items-center justify-center flex-1 border-r-2 border-black text-xs font-bold uppercase tracking-wider hover:bg-art-yellow hover:text-black transition-colors relative group"
             >
               {item.label}
               <span className="absolute bottom-0 left-0 w-full h-1 bg-black transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
@@ -88,8 +118,8 @@ export const Header: React.FC = () => {
           ))}
         </nav>
 
-        {/* Desktop Right Actions */}
-        <div className="hidden lg:flex items-stretch">
+        {/* Desktop Right Actions - прижаты к правому краю */}
+        <div className="hidden lg:flex items-stretch ml-auto">
             <button 
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className="flex items-center justify-center px-6 border-r-2 border-black hover:bg-art-red hover:text-white transition-colors cursor-pointer group w-20"

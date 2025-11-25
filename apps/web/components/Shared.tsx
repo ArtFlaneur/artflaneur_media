@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom';
 
 export const SectionHeader: React.FC<{ title: string; linkText?: string; linkTo?: string }> = ({ title, linkText, linkTo }) => (
   <div className="flex justify-between items-end mb-8 border-b-2 border-black pb-4">
-    <div className="flex items-center gap-4">
-        <div className="w-4 h-4 bg-art-red hidden md:block"></div>
-        <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-black">{title}</h2>
+    <div className="flex items-center gap-2 md:gap-4">
+        <div className="w-3 h-3 md:w-4 md:h-4 bg-art-red"></div>
+        <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tight text-black">{title}</h2>
     </div>
     {linkText && linkTo && (
       <Link to={linkTo} className="hidden md:flex items-center text-xs font-mono uppercase tracking-widest gap-2 hover:bg-black hover:text-white px-3 py-1 transition-all border border-transparent hover:border-black">
@@ -27,8 +27,9 @@ export const EntityCard: React.FC<{
     // RENDER: ARTIST CARD
     if (type === 'artist') {
         const artist = data as Artist;
+        const artistSlug = artist.slug || artist.id;
         return (
-            <Link to={`/artists/${artist.id}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(255,215,0,1)] transition-all duration-200">
+            <Link to={`/artists/${artistSlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(255,215,0,1)] transition-all duration-200">
                 <div className="relative aspect-square overflow-hidden border-b-2 border-black">
                     <img src={artist.image} alt={artist.name} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" />
                 </div>
@@ -43,8 +44,9 @@ export const EntityCard: React.FC<{
     // RENDER: EXHIBITION CARD
     if (type === 'exhibition') {
         const exhibition = data as Exhibition;
+        const exhibitionSlug = exhibition.slug || exhibition.id;
         return (
-            <Link to={`/exhibitions/${exhibition.id}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,85,212,1)] transition-all duration-200 h-full flex flex-col">
+            <Link to={`/exhibitions/${exhibitionSlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,85,212,1)] transition-all duration-200 h-full flex flex-col">
                 <div className="relative aspect-[3/2] overflow-hidden border-b-2 border-black">
                     <img src={exhibition.image} alt={exhibition.title} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" />
                     <div className="absolute top-0 right-0 bg-art-yellow px-2 py-1 text-xs font-mono font-bold border-l-2 border-b-2 border-black">
@@ -68,8 +70,9 @@ export const EntityCard: React.FC<{
     // RENDER: AUTHOR CARD
     if (type === 'author') {
         const author = data as Author;
+        const authorSlug = author.slug || author.id;
         return (
-             <Link to={`/ambassadors/${author.id}`} className="group block border-2 border-black bg-white hover:-translate-y-1 transition-all">
+             <Link to={`/ambassadors/${authorSlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 transition-all">
                 <div className="flex items-center p-4 gap-4">
                     <div className="w-16 h-16 border-2 border-black overflow-hidden flex-shrink-0">
                         <img src={author.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
@@ -86,8 +89,12 @@ export const EntityCard: React.FC<{
 
     // RENDER: ARTICLE / GUIDE (Default)
     const article = data as Article;
+    const articleSlug = article.slug || article.id;
+    const guideSlug = type === 'guide' ? articleSlug : null;
+    const reviewSlug = type !== 'guide' ? articleSlug : null;
+    
     return (
-        <Link to={type === 'guide' ? `/guides/${article.id}` : `/reviews/${article.id}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
+        <Link to={type === 'guide' ? `/guides/${guideSlug}` : `/reviews/${reviewSlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
           <div className="relative aspect-[4/5] border-b-2 border-black overflow-hidden">
             <img 
               src={article.image} 
@@ -118,27 +125,108 @@ export const ArticleCard: React.FC<{ article: Article; variant?: 'vertical' | 'h
     return <EntityCard data={article} type="article" variant={variant} />;
 };
 
-export const NewsletterSection: React.FC = () => (
-    <section className="bg-art-yellow border-t-2 border-black py-20">
-        <div className="container mx-auto px-4 md:px-6">
-            <div className="border-2 border-black bg-white p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] max-w-4xl mx-auto text-center">
-                <h3 className="text-4xl md:text-5xl font-black uppercase mb-4 tracking-tight">The Art World.<br/>In Your Inbox.</h3>
-                <p className="font-mono text-gray-600 mb-8 max-w-lg mx-auto">Get our weekly curation of must-see exhibitions, artist interviews, and city guides.</p>
-                <form className="flex flex-col sm:flex-row gap-0 border-2 border-black max-w-xl mx-auto">
-                    <input 
-                        type="email" 
-                        placeholder="EMAIL ADDRESS" 
-                        className="flex-1 bg-white px-6 py-4 focus:outline-none font-mono text-sm uppercase placeholder:text-gray-400"
-                    />
-                    <button type="submit" className="bg-black text-white px-8 py-4 font-bold uppercase tracking-widest hover:bg-art-red transition-colors border-l-2 border-black sm:border-l-2 sm:border-t-0 border-t-2">
-                        Subscribe
-                    </button>
-                </form>
-                <p className="text-[10px] font-mono uppercase text-gray-400 mt-4">No spam. Only Art.</p>
+export const NewsletterSection: React.FC = () => {
+    const [email, setEmail] = React.useState('');
+    const [status, setStatus] = React.useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [message, setMessage] = React.useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setStatus('loading');
+        setMessage('');
+        
+        const MAILCHIMP_URL = 'https://artflaneur.us13.list-manage.com/subscribe/post-json';
+        const params = new URLSearchParams({
+            u: '1722e1be914efca34ced245bd',
+            id: 'd130b18b0f',
+            EMAIL: email,
+            b_1722e1be914efca34ced245bd_d130b18b0f: '', // honeypot field
+        });
+        
+        console.log('Submitting to Mailchimp:', email);
+        
+        try {
+            // JSONP request to avoid CORS
+            const script = document.createElement('script');
+            const callbackName = 'mailchimpCallback' + Date.now();
+            
+            (window as any)[callbackName] = (data: any) => {
+                console.log('Mailchimp response:', data);
+                
+                delete (window as any)[callbackName];
+                document.body.removeChild(script);
+                
+                if (data.result === 'success') {
+                    setStatus('success');
+                    setMessage('You\'re subscribed! Get ready for art discoveries.');
+                    setEmail('');
+                } else {
+                    setStatus('error');
+                    // Mailchimp возвращает HTML в сообщениях об ошибках
+                    const msg = data.msg || 'Something went wrong. Please try again.';
+                    setMessage(msg.replace(/0 - /, ''));
+                }
+            };
+            
+            script.onerror = () => {
+                console.error('Script loading error');
+                delete (window as any)[callbackName];
+                setStatus('error');
+                setMessage('Failed to connect to Mailchimp. Please try again.');
+            };
+            
+            script.src = `${MAILCHIMP_URL}?${params.toString()}&c=${callbackName}`;
+            document.body.appendChild(script);
+            
+        } catch (error) {
+            console.error('Subscription error:', error);
+            setStatus('error');
+            setMessage('Something went wrong. Please try again.');
+        }
+    };
+
+    return (
+        <section className="bg-art-yellow border-t-2 border-black py-20">
+            <div className="container mx-auto px-4 md:px-6">
+                <div className="border-2 border-black bg-white p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] max-w-4xl mx-auto text-center">
+                    <h3 className="text-4xl md:text-5xl font-black uppercase mb-4 tracking-tight">The Art World.<br/>In Your Inbox.</h3>
+                    <p className="font-mono text-gray-600 mb-8 max-w-lg mx-auto">Get our weekly curation of must-see exhibitions, artist interviews, and city guides.</p>
+                    
+                    {status === 'success' ? (
+                        <div className="bg-green-50 border-2 border-green-500 p-6 max-w-xl mx-auto">
+                            <p className="font-mono text-sm text-green-800">{message}</p>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-0 border-2 border-black max-w-xl mx-auto">
+                            <input 
+                                type="email" 
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="EMAIL ADDRESS" 
+                                required
+                                disabled={status === 'loading'}
+                                className="flex-1 bg-white px-6 py-4 focus:outline-none font-mono text-sm uppercase placeholder:text-gray-400 disabled:opacity-50"
+                            />
+                            <button 
+                                type="submit" 
+                                disabled={status === 'loading'}
+                                className="bg-black text-white px-8 py-4 font-bold uppercase tracking-widest hover:bg-art-red transition-colors border-l-2 border-black sm:border-l-2 sm:border-t-0 border-t-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+                            </button>
+                        </form>
+                    )}
+                    
+                    {status === 'error' && (
+                        <p className="text-sm font-mono text-red-600 mt-4" dangerouslySetInnerHTML={{ __html: message }}></p>
+                    )}
+                    
+                    <p className="text-[10px] font-mono uppercase text-gray-400 mt-4">No spam. Only Art.</p>
+                </div>
             </div>
-        </div>
-    </section>
-);
+        </section>
+    );
+};
 
 export const AiTeaser: React.FC = () => (
     <section className="bg-art-black text-white py-0 border-y-2 border-black overflow-hidden relative">

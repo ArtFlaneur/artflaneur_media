@@ -6,7 +6,7 @@ import { ARTIST_QUERY } from '../sanity/lib/queries';
 
 const ArtistView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [artist, setArtist] = useState(MOCK_ARTISTS[0]);
+  const [artist, setArtist] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,20 +14,22 @@ const ArtistView: React.FC = () => {
       if (!id) return;
       
       try {
-        console.log('🔍 Fetching artist:', id);
+        console.log('🔍 Fetching artist with slug:', id);
         const artistData = await client.fetch(ARTIST_QUERY, { slug: id });
-        console.log('📦 Artist data:', artistData);
+        console.log('📦 Artist data received:', artistData);
         
         if (artistData) {
           setArtist({
             id: artistData._id,
             name: artistData.name,
-            image: artistData.photo?.asset?.url || MOCK_ARTISTS[0].image,
-            bio: artistData.bio || '',
-            discipline: artistData.discipline || [],
-            location: artistData.location || 'Unknown',
-            featuredWork: artistData.featuredWork || ''
+            image: artistData.photo?.asset?.url || 'https://picsum.photos/800/800',
+            bio: artistData.bio || 'No bio available',
+            discipline: [], // Not in schema yet
+            location: 'Location TBD', // Not in schema yet
+            featuredWork: artistData.website || ''
           });
+        } else {
+          console.warn('⚠️ No artist found with slug:', id);
         }
         
         setLoading(false);
@@ -39,6 +41,22 @@ const ArtistView: React.FC = () => {
     
     fetchArtist();
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="font-mono text-lg">Loading artist...</p>
+      </div>
+    );
+  }
+
+  if (!artist) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="font-mono text-lg">Artist not found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white">

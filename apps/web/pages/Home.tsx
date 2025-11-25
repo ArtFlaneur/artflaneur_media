@@ -107,26 +107,19 @@ const Home: React.FC = () => {
     <div className="min-h-screen">
       
       {/* Mondrian Hero Section */}
-      <section className="border-b-2 border-black">
+      <section className="border-b-2 border-black relative">
         <div className="grid grid-cols-1 lg:grid-cols-12 h-auto lg:h-[85vh]">
             
-            {/* Left: Featured Image (Big Block) */}
-            <div className="lg:col-span-7 border-b-2 lg:border-b-0 lg:border-r-2 border-black relative group overflow-hidden h-[50vh] lg:h-auto">
-                 <img 
-                    src={featuredArticle.image} 
-                    alt="Featured" 
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 grayscale group-hover:grayscale-0"
-                />
-                <div className="absolute top-0 left-0 bg-art-red text-white px-4 py-2 text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black">
-                    Feature of the Week
-                </div>
+            {/* Feature Badge - всегда поверх изображения */}
+            <div className="absolute top-0 left-0 bg-art-red text-white px-4 py-2 text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10">
+                Feature of the Week
             </div>
-
-            {/* Right: Content Grid */}
-            <div className="lg:col-span-5 grid grid-rows-6">
+            
+            {/* Right: Content Grid - показывается первым на мобильных */}
+            <div className="lg:col-span-5 order-1 lg:order-2">
                 
                 {/* Title Block */}
-                <div className="row-span-4 p-8 md:p-12 flex flex-col justify-center bg-art-paper">
+                <div className="p-8 md:p-12 flex flex-col justify-center bg-art-paper h-full">
                     <div className="mb-6 flex gap-2">
                         <span className="bg-black text-white px-2 py-1 text-xs font-mono uppercase">{featuredArticle.type}</span>
                         <span className="border border-black px-2 py-1 text-xs font-mono uppercase">{featuredArticle.date}</span>
@@ -141,22 +134,15 @@ const Home: React.FC = () => {
                         Read Full Story <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                     </Link>
                 </div>
+            </div>
 
-                {/* Color Block Decoration */}
-                <div className="row-span-2 grid grid-cols-3 border-t-2 border-black">
-                    <Link to="/exhibitions" className="bg-art-yellow border-r-2 border-black flex items-center justify-center p-4 hover:bg-black hover:text-white transition-colors">
-                        <span className="font-mono text-xs font-bold uppercase -rotate-90">Exhibitions</span>
-                    </Link>
-                    <Link to="/exhibitions" className="bg-white border-r-2 border-black flex items-center justify-center group cursor-pointer hover:bg-art-blue hover:text-white transition-colors">
-                        <div className="text-center">
-                            <span className="block text-3xl font-black">24</span>
-                            <span className="text-[10px] uppercase font-mono">New Openings</span>
-                        </div>
-                    </Link>
-                    <div className="bg-art-black text-white flex items-center justify-center p-6 text-center">
-                         <p className="text-xs font-mono leading-tight">THE CITY IS YOUR MUSEUM</p>
-                    </div>
-                </div>
+            {/* Left: Featured Image (Big Block) - показывается вторым на мобильных */}
+            <div className="lg:col-span-7 border-b-2 lg:border-b-0 lg:border-r-2 border-black relative group overflow-hidden h-[50vh] lg:h-auto order-2 lg:order-1">
+                 <img 
+                    src={featuredArticle.image} 
+                    alt="Featured" 
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 grayscale group-hover:grayscale-0"
+                />
             </div>
         </div>
       </section>

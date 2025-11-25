@@ -13,6 +13,7 @@ export enum ContentType {
 
 export interface Author {
   id: string;
+  slug?: string; // URL-friendly identifier
   name: string;
   role: string;
   image: string;
@@ -21,6 +22,7 @@ export interface Author {
 
 export interface Article {
   id: string;
+  slug?: string; // URL-friendly identifier
   type: ContentType;
   title: string;
   subtitle?: string;
@@ -35,6 +37,7 @@ export interface Article {
 
 export interface Artist {
   id: string;
+  slug?: string; // URL-friendly identifier
   name: string;
   image: string;
   bio: string;
@@ -58,6 +61,7 @@ export interface Guide extends Article {
 
 export interface Exhibition {
   id: string;
+  slug?: string; // URL-friendly identifier
   title: string;
   gallery: string;
   image: string;

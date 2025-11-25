@@ -7,6 +7,24 @@ import { client } from '../sanity/lib/client';
 import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
 import { ContentType } from '../types';
 
+// Функция для определения платформы пользователя
+const getAppStoreLink = () => {
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+  
+  // Проверка на iOS
+  if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
+    return 'https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783';
+  }
+  
+  // Проверка на Android
+  if (/android/i.test(userAgent)) {
+    return 'https://play.google.com/store/apps/details?id=com.artflaneur';
+  }
+  
+  // По умолчанию для десктопа - App Store
+  return 'https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783';
+};
+
 const ArticleView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState(MOCK_ARTICLES[0]);
@@ -161,9 +179,15 @@ const ArticleView: React.FC = () => {
                              </div>
                          </div>
                      </div>
-                     <button className="w-full mt-8 bg-black text-white py-3 font-bold uppercase tracking-wide text-xs hover:bg-art-blue transition-colors">
+                     {/* Save to App Button - с автоопределением платформы */}
+                     <a 
+                        href={getAppStoreLink()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full mt-8 bg-black text-white py-3 font-bold uppercase tracking-wide text-xs hover:bg-art-blue transition-colors text-center"
+                     >
                         Save to App
-                     </button>
+                     </a>
                  </div>
             </div>
 

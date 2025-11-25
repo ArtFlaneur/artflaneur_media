@@ -49,6 +49,44 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({
+      name: 'tickerMessages',
+      title: 'Ticker Messages',
+      type: 'array',
+      description: 'Messages that will appear in the scrolling ticker at the top of the site',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          fields: [
+            {
+              name: 'message',
+              type: 'string',
+              title: 'Message',
+              validation: (Rule) => Rule.required(),
+            },
+            {
+              name: 'isActive',
+              type: 'boolean',
+              title: 'Active',
+              description: 'Show this message in the ticker',
+              initialValue: true,
+            },
+          ],
+          preview: {
+            select: {
+              title: 'message',
+              isActive: 'isActive',
+            },
+            prepare({title, isActive}) {
+              return {
+                title: title,
+                subtitle: isActive ? '✓ Active' : '✗ Inactive',
+              }
+            },
+          },
+        }),
+      ],
+    }),
+    defineField({
       name: 'socialMedia',
       title: 'Social Media',
       type: 'object',

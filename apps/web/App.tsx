@@ -11,6 +11,9 @@ import ArtistView from './pages/ArtistView';
 import AmbassadorView from './pages/AmbassadorView';
 import About from './pages/About';
 import SearchResults from './pages/SearchResults';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TermsConditions } from './pages/TermsConditions';
+import { CookiesPolicy } from './pages/CookiesPolicy';
 
 // ScrollToTop component - прокручивает страницу наверх при смене маршрута
 const ScrollToTop = () => {
@@ -55,6 +58,11 @@ const App: React.FC = () => {
                 <Route path="/partners/events" element={<Partners type="event" />} />
                 <Route path="/map" element={<MapPage />} />
                 <Route path="/about" element={<About />} />
+                
+                {/* Legal Pages */}
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsConditions />} />
+                <Route path="/cookies" element={<CookiesPolicy />} />
                 
                 <Route path="*" element={<Home />} />
             </Routes>

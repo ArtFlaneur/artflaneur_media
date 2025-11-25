@@ -319,6 +319,7 @@ export const ARTIST_QUERY = defineQuery(`*[
   name,
   slug,
   bio,
+  birthYear,
   photo {
     asset->{
       url
@@ -387,7 +388,11 @@ export const SITE_SETTINGS_QUERY = defineQuery(`*[
       url
     }
   },
-  social
+  social,
+  tickerMessages[]{
+    message,
+    isActive
+  }
 }`)
 
 // Authors query
@@ -396,6 +401,7 @@ export const AUTHORS_QUERY = defineQuery(`*[
 ] | order(name asc) {
   _id,
   name,
+  slug,
   role,
   bio,
   photo {
@@ -460,3 +466,33 @@ export const GUIDE_QUERY = defineQuery(`*[
   }
 }`)
 
+// Single author by slug
+export const AUTHOR_QUERY = defineQuery(`*[
+  _type == "author"
+  && slug.current == $slug
+][0] {
+  _id,
+  name,
+  slug,
+  email,
+  role,
+  photo {
+    asset->{
+      url
+    },
+    alt
+  },
+  "posts": *[_type == "review" && references(^._id)] | order(publishedAt desc) [0...10] {
+    _id,
+    title,
+    slug,
+    publishedAt,
+    excerpt,
+    mainImage {
+      asset->{
+        url
+      },
+      alt
+    }
+  }
+}`)
