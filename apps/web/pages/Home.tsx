@@ -5,102 +5,96 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { client } from '../sanity/lib/client';
 import { HOMEPAGE_QUERY, LATEST_REVIEWS_QUERY } from '../sanity/lib/queries';
-import { ContentType } from '../types';
+import { HOMEPAGE_QUERYResult, LATEST_REVIEWS_QUERYResult } from '../sanity/types';
+import { Article, ContentType } from '../types';
+
+type HomepageData = NonNullable<HOMEPAGE_QUERYResult>;
+type HeroSection = NonNullable<HomepageData['heroSection']>;
+type FeaturedReviewNode = NonNullable<HeroSection['featuredReview']>;
+type LatestReviewNode = NonNullable<HomepageData['latestReviews']>[number];
+type ReviewSource = FeaturedReviewNode | LatestReviewNode | LATEST_REVIEWS_QUERYResult[number];
+
+const FALLBACK_FEATURED_ARTICLE = MOCK_ARTICLES[0];
+const FALLBACK_LATEST_ARTICLES = MOCK_ARTICLES.slice(1, 4);
+const DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+};
+
+const formatDate = (value?: string | null) =>
+  value ? new Date(value).toLocaleDateString('en-US', DATE_FORMAT) : undefined;
+
+const mapReviewToArticle = (review: ReviewSource): Article => ({
+  id: review._id,
+  slug: review.slug?.current ?? review._id,
+  type: ContentType.REVIEW,
+  title: review.title ?? 'Untitled Review',
+  subtitle: review.excerpt ?? '',
+  image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/800/600`,
+  date: formatDate(review.publishedAt),
+  author: review.author
+    ? {
+        id: review.author._id,
+        name: review.author.name ?? 'Anonymous',
+        role: 'Critic',
+        image: review.author.photo?.asset?.url ?? '',
+      }
+    : undefined,
+});
 
 const Home: React.FC = () => {
-  const [featuredArticle, setFeaturedArticle] = useState(MOCK_ARTICLES[0]);
-  const [latestReviews, setLatestReviews] = useState(MOCK_ARTICLES.slice(1, 4));
+  const [featuredArticle, setFeaturedArticle] = useState<Article>(FALLBACK_FEATURED_ARTICLE);
+  const [latestReviews, setLatestReviews] = useState<Article[]>(FALLBACK_LATEST_ARTICLES);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchData = async () => {
       try {
-        console.log('🔍 Fetching data from Sanity...');
-        console.log('📡 Client object:', client);
-        console.log('📋 Client config:', client.config());
-        
-        // Test simple query first
-        const testQuery = '*[_type == "review"][0...2]{ _id, title, publishStatus }';
-        console.log('🧪 Testing simple query:', testQuery);
-        const testData = await client.fetch(testQuery);
-        console.log('🧪 Test data:', testData);
-        
-        // Fetch homepage content
-        const homepageData = await client.fetch(HOMEPAGE_QUERY);
-        console.log('📦 Homepage data:', homepageData);
-        
-        // Fetch latest reviews
-        const reviewsData = await client.fetch(LATEST_REVIEWS_QUERY, { limit: 3 });
-        console.log('📦 Reviews data:', reviewsData);
-        
-        // Transform Sanity data to match our component structure
-        if (homepageData?.featuredReviews && homepageData.featuredReviews.length > 0) {
-          const featured = homepageData.featuredReviews[0];
-          setFeaturedArticle({
-            id: featured._id,
-            title: featured.title,
-            subtitle: featured.excerpt || '',
-            image: featured.mainImage?.asset?.url || MOCK_ARTICLES[0].image,
-            date: new Date(featured.publishedAt || Date.now()).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'short', 
-              day: 'numeric' 
-            }),
-            type: ContentType.REVIEW,
-          });
-        } else if (reviewsData && reviewsData.length > 0) {
-          // Fallback to using first review from latest reviews
-          const featured = reviewsData[0];
-          setFeaturedArticle({
-            id: featured._id,
-            title: featured.title,
-            subtitle: featured.excerpt || '',
-            image: featured.mainImage?.asset?.url || MOCK_ARTICLES[0].image,
-            date: new Date(featured.publishedAt).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'short', 
-              day: 'numeric' 
-            }),
-            type: ContentType.REVIEW,
-            author: featured.author ? {
-              id: featured.author._id,
-              name: featured.author.name,
-              role: 'Critic',
-              image: featured.author.photo?.asset?.url || ''
-            } : undefined
-          });
+        const [homepageData, fallbackReviews] = await Promise.all([
+          client.fetch<HOMEPAGE_QUERYResult>(HOMEPAGE_QUERY),
+          client.fetch<LATEST_REVIEWS_QUERYResult>(LATEST_REVIEWS_QUERY, {limit: 3}),
+        ]);
+
+        if (!isMounted) return;
+
+        const curatedLatest: ReviewSource[] | undefined =
+          homepageData?.latestReviews && homepageData.latestReviews.length > 0
+            ? (homepageData.latestReviews as ReviewSource[])
+            : (fallbackReviews as ReviewSource[]);
+
+        const heroReview = (homepageData?.heroSection?.featuredReview ?? curatedLatest?.[0]) as
+          | ReviewSource
+          | undefined;
+
+        setFeaturedArticle(heroReview ? mapReviewToArticle(heroReview) : FALLBACK_FEATURED_ARTICLE);
+        setLatestReviews(
+          curatedLatest && curatedLatest.length > 0
+            ? curatedLatest.map((review) => mapReviewToArticle(review))
+            : FALLBACK_LATEST_ARTICLES,
+        );
+        setError(null);
+      } catch (err) {
+        console.error('❌ Error fetching Sanity data:', err);
+        if (!isMounted) return;
+        setError('Unable to load the latest editor picks. Showing curated highlights instead.');
+        setFeaturedArticle(FALLBACK_FEATURED_ARTICLE);
+        setLatestReviews(FALLBACK_LATEST_ARTICLES);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
-        
-        if (reviewsData && reviewsData.length > 0) {
-          setLatestReviews(reviewsData.map((review: any) => ({
-            id: review._id,
-            title: review.title,
-            subtitle: review.excerpt || '',
-            image: review.mainImage?.asset?.url || `https://picsum.photos/400/300?random=${review._id}`,
-            date: new Date(review.publishedAt).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'short', 
-              day: 'numeric' 
-            }),
-            type: ContentType.REVIEW,
-            author: review.author ? {
-              id: review.author._id,
-              name: review.author.name,
-              role: 'Critic',
-              image: review.author.photo?.asset?.url || ''
-            } : undefined
-          })));
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('❌ Error fetching Sanity data:', error);
-        setLoading(false);
-        // Keep using mock data if Sanity fetch fails
       }
     };
-    
+
     fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -111,9 +105,9 @@ const Home: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 h-auto lg:h-[85vh]">
             
             {/* Feature Badge - всегда поверх изображения */}
-            <div className="absolute top-0 left-0 bg-art-red text-white px-4 py-2 text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10">
-                Feature of the Week
-            </div>
+      <div className="absolute top-0 left-0 bg-art-red text-white px-4 py-2 text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10">
+        {loading ? 'Syncing Latest Feature' : 'Feature of the Week'}
+      </div>
             
             {/* Right: Content Grid - показывается первым на мобильных */}
             <div className="lg:col-span-5 order-1 lg:order-2">
@@ -130,7 +124,7 @@ const Home: React.FC = () => {
                     <p className="font-serif text-xl md:text-2xl italic text-gray-600 mb-8 border-l-4 border-art-yellow pl-4">
                         {featuredArticle.subtitle}
                     </p>
-                    <Link to={`/reviews/${featuredArticle.id}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
+                    <Link to={`/reviews/${featuredArticle.slug ?? featuredArticle.id}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
                         Read Full Story <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                     </Link>
                 </div>
@@ -150,11 +144,20 @@ const Home: React.FC = () => {
       {/* Latest Reviews Grid */}
       <section className="py-24 container mx-auto px-4 md:px-6">
         <SectionHeader title="Latest Critical Reviews" linkText="Archive" linkTo="/reviews" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {error && (
+          <p className="text-sm font-mono text-red-600 mb-6">{error}</p>
+        )}
+        {loading && !latestReviews.length ? (
+          <p className="font-mono text-gray-500">Loading editor picks…</p>
+        ) : latestReviews.length ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {latestReviews.map((article) => (
-                <ArticleCard key={article.id} article={article} />
+              <ArticleCard key={article.slug ?? article.id} article={article} />
             ))}
-        </div>
+          </div>
+        ) : (
+          <p className="font-mono text-gray-500">No reviews published yet.</p>
+        )}
       </section>
 
       {/* Featured Artist Story (Split) */}

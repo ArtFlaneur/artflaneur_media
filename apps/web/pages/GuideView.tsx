@@ -5,6 +5,34 @@ import { MapPin, ArrowDown, Plus } from 'lucide-react';
 import { client } from '../sanity/lib/client';
 import { GUIDE_QUERY } from '../sanity/lib/queries';
 
+type GuideQueryResponse = {
+    _id: string;
+    title?: string | null;
+    city?: string | null;
+    description?: string | null;
+    coverImage?: {
+        asset?: {
+            url?: string | null;
+        } | null;
+    } | null;
+    stops?: Array<{
+        _key?: string;
+        title?: string | null;
+        description?: string | null;
+        location?: {
+            lat?: number | null;
+            lng?: number | null;
+        } | null;
+        gallery?: {
+            _id: string;
+            name?: string | null;
+            address?: string | null;
+        } | null;
+        }> | null;
+    };
+
+    type GuideStop = NonNullable<GuideQueryResponse['stops']>[number];
+
 const GuideView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [guide, setGuide] = useState(MOCK_GUIDES[0]);
@@ -15,25 +43,24 @@ const GuideView: React.FC = () => {
       if (!id) return;
       
       try {
-        console.log('🔍 Fetching guide:', id);
-        const guideData = await client.fetch(GUIDE_QUERY, { slug: id });
-        console.log('📦 Guide data:', guideData);
+                const guideData = await client.fetch<GuideQueryResponse>(GUIDE_QUERY, {slug: id});
         
         if (guideData) {
+                    const stops: GuideStop[] = Array.isArray(guideData.stops) ? guideData.stops : [];
           setGuide({
             id: guideData._id,
-            title: guideData.title,
-            city: guideData.city || 'City',
-            subtitle: guideData.description || '',
-            image: guideData.coverImage?.asset?.url || MOCK_GUIDES[0].image,
+                        title: guideData.title || 'Untitled Guide',
+                        city: guideData.city || 'City',
+                        subtitle: guideData.description || '',
+                        image: guideData.coverImage?.asset?.url || MOCK_GUIDES[0].image,
             type: guideData.city ? 'Guide' as any : 'Guide' as any,
-            steps: guideData.stops?.map((stop: any, index: number) => ({
-              id: stop._key || `stop-${index}`,
-              title: stop.title,
-              description: stop.description,
-              location: stop.gallery?.address || `${guideData.city}`,
-              image: `https://picsum.photos/800/600?random=${index + 40}`
-            })) || [],
+                        steps: stops.map((stop: GuideStop, index: number) => ({
+                            id: stop._key || `stop-${index}`,
+                            title: stop.title || `Stop ${index + 1}`,
+                            description: stop.description || 'Details coming soon.',
+                            location: stop.gallery?.address || guideData.city || 'City',
+                            image: `https://picsum.photos/seed/${stop._key ?? index + 40}/800/600`
+                        })),
             author: { id: '1', name: 'Art Curator', role: 'Guide Creator', image: '' }
           });
         }

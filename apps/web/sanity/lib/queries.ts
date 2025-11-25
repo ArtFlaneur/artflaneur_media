@@ -63,6 +63,13 @@ export const REVIEW_QUERY = defineQuery(`*[
     },
     bio
   },
+  gallery->{
+    _id,
+    name,
+    city,
+    address,
+    website
+  },
   exhibition->{
     _id,
     title,
@@ -70,6 +77,27 @@ export const REVIEW_QUERY = defineQuery(`*[
       name,
       city
     }
+  },
+  sponsorshipEnabled,
+  sponsor->{
+    _id,
+    name,
+    logo {
+      asset->{
+        url
+      },
+      alt
+    },
+    defaultBadgeTemplate,
+    brandColor {
+      hex
+    }
+  },
+  sponsorBadgeSettings{
+    template,
+    customText,
+    placement,
+    style
   },
   publishedAt
 }`)
@@ -347,31 +375,118 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
   && !(_id in path("drafts.**"))
 ][0] {
   _id,
-  heroTitle,
-  heroSubtitle,
-  featuredReviews[]->{
+  title,
+  heroSection{
+    featuredReview->{
+      _id,
+      title,
+      slug,
+      excerpt,
+      publishedAt,
+      mainImage{
+        asset->{
+          url
+        },
+        alt
+      },
+      author->{
+        _id,
+        name,
+        photo{
+          asset->{
+            url
+          }
+        }
+      }
+    },
+    weeklyStory->{
+      _id,
+      title,
+      slug,
+      excerpt,
+      portrait{
+        asset->{
+          url
+        },
+        alt
+      },
+      artist->{
+        _id,
+        name,
+        slug
+      }
+    }
+  },
+  latestReviews[]->{
     _id,
     title,
     slug,
     excerpt,
-    mainImage {
+    publishedAt,
+    mainImage{
       asset->{
         url
       },
       alt
     },
-    rating
+    author->{
+      _id,
+      name,
+      photo{
+        asset->{
+          url
+        }
+      }
+    }
   },
-  featuredExhibitions[]->{
+  featuredArtistStory->{
     _id,
     title,
     slug,
-    startDate,
-    endDate,
-    gallery->{
+    portrait{
+      asset->{
+        url
+      },
+      alt
+    },
+    artist->{
+      _id,
       name,
-      city
+      slug
     }
+  },
+  weekendGuide->{
+    _id,
+    title,
+    slug,
+    ctaText,
+    coverImage{
+      asset->{
+        url
+      },
+      alt
+    },
+    sponsorshipStatus,
+    sponsor->{
+      _id,
+      name,
+      logo{
+        asset->{
+          url
+        }
+      }
+    }
+  },
+  aiChatbotTeaser{
+    headline,
+    description,
+    ctaText
+  },
+  newsletterSignup{
+    headline,
+    description,
+    placeholder,
+    submitText
   }
 }`)
 
@@ -417,6 +532,7 @@ export const GUIDES_QUERY = defineQuery(`*[
   _type == "guide"
 ] | order(_createdAt desc) {
   _id,
+  slug,
   title,
   city,
   description,

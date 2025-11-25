@@ -1,5 +1,8 @@
 {
-  "path": "./**/*.{ts,tsx,js,jsx}",
+  "path": [
+    "./**/*.{ts,tsx,js,jsx}",
+    "../web/**/*.{ts,tsx,js,jsx}"
+  ],
   "schema": "../web/sanity-schema.json",
   "generates": "../web/sanity/types.ts"
 }
