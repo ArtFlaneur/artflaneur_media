@@ -156,9 +156,22 @@ export const AiTeaser: React.FC = () => (
                     Not sure what to see? Ask our AI assistant. Get personalized itineraries instantly.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                    <button className="bg-white text-black px-8 py-4 font-bold uppercase tracking-wide hover:bg-art-yellow hover:text-black transition-colors border-2 border-white hover:border-art-yellow">
-                        Download App
-                    </button>
+                    <a 
+                        href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-white text-black px-8 py-4 font-bold uppercase tracking-wide hover:bg-art-yellow hover:text-black transition-colors border-2 border-white hover:border-art-yellow text-center"
+                    >
+                        App Store
+                    </a>
+                    <a 
+                        href="https://play.google.com/store/apps/details?id=com.artflaneur"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-transparent text-white px-8 py-4 font-bold uppercase tracking-wide hover:bg-white hover:text-black transition-colors border-2 border-white text-center"
+                    >
+                        Google Play
+                    </a>
                 </div>
             </div>
             

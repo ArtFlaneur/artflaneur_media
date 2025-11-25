@@ -1,5 +1,12 @@
 import {createClient} from '@sanity/client'
 
+// Debug: выводим все переменные окружения
+console.log('🌍 Environment check:', {
+  'import.meta.env': typeof import.meta !== 'undefined' ? (import.meta as any).env : 'not available',
+  'VITE_SANITY_PROJECT_ID': (import.meta as any).env?.VITE_SANITY_PROJECT_ID,
+  'VITE_SANITY_DATASET': (import.meta as any).env?.VITE_SANITY_DATASET,
+});
+
 const projectId =
   (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SANITY_PROJECT_ID) ||
   process.env.SANITY_PROJECT_ID ||
@@ -19,6 +26,11 @@ const apiVersion =
   process.env.NEXT_PUBLIC_SANITY_API_VERSION || 
   '2024-01-01'
 
+const token = 
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SANITY_TOKEN) ||
+  process.env.SANITY_TOKEN ||
+  process.env.NEXT_PUBLIC_SANITY_TOKEN
+
 if (!projectId || !dataset) {
   throw new Error(
     'Missing Sanity configuration. Add SANITY_PROJECT_ID and SANITY_DATASET to apps/web/.env.local (or set SANITY_STUDIO_* variables).'
@@ -31,16 +43,25 @@ const studioUrl =
   process.env.NEXT_PUBLIC_SANITY_STUDIO_URL ||
   'https://art-flaneur.sanity.studio'
 
-const useCdn = process.env.SANITY_USE_CDN 
-  ? process.env.SANITY_USE_CDN === 'true' 
-  : (typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD) || process.env.NODE_ENV === 'production'
+// Use CDN false for development to avoid caching issues
+const useCdn = false
 
-export const client = createClient({
+console.log('🔧 Sanity Client Config:', {
   projectId,
   dataset,
   apiVersion,
   useCdn,
-  perspective: 'published',
+  perspective: 'raw',
+  hasToken: !!token
+});
+
+export const client = createClient({
+  projectId,
+  dataset,
+  apiVersion: '2024-01-01',
+  token, // Add authentication token
+  useCdn: false, // Disable CDN to get fresh data
+  perspective: 'raw', // Get all documents
 })
 
 export const sanityConfig = {

@@ -16,6 +16,14 @@ const Home: React.FC = () => {
     const fetchData = async () => {
       try {
         console.log('🔍 Fetching data from Sanity...');
+        console.log('📡 Client object:', client);
+        console.log('📋 Client config:', client.config());
+        
+        // Test simple query first
+        const testQuery = '*[_type == "review"][0...2]{ _id, title, publishStatus }';
+        console.log('🧪 Testing simple query:', testQuery);
+        const testData = await client.fetch(testQuery);
+        console.log('🧪 Test data:', testData);
         
         // Fetch homepage content
         const homepageData = await client.fetch(HOMEPAGE_QUERY);

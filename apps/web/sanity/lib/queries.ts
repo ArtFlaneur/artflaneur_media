@@ -343,6 +343,7 @@ export const ARTIST_QUERY = defineQuery(`*[
 // Homepage content query
 export const HOMEPAGE_QUERY = defineQuery(`*[
   _type == "homepageContent"
+  && !(_id in path("drafts.**"))
 ][0] {
   _id,
   heroTitle,

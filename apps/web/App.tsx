@@ -10,6 +10,7 @@ import GuideView from './pages/GuideView';
 import ArtistView from './pages/ArtistView';
 import AmbassadorView from './pages/AmbassadorView';
 import About from './pages/About';
+import SearchResults from './pages/SearchResults';
 
 // ScrollToTop component - прокручивает страницу наверх при смене маршрута
 const ScrollToTop = () => {
@@ -31,6 +32,9 @@ const App: React.FC = () => {
         <main className="flex-grow">
             <Routes>
                 <Route path="/" element={<Home />} />
+                
+                {/* Search */}
+                <Route path="/search" element={<SearchResults />} />
                 
                 {/* Listings */}
                 <Route path="/reviews" element={<ListingPage title="Reviews" type="reviews" />} />

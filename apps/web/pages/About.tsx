@@ -24,25 +24,28 @@ const About: React.FC = () => {
                      <div>
                          <h3 className="font-mono font-bold uppercase text-xl mb-4">Contact</h3>
                          <ul className="space-y-2 font-mono text-sm">
-                             <li>General: hello@artflaneur.com</li>
-                             <li>Editorial: editor@artflaneur.com</li>
-                             <li>Partnerships: partners@artflaneur.com</li>
+                             <li>
+                                 <strong>Art Flaneur Global Pty Ltd</strong>
+                             </li>
+                             <li>ABN 27 672 710 520</li>
+                             <li>
+                                 Email: <a href="mailto:tim@artflaneur.com.au" className="text-art-blue hover:underline">tim@artflaneur.com.au</a>
+                             </li>
+                             <li>
+                                 Web: <a href="https://www.artflaneur.com.au" target="_blank" rel="noopener noreferrer" className="text-art-blue hover:underline">www.artflaneur.com.au</a>
+                             </li>
                          </ul>
                      </div>
                      <div>
-                         <h3 className="font-mono font-bold uppercase text-xl mb-4">Offices</h3>
-                         <address className="not-italic font-mono text-sm space-y-4">
-                             <p>
-                                 <strong>London</strong><br/>
-                                 180 The Strand<br/>
-                                 London, WC2R 1EA
-                             </p>
-                             <p>
-                                 <strong>New York</strong><br/>
-                                 52 Walker St<br/>
-                                 New York, NY 10013
-                             </p>
-                         </address>
+                         <h3 className="font-mono font-bold uppercase text-xl mb-4">Legal</h3>
+                         <ul className="space-y-2 font-mono text-sm">
+                             <li>Registered in Australia</li>
+                             <li>ABN: 27 672 710 520</li>
+                             <li className="pt-4">
+                                 <strong>Company Name:</strong><br/>
+                                 Art Flaneur Global Pty Ltd
+                             </li>
+                         </ul>
                      </div>
                  </div>
              </div>
