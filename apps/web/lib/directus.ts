@@ -279,6 +279,9 @@ class DirectusClient {
     if (params?.width) url.searchParams.append('width', String(params.width));
     if (params?.height) url.searchParams.append('height', String(params.height));
     if (params?.quality) url.searchParams.append('quality', String(params.quality));
+    if (this.token) {
+      url.searchParams.append('access_token', this.token);
+    }
     
     return url.toString();
   }

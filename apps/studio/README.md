@@ -56,10 +56,11 @@ Populate Sanity with galleries, artists, and exhibitions from Directus so editor
 pnpm --filter @artflaneur/studio sync:directus
 ```
 
-To sync only certain collections, pass a comma-separated list:
+По умолчанию скрипт обновляет только галереи и художников. Чтобы добавить другие коллекции, передайте их список через запятую:
 
 ```bash
 pnpm --filter @artflaneur/studio sync:directus galleries,artists
+pnpm --filter @artflaneur/studio sync:directus galleries,artists,exhibitions
 ```
 
 The script paginates Directus data, batches Sanity mutations, and records the `syncedAt` timestamp on each document for auditing.

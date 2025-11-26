@@ -12,6 +12,8 @@ type DirectusGallery = {
   placeurl?: string | null
   openinghours?: string | null
   newsletter_email?: string | null
+  gallery_img?: string | null
+  gallery_img_file?: string | null
   updated?: string | null
 }
 
@@ -72,7 +74,8 @@ type SyncTarget = (typeof availableTargets)[number]
 const requestedTargets = process.argv[2]?.split(',').map((item) => item.trim().toLowerCase()) as
   | SyncTarget[]
   | undefined
-const targetsToSync = requestedTargets?.length ? requestedTargets : availableTargets
+const defaultTargets: SyncTarget[] = ['galleries', 'artists']
+const targetsToSync = requestedTargets?.length ? requestedTargets : defaultTargets
 
 function chunkArray<T>(items: T[], size: number): T[][] {
   const chunks: T[][] = []
@@ -193,6 +196,7 @@ function prepareGalleryDoc(gallery: DirectusGallery): PreparedDoc | null {
     website: gallery.placeurl,
     workingHours,
     geopoint,
+    directusImageFile: gallery.gallery_img_file,
     syncedAt: SYNCED_AT,
   })
 
@@ -209,6 +213,7 @@ function prepareGalleryDoc(gallery: DirectusGallery): PreparedDoc | null {
     setIfMissing: {
       slug: {_type: 'slug', current: slug},
       directusId: galleryId,
+      directusImageFile: gallery.gallery_img_file,
     },
   }
 }
@@ -225,6 +230,7 @@ function prepareArtistDoc(artist: DirectusArtist): PreparedDoc | null {
   const patchSet = cleanRecord({
     directusId: artistId,
     name: artist.name,
+    bio: artist.description,
     birthYear: artist.birth_year,
     country: artist.country,
     syncedAt: SYNCED_AT,
@@ -286,7 +292,8 @@ function prepareExhibitionDoc(exhibition: DirectusExhibition): PreparedDoc | nul
 async function syncGalleries() {
   console.log('\n→ Syncing galleries from Directus...')
   const galleries = await fetchCollection<DirectusGallery>('galleries', {
-    fields: 'id,galleryname,fulladdress,city,country,lat,lon,placeurl,openinghours,newsletter_email,updated',
+    fields:
+      'id,galleryname,fulladdress,city,country,lat,lon,placeurl,openinghours,newsletter_email,gallery_img,gallery_img_file,updated',
   })
   console.log(`   • Retrieved ${galleries.length} galleries`)
   const prepared = galleries.map(prepareGalleryDoc).filter(Boolean) as PreparedDoc[]

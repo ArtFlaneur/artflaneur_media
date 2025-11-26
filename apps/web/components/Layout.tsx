@@ -276,7 +276,6 @@ export const Footer: React.FC = () => {
                     <ul className="space-y-2">
                         <li><Link to="/about" className="hover:text-art-yellow">About</Link></li>
                         <li><Link to="/ambassadors" className="hover:text-art-yellow">Ambassadors</Link></li>
-            <li><Link to="/map" className="hover:text-art-yellow">Map</Link></li>
                     </ul>
                 </div>
                 <div>

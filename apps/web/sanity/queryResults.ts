@@ -394,6 +394,7 @@ export type GALLERIES_QUERYResult = Array<{
     lng?: number | null;
   } | null;
   description: string | null;
+  directusImageFile: string | null;
   mainImage: {
     asset: {
       url: string | null;
@@ -421,6 +422,7 @@ export type GALLERY_QUERYResult = {
     phone?: string | null;
     email?: string | null;
   } | null;
+  directusImageFile: string | null;
   mainImage: {
     asset: {
       url: string | null;

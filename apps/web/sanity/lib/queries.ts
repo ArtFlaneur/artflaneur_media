@@ -249,6 +249,27 @@ export const GALLERIES_QUERY = defineQuery(`*[
   address,
   location,
   description,
+  directusImageFile,
+  mainImage {
+    asset->{
+      url
+    },
+    alt
+  }
+}`)
+
+export const PAGINATED_GALLERIES_QUERY = defineQuery(`*[
+  _type == "gallery"
+] | order(name asc) [$offset...$end] {
+  _id,
+  name,
+  slug,
+  city,
+  country,
+  address,
+  location,
+  description,
+  directusImageFile,
   mainImage {
     asset->{
       url
@@ -273,6 +294,7 @@ export const GALLERY_QUERY = defineQuery(`*[
   workingHours,
   social,
   contact,
+  directusImageFile,
   mainImage {
     asset->{
       url
@@ -334,6 +356,21 @@ export const GALLERY_QUERY = defineQuery(`*[
 export const ARTISTS_QUERY = defineQuery(`*[
   _type == "artist"
 ] | order(name asc) {
+  _id,
+  name,
+  slug,
+  bio,
+  photo {
+    asset->{
+      url
+    },
+    alt
+  }
+}`)
+
+export const PAGINATED_ARTISTS_QUERY = defineQuery(`*[
+  _type == "artist"
+] | order(name asc) [$offset...$end] {
   _id,
   name,
   slug,

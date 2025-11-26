@@ -16,6 +16,7 @@ import { client } from '../sanity/lib/client';
 import { GALLERY_QUERY } from '../sanity/lib/queries';
 import { GALLERY_QUERYResult } from '../sanity/queryResults';
 import { Article, ContentType } from '../types';
+import { directusClient } from '../lib/directus';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1600&q=80';
@@ -37,6 +38,18 @@ const buildGoogleMapsLink = (gallery: GALLERY_QUERYResult | null) => {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gallery.address)}`;
   }
   return undefined;
+};
+
+const buildHeroImage = (gallery: GALLERY_QUERYResult | null) => {
+  if (!gallery) return FALLBACK_IMAGE;
+  if (gallery.directusImageFile) {
+    try {
+      return directusClient.getImageUrl(gallery.directusImageFile, { width: 1600, quality: 85 });
+    } catch (error) {
+      console.warn('Failed to build Directus gallery image URL', error);
+    }
+  }
+  return gallery.mainImage?.asset?.url ?? FALLBACK_IMAGE;
 };
 
 const mapReviewToArticle = (review: NonNullable<GALLERY_QUERYResult>['reviews'][number]): Article => ({
@@ -123,7 +136,7 @@ const GalleryView: React.FC = () => {
     );
   }
 
-  const heroImage = gallery.mainImage?.asset?.url ?? FALLBACK_IMAGE;
+  const heroImage = buildHeroImage(gallery);
   const locationLabel = [gallery.city, gallery.country].filter(Boolean).join(', ');
 
   const contactItems = [

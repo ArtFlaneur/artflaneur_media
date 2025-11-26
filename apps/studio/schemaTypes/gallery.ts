@@ -15,6 +15,13 @@ export const gallery = defineType({
       readOnly: true,
     }),
     defineField({
+      name: 'directusImageFile',
+      title: 'Gallery Image File',
+      type: 'string',
+      description: 'Directus file identifier (gallery_img_file)',
+      readOnly: true,
+    }),
+    defineField({
       name: 'name',
       title: 'Gallery Name',
       type: 'string',
