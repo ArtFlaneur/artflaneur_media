@@ -1,14 +1,16 @@
+import {PinIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 
 export const gallery = defineType({
   name: 'gallery',
   title: 'Gallery',
   type: 'document',
+  icon: PinIcon,
   fields: [
     defineField({
       name: 'directusId',
       title: 'Directus ID',
-      type: 'number',
+      type: 'string',
       description: 'Gallery ID from Directus',
       readOnly: true,
     }),
@@ -88,6 +90,13 @@ export const gallery = defineType({
         {name: 'facebook', type: 'url', title: 'Facebook'},
         {name: 'twitter', type: 'url', title: 'Twitter/X'},
       ],
+    }),
+    defineField({
+      name: 'syncedAt',
+      title: 'Last Synced At',
+      type: 'datetime',
+      description: 'Timestamp of the most recent Directus sync',
+      readOnly: true,
     }),
   ],
   preview: {

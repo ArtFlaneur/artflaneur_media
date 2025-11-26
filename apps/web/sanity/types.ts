@@ -547,7 +547,7 @@ export type Artist = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  directusId?: number;
+  directusId?: string;
   name?: string;
   slug?: Slug;
   photo?: {
@@ -571,6 +571,7 @@ export type Artist = {
     facebook?: string;
     twitter?: string;
   };
+  syncedAt?: string;
 };
 
 export type Review = {
@@ -829,7 +830,7 @@ export type Gallery = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  directusId?: number;
+  directusId?: string;
   name?: string;
   slug?: Slug;
   image?: {
@@ -859,6 +860,7 @@ export type Gallery = {
     facebook?: string;
     twitter?: string;
   };
+  syncedAt?: string;
 };
 
 export type Author = {
@@ -1017,7 +1019,7 @@ export type AllSanitySchemaTypes = SiteSettings | MapData | HomepageContent | La
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ../web/pages/SearchResults.tsx
 // Variable: SEARCH_QUERY
-// Query: {  "reviews": *[_type == "review"] {    _id,    title,    slug,    excerpt,    publishStatus,    mainImage {      asset->{ url }    },    publishedAt,    author->{ _id, name }  },  "exhibitions": *[_type == "exhibition"] {    _id,    title,    slug,    startDate,    endDate,    description,    gallery->{ name, city }  },  "artists": *[_type == "artist"] {    _id,    name,    slug,    photo {      asset->{ url }    }  },  "galleries": *[_type == "gallery"] {    _id,    name,    slug,    city  }}
+// Query: {  "reviews": *[_type == "review"] {    _id,    title,    slug,    excerpt,    publishStatus,    mainImage {      asset->{ url }    },    publishedAt,    author->{ _id, name, photo { asset->{ url } } }  },  "exhibitions": *[_type == "exhibition"] {    _id,    title,    slug,    startDate,    endDate,    description,    gallery->{ name, city }  },  "artists": *[_type == "artist"] {    _id,    name,    slug,    photo {      asset->{ url }    }  },  "galleries": *[_type == "gallery"] {    _id,    name,    slug,    city  },  "guides": *[_type == "guide"] {    _id,    title,    slug,    city,    description,    coverImage {      asset->{ url }    }  },  "ambassadors": *[_type == "author"] {    _id,    name,    slug,    role,    bio,    photo {      asset->{ url }    }  }}
 export type SEARCH_QUERYResult = {
   reviews: Array<{
     _id: string;
@@ -1034,6 +1036,11 @@ export type SEARCH_QUERYResult = {
     author: {
       _id: string;
       name: string | null;
+      photo: {
+        asset: {
+          url: string | null;
+        } | null;
+      } | null;
     } | null;
   }>;
   exhibitions: Array<{
@@ -1064,11 +1071,35 @@ export type SEARCH_QUERYResult = {
     slug: Slug | null;
     city: string | null;
   }>;
+  guides: Array<{
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    city: string | null;
+    description: string | null;
+    coverImage: {
+      asset: {
+        url: string | null;
+      } | null;
+    } | null;
+  }>;
+  ambassadors: Array<{
+    _id: string;
+    name: string | null;
+    slug: Slug | null;
+    role: "author" | "chiefEditor" | "editor" | null;
+    bio: string | null;
+    photo: {
+      asset: {
+        url: string | null;
+      } | null;
+    } | null;
+  }>;
 };
 
 // Source: ../web/sanity/lib/queries.ts
 // Variable: REVIEWS_QUERY
-// Query: *[  _type == "review"  && publishStatus == "published"] | order(publishedAt desc) [0...10] {  _id,  title,  slug,  excerpt,  mainImage {    asset->{      _id,      url    },    alt  },  author->{    _id,    name,    photo {      asset->{        url      }    }  },  publishedAt,  rating}
+// Query: *[  _type == "review"  && publishStatus == "published"] | order(publishedAt desc) [0...10] {  _id,  title,  slug,  excerpt,  mainImage {    asset->{      _id,      url    },    alt  },  author->{    _id,    name,    slug,    photo {      asset->{        url      }    }  },  publishedAt,  rating}
 export type REVIEWS_QUERYResult = Array<{
   _id: string;
   title: string | null;
@@ -1300,17 +1331,9 @@ export type GALLERIES_QUERYResult = Array<{
   city: string | null;
   country: string | null;
   address: string | null;
-  location: {
-    lat?: number | null;
-    lng?: number | null;
-  } | null;
-  description: string | null;
-  mainImage: {
-    asset: {
-      url: string | null;
-    } | null;
-    alt: string | null;
-  } | null;
+  location: null;
+  description: null;
+  mainImage: null;
 }>;
 // Variable: GALLERY_QUERY
 // Query: *[  _type == "gallery"  && slug.current == $slug][0] {  _id,  name,  slug,  city,  country,  address,  location,  description,  website,  workingHours,  social,  contact,  mainImage {    asset->{      url    },    alt  },  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {    _id,    title,    slug,    startDate,    endDate,    description,    gallery->{      _id,      name,      city    },    "image": image{      asset->{        url      },      alt    }  },  "reviews": *[    _type == "review"    && publishStatus == "published"    && (      gallery._ref == ^._id      || exhibition->gallery._ref == ^._id    )  ] | order(publishedAt desc) [0...8] {    _id,    title,    slug,    excerpt,    publishedAt,    mainImage {      asset->{        url      },      alt    },    author->{      _id,      name,      slug,      photo {        asset->{          url        }      }    }  }}
@@ -1321,28 +1344,20 @@ export type GALLERY_QUERYResult = {
   city: string | null;
   country: string | null;
   address: string | null;
-  location: {
-    lat?: number | null;
-    lng?: number | null;
-  } | null;
-  description: string | null;
+  location: null;
+  description: null;
   website: string | null;
   workingHours: string | null;
   social: {
-    instagram?: string | null;
-    facebook?: string | null;
-    twitter?: string | null;
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
   } | null;
   contact: {
-    phone?: string | null;
-    email?: string | null;
+    phone?: string;
+    email?: string;
   } | null;
-  mainImage: {
-    asset: {
-      url: string | null;
-    } | null;
-    alt: string | null;
-  } | null;
+  mainImage: null;
   exhibitions: Array<{
     _id: string;
     title: string | null;
@@ -1361,7 +1376,7 @@ export type GALLERY_QUERYResult = {
       } | null;
       alt: string | null;
     } | null;
-  }> | null;
+  }>;
   reviews: Array<{
     _id: string;
     title: string | null;
@@ -1384,7 +1399,7 @@ export type GALLERY_QUERYResult = {
         } | null;
       } | null;
     } | null;
-  }> | null;
+  }>;
 } | null;
 // Variable: ARTISTS_QUERY
 // Query: *[  _type == "artist"] | order(name asc) {  _id,  name,  slug,  bio,  photo {    asset->{      url    },    alt  }}
@@ -1723,19 +1738,44 @@ export type AUTHOR_QUERYResult = {
     } | null;
   }>;
 } | null;
+// Variable: CURATOR_QUERY
+// Query: *[  _type == "curator"  && slug.current == $slug][0] {  _id,  name,  slug,  bio,  photo {    asset->{      url    },    alt  },  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {    _id,    title,    slug,    startDate,    endDate,    gallery->{      name,      city    }  }}
+export type CURATOR_QUERYResult = {
+  _id: string;
+  name: string | null;
+  slug: Slug | null;
+  bio: string | null;
+  photo: {
+    asset: {
+      url: string | null;
+    } | null;
+    alt: null;
+  } | null;
+  exhibitions: Array<{
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    startDate: string | null;
+    endDate: string | null;
+    gallery: {
+      name: string | null;
+      city: string | null;
+    } | null;
+  }>;
+} | null;
 
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    "{\n  \"reviews\": *[_type == \"review\"] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishStatus,\n    mainImage {\n      asset->{ url }\n    },\n    publishedAt,\n    author->{ _id, name }\n  },\n  \"exhibitions\": *[_type == \"exhibition\"] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{ name, city }\n  },\n  \"artists\": *[_type == \"artist\"] {\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{ url }\n    }\n  },\n  \"galleries\": *[_type == \"gallery\"] {\n    _id,\n    name,\n    slug,\n    city\n  }\n}": SEARCH_QUERYResult;
-    "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...10] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": REVIEWS_QUERYResult;
-    "*[\n  _type == \"review\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  coverImage {\n    asset->{\n      url\n    },\n    alt,\n    caption\n  },\n  body,\n  rating,\n  author->{\n    _id,\n    name,\n    photo {\n      asset->{\n        url\n      }\n    },\n    bio\n  },\n  gallery->{\n    _id,\n    name,\n    city,\n    address,\n    website\n  },\n  exhibition->{\n    _id,\n    title,\n    gallery->{\n      name,\n      city\n    }\n  },\n  sponsorshipEnabled,\n  sponsor->{\n    _id,\n    name,\n    logo {\n      asset->{\n        url\n      },\n      alt\n    },\n    defaultBadgeTemplate,\n    brandColor {\n      hex\n    }\n  },\n  sponsorBadgeSettings{\n    template,\n    customText,\n    placement,\n    style\n  },\n  publishedAt\n}": REVIEW_QUERYResult;
+    "{\n  \"reviews\": *[_type == \"review\"] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishStatus,\n    mainImage {\n      asset->{ url }\n    },\n    publishedAt,\n    author->{ _id, name, photo { asset->{ url } } }\n  },\n  \"exhibitions\": *[_type == \"exhibition\"] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{ name, city }\n  },\n  \"artists\": *[_type == \"artist\"] {\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{ url }\n    }\n  },\n  \"galleries\": *[_type == \"gallery\"] {\n    _id,\n    name,\n    slug,\n    city\n  },\n  \"guides\": *[_type == \"guide\"] {\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    coverImage {\n      asset->{ url }\n    }\n  },\n  \"ambassadors\": *[_type == \"author\"] {\n    _id,\n    name,\n    slug,\n    role,\n    bio,\n    photo {\n      asset->{ url }\n    }\n  }\n}": SEARCH_QUERYResult;
+    "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...10] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": REVIEWS_QUERYResult;
+    "*[\n  _type == \"review\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  coverImage {\n    asset->{\n      url\n    },\n    alt,\n    caption\n  },\n  body,\n  rating,\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    },\n    bio\n  },\n  artists[]->{\n    _id,\n    name,\n    slug\n  },\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    website\n  },\n  exhibition->{\n    _id,\n    title,\n    slug,\n    gallery->{\n      _id,\n      name,\n      slug,\n      city,\n      address,\n      website\n    },\n    artists[]->{\n      _id,\n      name,\n      slug\n    },\n    curators[]->{\n      _id,\n      name,\n      slug\n    }\n  },\n  sponsorshipEnabled,\n  sponsor->{\n    _id,\n    name,\n    logo {\n      asset->{\n        url\n      },\n      alt\n    },\n    defaultBadgeTemplate,\n    brandColor {\n      hex\n    }\n  },\n  sponsorBadgeSettings{\n    template,\n    customText,\n    placement,\n    style\n  },\n  publishedAt\n}": REVIEW_QUERYResult;
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...$limit] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": LATEST_REVIEWS_QUERYResult;
     "*[\n  _type == \"exhibition\"\n  && defined(startDate)\n] | order(startDate desc) [0...20] {\n  _id,\n  title,\n  slug,\n  description,\n  startDate,\n  endDate,\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    location\n  },\n  artists[]->{\n    _id,\n    name,\n    slug\n  },\n  \"mainImage\": image{\n    asset->{\n      url\n    },\n    alt\n  },\n  ticketing{\n    access,\n    ticketPrice,\n    bookingUrl,\n    ctaLabel\n  }\n}": EXHIBITIONS_QUERYResult;
     "*[\n  _type == \"exhibition\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  description,\n  startDate,\n  endDate,\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    location,\n    website,\n    openingHours\n  },\n  artists[]->{\n    _id,\n    name,\n    slug,\n    bio,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  \"mainImage\": image{\n    asset->{\n      url\n    },\n    alt\n  },\n  ticketing{\n    access,\n    ticketPrice,\n    bookingUrl,\n    ctaLabel\n  }\n}": EXHIBITION_QUERYResult;
-  "*[\n  _type == \"gallery\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  }\n}": GALLERIES_QUERYResult;
-  "*[\n  _type == \"gallery\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  website,\n  workingHours,\n  social,\n  contact,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{\n      _id,\n      name,\n      city\n    },\n    \"image\": image{\n      asset->{\n        url\n      },\n      alt\n    }\n  },\n  \"reviews\": *[\n    _type == \"review\"\n    && publishStatus == \"published\"\n    && (\n      gallery._ref == ^._id\n      || exhibition->gallery._ref == ^._id\n    )\n  ] | order(publishedAt desc) [0...8] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      slug,\n      photo {\n        asset->{\n          url\n        }\n      }\n    }\n  }\n}": GALLERY_QUERYResult;
+    "*[\n  _type == \"gallery\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  }\n}": GALLERIES_QUERYResult;
+    "*[\n  _type == \"gallery\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  website,\n  workingHours,\n  social,\n  contact,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{\n      _id,\n      name,\n      city\n    },\n    \"image\": image{\n      asset->{\n        url\n      },\n      alt\n    }\n  },\n  \"reviews\": *[\n    _type == \"review\"\n    && publishStatus == \"published\"\n    && (\n      gallery._ref == ^._id\n      || exhibition->gallery._ref == ^._id\n    )\n  ] | order(publishedAt desc) [0...8] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      slug,\n      photo {\n        asset->{\n          url\n        }\n      }\n    }\n  }\n}": GALLERY_QUERYResult;
     "*[\n  _type == \"artist\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  }\n}": ARTISTS_QUERYResult;
     "*[\n  _type == \"artist\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  bio,\n  birthYear,\n  country,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  website,\n  social,\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...10] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    gallery->{\n      name,\n      city\n    }\n  }\n}": ARTIST_QUERYResult;
     "*[\n  _type == \"homepageContent\"\n  && !(_id in path(\"drafts.**\"))\n][0] {\n  _id,\n  title,\n  heroSection{\n    featuredReview->{\n      _id,\n      title,\n      slug,\n      excerpt,\n      publishedAt,\n      mainImage{\n        asset->{\n          url\n        },\n        alt\n      },\n      author->{\n        _id,\n        name,\n        photo{\n          asset->{\n            url\n          }\n        }\n      }\n    },\n    weeklyStory->{\n      _id,\n      title,\n      slug,\n      excerpt,\n      portrait{\n        asset->{\n          url\n        },\n        alt\n      },\n      artist->{\n        _id,\n        name,\n        slug\n      }\n    }\n  },\n  latestReviews[]->{\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      photo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  featuredArtistStory->{\n    _id,\n    title,\n    slug,\n    portrait{\n      asset->{\n        url\n      },\n      alt\n    },\n    artist->{\n      _id,\n      name,\n      slug\n    }\n  },\n  weekendGuide->{\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    ctaText,\n    coverImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    sponsorshipStatus,\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  aiChatbotTeaser{\n    headline,\n    description,\n    ctaText\n  },\n  newsletterSignup{\n    headline,\n    description,\n    placeholder,\n    submitText\n  }\n}": HOMEPAGE_QUERYResult;
@@ -1744,5 +1784,6 @@ declare module "@sanity/client" {
     "*[\n  _type == \"guide\"\n] | order(_createdAt desc) {\n  _id,\n  slug,\n  title,\n  city,\n  description,\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  ctaText,\n  sponsorshipStatus,\n  sponsor->{\n    _id,\n    name,\n    logo {\n      asset->{\n        url\n      }\n    }\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    address,\n    notes,\n    image {\n      asset->{\n        url\n      },\n      alt\n    },\n    gallery->{\n      _id,\n      name,\n      address\n    },\n    exhibition->{\n      _id,\n      title,\n      slug\n    },\n    location {\n      lat,\n      lng\n    }\n  }\n}": GUIDES_QUERYResult;
     "*[\n  _type == \"guide\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  city,\n  description,\n  ctaText,\n  sponsorshipStatus,\n  sponsor->{\n    _id,\n    name,\n    logo {\n      asset->{\n        url\n      }\n    }\n  },\n  sponsorBadgeSettings{\n    template,\n    placement\n  },\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    address,\n    notes,\n    image {\n      asset->{\n        url\n      },\n      alt\n    },\n    location {\n      lat,\n      lng\n    },\n    gallery->{\n      _id,\n      name,\n      address\n    },\n    exhibition->{\n      _id,\n      title,\n      slug\n    }\n  }\n}": GUIDE_QUERYResult;
     "*[\n  _type == \"author\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  email,\n  role,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"posts\": *[_type == \"review\" && references(^._id)] | order(publishedAt desc) [0...10] {\n    _id,\n    title,\n    slug,\n    publishedAt,\n    excerpt,\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    }\n  }\n}": AUTHOR_QUERYResult;
+    "*[\n  _type == \"curator\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    gallery->{\n      name,\n      city\n    }\n  }\n}": CURATOR_QUERYResult;
   }
 }

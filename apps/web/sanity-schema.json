@@ -3360,7 +3360,7 @@
       "directusId": {
         "type": "objectAttribute",
         "value": {
-          "type": "number"
+          "type": "string"
         },
         "optional": true
       },
@@ -3503,6 +3503,13 @@
               "optional": true
             }
           }
+        },
+        "optional": true
+      },
+      "syncedAt": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
         },
         "optional": true
       }
@@ -5183,7 +5190,7 @@
       "directusId": {
         "type": "objectAttribute",
         "value": {
-          "type": "number"
+          "type": "string"
         },
         "optional": true
       },
@@ -5364,6 +5371,13 @@
               "optional": true
             }
           }
+        },
+        "optional": true
+      },
+      "syncedAt": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
         },
         "optional": true
       }

@@ -6,6 +6,7 @@
         "build": "sanity build",
         "deploy": "sanity deploy",
         "import-json": "tsx scripts/importFromJSON.ts",
+        "sync:directus": "tsx scripts/syncFromDirectus.ts",
         "typegen": "sanity schema extract --path=../web/sanity-schema.json && sanity typegen generate --enforce-required-fields",
         "typecheck": "tsc --noEmit"
     },
@@ -18,6 +19,7 @@
         "@sanity/presentation": "^2.0.0",
         "@sanity/table": "^2.0.0",
         "@sanity/vision": "^3.x.x",
+        "dotenv": "^17.2.3",
         "react": "^18.0.0",
         "react-dom": "^18.0.0",
         "sanity": "^3.x.x",

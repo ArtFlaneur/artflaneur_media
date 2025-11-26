@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowRight, MapPin, Calendar, User } from 'lucide-react';
-import { Article, Artist, Exhibition, Author, Guide } from '../types';
+import { Article, Artist, Exhibition, Author, Guide, Gallery } from '../types';
 import { Link } from 'react-router-dom';
 
 export const SectionHeader: React.FC<{ title: string; linkText?: string; linkTo?: string }> = ({ title, linkText, linkTo }) => (
@@ -19,8 +19,8 @@ export const SectionHeader: React.FC<{ title: string; linkText?: string; linkTo?
 
 // Generic Entity Card covering different content types
 export const EntityCard: React.FC<{ 
-    data: Article | Artist | Exhibition | Guide | Author; 
-    type: 'article' | 'artist' | 'exhibition' | 'guide' | 'author';
+    data: Article | Artist | Exhibition | Guide | Author | Gallery; 
+    type: 'article' | 'artist' | 'exhibition' | 'guide' | 'author' | 'gallery';
     variant?: 'vertical' | 'horizontal';
     imageAspect?: 'square' | 'portrait' | 'landscape' | 'default';
 }> = ({ data, type, variant = 'vertical', imageAspect = 'square' }) => {
@@ -37,6 +37,37 @@ export const EntityCard: React.FC<{
                 <div className="p-4">
                     <h3 className="text-2xl font-black uppercase mb-1">{artist.name}</h3>
                     <p className="font-mono text-xs text-gray-500 uppercase">{artist.location}</p>
+                </div>
+            </Link>
+        );
+    }
+
+    // RENDER: GALLERY CARD
+    if (type === 'gallery') {
+        const gallery = data as Gallery;
+        const gallerySlug = gallery.slug || gallery.id;
+        const locationLabel = [gallery.city, gallery.country].filter(Boolean).join(', ');
+        return (
+            <Link to={`/galleries/${gallerySlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 h-full flex flex-col">
+                <div className="relative aspect-square overflow-hidden border-b-2 border-black">
+                    <img src={gallery.image} alt={gallery.name} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" />
+                    {locationLabel && (
+                        <div className="absolute top-0 left-0 bg-white px-3 py-1 text-xs font-mono font-bold uppercase border-b-2 border-r-2 border-black">
+                            {locationLabel}
+                        </div>
+                    )}
+                </div>
+                <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="text-2xl font-black uppercase leading-tight mb-2">{gallery.name}</h3>
+                    {gallery.description && (
+                        <p className="text-sm text-gray-600 font-mono line-clamp-3 mb-4">{gallery.description}</p>
+                    )}
+                    {gallery.address && (
+                        <div className="mt-auto flex items-center gap-2 font-mono text-xs text-gray-500">
+                            <MapPin className="w-3 h-3" />
+                            <span>{gallery.address}</span>
+                        </div>
+                    )}
                 </div>
             </Link>
         );

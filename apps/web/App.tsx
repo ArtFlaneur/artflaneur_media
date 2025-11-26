@@ -10,6 +10,7 @@ import GuideView from './pages/GuideView';
 import ArtistView from './pages/ArtistView';
 import AmbassadorView from './pages/AmbassadorView';
 import CuratorView from './pages/CuratorView';
+import GalleryView from './pages/GalleryView';
 import About from './pages/About';
 import SearchResults from './pages/SearchResults';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
@@ -46,6 +47,7 @@ const App: React.FC = () => {
                 <Route path="/artists" element={<ListingPage title="Artists" type="artists" />} />
                 <Route path="/guides" element={<ListingPage title="City Guides" type="guides" />} />
                 <Route path="/ambassadors" element={<ListingPage title="Ambassadors" type="ambassadors" />} />
+                <Route path="/galleries" element={<ListingPage title="Galleries" type="galleries" />} />
                 
                 {/* Details */}
                 <Route path="/reviews/:id" element={<ArticleView />} />
@@ -54,6 +56,7 @@ const App: React.FC = () => {
                 <Route path="/artists/:id" element={<ArtistView />} />
                 <Route path="/ambassadors/:id" element={<AmbassadorView />} />
                 <Route path="/curators/:id" element={<CuratorView />} />
+                <Route path="/galleries/:id" element={<GalleryView />} />
                 
                 {/* Static & Utility */}
                 <Route path="/partners/galleries" element={<Partners type="gallery" />} />

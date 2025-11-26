@@ -8,7 +8,8 @@ export enum ContentType {
   EXHIBITION = 'Exhibition',
   EVENT = 'Art Event',
   ARTIST = 'Artist',
-  AUTHOR = 'Ambassador'
+  AUTHOR = 'Ambassador',
+  GALLERY = 'Gallery'
 }
 
 export interface Author {
@@ -69,6 +70,17 @@ export interface Exhibition {
   endDate: string;
   description: string;
   city: string;
+}
+
+export interface Gallery {
+  id: string;
+  slug?: string;
+  name: string;
+  city?: string;
+  country?: string;
+  address?: string;
+  image: string;
+  description?: string;
 }
 
 export interface PricingTier {

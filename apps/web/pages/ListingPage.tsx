@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { EntityCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
-import { REVIEWS_QUERY, EXHIBITIONS_QUERY, ARTISTS_QUERY, AUTHORS_QUERY, GUIDES_QUERY } from '../sanity/lib/queries';
-import { REVIEWS_QUERYResult, EXHIBITIONS_QUERYResult, ARTISTS_QUERYResult, GUIDES_QUERYResult, AUTHORS_QUERYResult } from '../sanity/queryResults';
-import { Article, Artist, Exhibition, Guide, Author, ContentType } from '../types';
+import { REVIEWS_QUERY, EXHIBITIONS_QUERY, ARTISTS_QUERY, AUTHORS_QUERY, GUIDES_QUERY, GALLERIES_QUERY } from '../sanity/lib/queries';
+import { REVIEWS_QUERYResult, EXHIBITIONS_QUERYResult, ARTISTS_QUERYResult, GUIDES_QUERYResult, AUTHORS_QUERYResult, GALLERIES_QUERYResult } from '../sanity/queryResults';
+import { Article, Artist, Exhibition, Guide, Author, ContentType, Gallery } from '../types';
 
 interface ListingPageProps {
   title: string;
-  type: 'reviews' | 'artists' | 'exhibitions' | 'guides' | 'ambassadors';
+  type: 'reviews' | 'artists' | 'exhibitions' | 'guides' | 'ambassadors' | 'galleries';
 }
 
-type ListingEntity = Article | Artist | Exhibition | Guide | Author;
+type ListingEntity = Article | Artist | Exhibition | Guide | Author | Gallery;
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -95,12 +95,24 @@ const mapAuthorToCard = (author: AUTHORS_QUERYResult[number]): Author => ({
   bio: author.bio ?? '',
 });
 
+const mapGalleryToCard = (gallery: GALLERIES_QUERYResult[number]): Gallery => ({
+  id: gallery._id,
+  slug: gallery.slug?.current ?? gallery._id,
+  name: gallery.name ?? 'Gallery',
+  city: gallery.city ?? undefined,
+  country: gallery.country ?? undefined,
+  address: gallery.address ?? undefined,
+  image: gallery.mainImage?.asset?.url ?? `https://picsum.photos/seed/${gallery._id}/600/600`,
+  description: gallery.description ?? undefined,
+});
+
 const CARD_TYPE_MAP = {
   reviews: 'article',
   exhibitions: 'exhibition',
   artists: 'artist',
   guides: 'guide',
   ambassadors: 'author',
+  galleries: 'gallery',
 } as const;
 
 const getCardKey = (item: ListingEntity) => ('slug' in item && item.slug ? item.slug : item.id);
@@ -141,6 +153,11 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           case 'ambassadors': {
             const authors = await client.fetch<AUTHORS_QUERYResult>(AUTHORS_QUERY);
             mapped = (authors ?? []).map(mapAuthorToCard);
+            break;
+          }
+          case 'galleries': {
+            const galleries = await client.fetch<GALLERIES_QUERYResult>(GALLERIES_QUERY);
+            mapped = (galleries ?? []).map(mapGalleryToCard);
             break;
           }
           default:

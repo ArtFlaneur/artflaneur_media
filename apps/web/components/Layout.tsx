@@ -276,6 +276,7 @@ export const Footer: React.FC = () => {
                     <ul className="space-y-2">
                         <li><Link to="/about" className="hover:text-art-yellow">About</Link></li>
                         <li><Link to="/ambassadors" className="hover:text-art-yellow">Ambassadors</Link></li>
+            <li><Link to="/map" className="hover:text-art-yellow">Map</Link></li>
                     </ul>
                 </div>
                 <div>
@@ -291,13 +292,8 @@ export const Footer: React.FC = () => {
                         <li className="text-white font-bold">Art Flaneur Global Pty Ltd</li>
                         <li>ABN 27 672 710 520</li>
                         <li>
-                            <a href="https://www.artflaneur.com.au" target="_blank" rel="noopener noreferrer" className="hover:text-art-yellow">
-                                www.artflaneur.com.au
-                            </a>
-                        </li>
-                        <li>
-                            <a href="mailto:tim@artflaneur.com.au" className="hover:text-art-yellow">
-                                tim@artflaneur.com.au
+                            <a href="mailto:info@artflaneur.com.au" className="hover:text-art-yellow">
+                                info@artflaneur.com.au
                             </a>
                         </li>
                     </ul>

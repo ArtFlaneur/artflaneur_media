@@ -6,7 +6,7 @@ export const NAV_ITEMS = [
   { label: 'Ambassadors', path: '/ambassadors' },
   { label: 'Artists', path: '/artists' },
   { label: 'Guides', path: '/guides' },
-  { label: 'Map', path: '/map' },
+  { label: 'Galleries', path: '/galleries' },
 ];
 
 export const GALLERY_PRICING: PricingTier[] = [

@@ -1,14 +1,16 @@
+import {UserIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 
 export const artist = defineType({
   name: 'artist',
   title: 'Artist',
   type: 'document',
+  icon: UserIcon,
   fields: [
     defineField({
       name: 'directusId',
       title: 'Directus ID',
-      type: 'number',
+      type: 'string',
       description: 'Artist ID from Directus',
       readOnly: true,
     }),
@@ -66,6 +68,13 @@ export const artist = defineType({
         {name: 'facebook', type: 'url', title: 'Facebook'},
         {name: 'twitter', type: 'url', title: 'Twitter/X'},
       ],
+    }),
+    defineField({
+      name: 'syncedAt',
+      title: 'Last Synced At',
+      type: 'datetime',
+      description: 'Timestamp of the most recent Directus sync',
+      readOnly: true,
     }),
   ],
   preview: {
