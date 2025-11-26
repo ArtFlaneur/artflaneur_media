@@ -19,6 +19,7 @@ export const REVIEWS_QUERY = defineQuery(`*[
   author->{
     _id,
     name,
+    slug,
     photo {
       asset->{
         url
@@ -56,6 +57,7 @@ export const REVIEW_QUERY = defineQuery(`*[
   author->{
     _id,
     name,
+    slug,
     photo {
       asset->{
         url
@@ -63,9 +65,15 @@ export const REVIEW_QUERY = defineQuery(`*[
     },
     bio
   },
+  artists[]->{
+    _id,
+    name,
+    slug
+  },
   gallery->{
     _id,
     name,
+    slug,
     city,
     address,
     website
@@ -73,9 +81,24 @@ export const REVIEW_QUERY = defineQuery(`*[
   exhibition->{
     _id,
     title,
+    slug,
     gallery->{
+      _id,
       name,
-      city
+      slug,
+      city,
+      address,
+      website
+    },
+    artists[]->{
+      _id,
+      name,
+      slug
+    },
+    curators[]->{
+      _id,
+      name,
+      slug
     }
   },
   sponsorshipEnabled,
@@ -222,6 +245,7 @@ export const GALLERIES_QUERY = defineQuery(`*[
   name,
   slug,
   city,
+  country,
   address,
   location,
   description,
@@ -241,23 +265,68 @@ export const GALLERY_QUERY = defineQuery(`*[
   name,
   slug,
   city,
+  country,
   address,
   location,
   description,
   website,
-  openingHours,
+  workingHours,
+  social,
+  contact,
   mainImage {
     asset->{
       url
     },
     alt
   },
-  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...10] {
+  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {
     _id,
     title,
     slug,
     startDate,
-    endDate
+    endDate,
+    description,
+    gallery->{
+      _id,
+      name,
+      city
+    },
+    "image": image{
+      asset->{
+        url
+      },
+      alt
+    }
+  },
+  "reviews": *[
+    _type == "review"
+    && publishStatus == "published"
+    && (
+      gallery._ref == ^._id
+      || exhibition->gallery._ref == ^._id
+    )
+  ] | order(publishedAt desc) [0...8] {
+    _id,
+    title,
+    slug,
+    excerpt,
+    publishedAt,
+    mainImage {
+      asset->{
+        url
+      },
+      alt
+    },
+    author->{
+      _id,
+      name,
+      slug,
+      photo {
+        asset->{
+          url
+        }
+      }
+    }
   }
 }`)
 
@@ -609,6 +678,33 @@ export const AUTHOR_QUERY = defineQuery(`*[
         url
       },
       alt
+    }
+  }
+}`)
+
+export const CURATOR_QUERY = defineQuery(`*[
+  _type == "curator"
+  && slug.current == $slug
+][0] {
+  _id,
+  name,
+  slug,
+  bio,
+  photo {
+    asset->{
+      url
+    },
+    alt
+  },
+  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {
+    _id,
+    title,
+    slug,
+    startDate,
+    endDate,
+    gallery->{
+      name,
+      city
     }
   }
 }`)

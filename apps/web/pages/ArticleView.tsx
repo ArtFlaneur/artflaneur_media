@@ -57,11 +57,24 @@ const mapReviewToArticle = (review: ReviewLike): Article => {
       ? {
           id: review.author._id,
           name: review.author.name ?? 'Anonymous',
+          slug: review.author.slug?.current ?? review.author._id,
           role: 'Critic',
           image: review.author.photo?.asset?.url ?? '',
         }
       : undefined,
   };
+};
+
+type LinkedDocument = {
+  _id: string;
+  name?: string | null;
+  slug?: { current?: string | null } | null;
+};
+
+const getReferencePath = (basePath: string, doc?: LinkedDocument | null) => {
+  if (!doc) return undefined;
+  const handle = doc.slug?.current ?? doc._id;
+  return handle ? `${basePath}/${handle}` : undefined;
 };
 
 const portableTextToPlain = (body?: BlockContent | null) => {
@@ -180,8 +193,25 @@ const ArticleView: React.FC = () => {
   const article = useMemo(() => (review ? mapReviewToArticle(review) : null), [review]);
   const articleBody = review ? portableTextToPlain(review.body) : '';
   const location = getLocationLabel(review);
-  const galleryAddress = review?.gallery?.address;
-  const galleryWebsite = review?.gallery?.website;
+  const galleryAddress = review?.gallery?.address ?? review?.exhibition?.gallery?.address;
+  const galleryWebsite = review?.gallery?.website ?? review?.exhibition?.gallery?.website;
+  const galleryDoc = review?.exhibition?.gallery ?? review?.gallery;
+
+  const artistList = useMemo<LinkedDocument[]>(() => {
+    if (!review) return [];
+    const reviewArtists = (review.artists ?? []) as LinkedDocument[];
+    if (reviewArtists.length) return reviewArtists;
+    return ((review.exhibition?.artists ?? []) as LinkedDocument[]) || [];
+  }, [review]);
+
+  const curatorList = useMemo<LinkedDocument[]>(() => {
+    if (!review?.exhibition?.curators) return [];
+    return (review.exhibition.curators as LinkedDocument[]) ?? [];
+  }, [review]);
+
+  const authorProfilePath = article?.author
+    ? `/ambassadors/${article.author.slug ?? article.author.id}`
+    : undefined;
 
   const handleShare = useCallback(
     (platform: SharePlatform) => {
@@ -258,7 +288,17 @@ const ArticleView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 border-t-2 border-black pt-4 gap-4 font-mono text-xs uppercase">
                 <div>
                     <span className="text-gray-500 block mb-1">Author</span>
-                    <span className="font-bold">{article.author?.name ?? 'Art Flâneur Editorial'}</span>
+                    {article.author ? (
+                      authorProfilePath ? (
+                        <Link to={authorProfilePath} className="font-bold hover:text-art-blue underline-offset-4 hover:underline">
+                          {article.author.name}
+                        </Link>
+                      ) : (
+                        <span className="font-bold">{article.author.name}</span>
+                      )
+                    ) : (
+                      <span className="font-bold">Art Flâneur Editorial</span>
+                    )}
                 </div>
                 <div>
                     <span className="text-gray-500 block mb-1">Date</span>
@@ -342,7 +382,52 @@ const ArticleView: React.FC = () => {
                              <Ticket className="w-4 h-4 mt-1" />
                              <div>
                                  <p className="font-bold">Entry: Free</p>
+                                 {galleryDoc?.name && (
+                                   <p className="text-gray-500 text-xs">Hosted by {galleryDoc.name}</p>
+                                 )}
                              </div>
+                         </div>
+                         <div className="border-t border-gray-200 pt-4 space-y-4">
+                           <div>
+                             <p className="font-bold uppercase text-xs tracking-widest mb-1">Artist{artistList.length > 1 ? 's' : ''}</p>
+                             {artistList.length ? (
+                               <div className="flex flex-wrap gap-2 text-xs font-mono">
+                                 {artistList.map((artist) => {
+                                   const path = getReferencePath('/artists', artist);
+                                   const label = artist?.name ?? 'Unknown artist';
+                                   return path ? (
+                                     <Link key={artist._id} to={path} className="underline decoration-dotted hover:text-art-blue">
+                                       {label}
+                                     </Link>
+                                   ) : (
+                                     <span key={artist._id}>{label}</span>
+                                   );
+                                 })}
+                               </div>
+                             ) : (
+                               <p className="text-gray-500 text-xs">Artist details coming soon.</p>
+                             )}
+                           </div>
+                           <div>
+                             <p className="font-bold uppercase text-xs tracking-widest mb-1">Curator{curatorList.length > 1 ? 's' : ''}</p>
+                             {curatorList.length ? (
+                               <div className="flex flex-wrap gap-2 text-xs font-mono">
+                                 {curatorList.map((curator) => {
+                                   const path = getReferencePath('/curators', curator);
+                                   const label = curator?.name ?? 'Unknown curator';
+                                   return path ? (
+                                     <Link key={curator._id} to={path} className="underline decoration-dotted hover:text-art-blue">
+                                       {label}
+                                     </Link>
+                                   ) : (
+                                     <span key={curator._id}>{label}</span>
+                                   );
+                                 })}
+                               </div>
+                             ) : (
+                               <p className="text-gray-500 text-xs">Curator to be announced.</p>
+                             )}
+                           </div>
                          </div>
                      </div>
                      {/* Save to App Button - с автоопределением платформы */}

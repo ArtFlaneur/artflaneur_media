@@ -9,6 +9,7 @@ import ListingPage from './pages/ListingPage';
 import GuideView from './pages/GuideView';
 import ArtistView from './pages/ArtistView';
 import AmbassadorView from './pages/AmbassadorView';
+import CuratorView from './pages/CuratorView';
 import About from './pages/About';
 import SearchResults from './pages/SearchResults';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
                 <Route path="/guides/:id" element={<GuideView />} />
                 <Route path="/artists/:id" element={<ArtistView />} />
                 <Route path="/ambassadors/:id" element={<AmbassadorView />} />
+                <Route path="/curators/:id" element={<CuratorView />} />
                 
                 {/* Static & Utility */}
                 <Route path="/partners/galleries" element={<Partners type="gallery" />} />

@@ -15,6 +15,7 @@ export type REVIEWS_QUERYResult = Array<{
   author: {
     _id: string;
     name: string | null;
+    slug: Slug | null;
     photo: {
       asset: {
         url: string | null;
@@ -49,6 +50,7 @@ export type REVIEW_QUERYResult = {
   author: {
     _id: string;
     name: string | null;
+    slug: Slug | null;
     photo: {
       asset: {
         url: string | null;
@@ -56,9 +58,15 @@ export type REVIEW_QUERYResult = {
     } | null;
     bio: string | null;
   } | null;
+  artists: Array<{
+    _id: string;
+    name: string | null;
+    slug: Slug | null;
+  }> | null;
   gallery: {
     _id: string;
     name: string | null;
+    slug: Slug | null;
     city: string | null;
     address: string | null;
     website: string | null;
@@ -66,10 +74,25 @@ export type REVIEW_QUERYResult = {
   exhibition: {
     _id: string;
     title: string | null;
+    slug: Slug | null;
     gallery: {
+      _id: string;
       name: string | null;
+      slug: Slug | null;
       city: string | null;
+      address: string | null;
+      website: string | null;
     } | null;
+    artists: Array<{
+      _id: string;
+      name: string | null;
+      slug: Slug | null;
+    }> | null;
+    curators: Array<{
+      _id: string;
+      name: string | null;
+      slug: Slug | null;
+    }> | null;
   } | null;
   sponsorshipEnabled: 'no' | 'yes' | null;
   sponsor: {
@@ -358,3 +381,96 @@ export type AUTHORS_QUERYResult = Array<{
     website?: string;
   } | null;
 }>;
+
+export type GALLERIES_QUERYResult = Array<{
+  _id: string;
+  name: string | null;
+  slug: Slug | null;
+  city: string | null;
+  country: string | null;
+  address: string | null;
+  location: {
+    lat?: number | null;
+    lng?: number | null;
+  } | null;
+  description: string | null;
+  mainImage: {
+    asset: {
+      url: string | null;
+    } | null;
+    alt: string | null;
+  } | null;
+}>;
+
+export type GALLERY_QUERYResult = {
+  _id: string;
+  name: string | null;
+  slug: Slug | null;
+  city: string | null;
+  country: string | null;
+  address: string | null;
+  description: string | null;
+  website: string | null;
+  workingHours: string | null;
+  social?: {
+    instagram?: string | null;
+    facebook?: string | null;
+    twitter?: string | null;
+  } | null;
+  contact?: {
+    phone?: string | null;
+    email?: string | null;
+  } | null;
+  mainImage: {
+    asset: {
+      url: string | null;
+    } | null;
+    alt: string | null;
+  } | null;
+  location: {
+    lat?: number | null;
+    lng?: number | null;
+  } | null;
+  exhibitions: Array<{
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    startDate: string | null;
+    endDate: string | null;
+    description: string | null;
+    gallery: {
+      _id: string;
+      name: string | null;
+      city: string | null;
+    } | null;
+    image: {
+      asset: {
+        url: string | null;
+      } | null;
+      alt: string | null;
+    } | null;
+  }> | null;
+  reviews: Array<{
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    excerpt: string | null;
+    publishedAt: string | null;
+    mainImage: {
+      asset: {
+        url: string | null;
+      } | null;
+      alt: string | null;
+    } | null;
+    author: {
+      _id: string;
+      name: string | null;
+      slug: Slug | null;
+      photo: {
+        asset: {
+          url: string | null;
+        } | null;
+      } | null;
+    } | null;
+  }> | null;
+} | null;
