@@ -17,17 +17,10 @@ import { GALLERY_QUERY } from '../sanity/lib/queries';
 import { GALLERY_QUERYResult } from '../sanity/queryResults';
 import { Article, ContentType } from '../types';
 import { directusClient } from '../lib/directus';
+import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1600&q=80';
-
-const formatWorkingHours = (value?: string | null) => {
-  if (!value) return [];
-  return value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-};
 
 const buildGoogleMapsLink = (gallery: GALLERY_QUERYResult | null) => {
   if (!gallery) return undefined;
@@ -108,9 +101,10 @@ const GalleryView: React.FC = () => {
     };
   }, [id]);
 
-  const workingHours = formatWorkingHours(gallery?.workingHours);
+  const workingHours = formatWorkingHoursSchedule(gallery?.workingHours);
   const mapsLink = useMemo(() => buildGoogleMapsLink(gallery), [gallery]);
   const relatedReviews = useMemo(() => (gallery?.reviews ?? []).map(mapReviewToArticle), [gallery?.reviews]);
+  const galleryDescription = gallery?.description?.trim();
 
   if (loading) {
     return (
@@ -161,7 +155,7 @@ const GalleryView: React.FC = () => {
     gallery.website && {
       icon: Globe,
       label: 'Website',
-      value: gallery.website.replace(/^https?:\/\//, ''),
+      value: getDisplayDomain(gallery.website) ?? gallery.website.replace(/^https?:\/\//, '').replace(/\/$/, ''),
       href: gallery.website,
     },
   ].filter(Boolean) as Array<{
@@ -257,11 +251,11 @@ const GalleryView: React.FC = () => {
 
           {/* Body content */}
           <section className="lg:col-span-8 order-1 lg:order-2 space-y-12">
-            <div className="border-2 border-black bg-white p-8">
-              <p className="font-serif text-2xl md:text-3xl leading-relaxed">
-                {gallery.description ?? 'Gallery description coming soon. Check back shortly for curatorial notes and highlights.'}
-              </p>
-            </div>
+            {galleryDescription && (
+              <div className="border-2 border-black bg-white p-8">
+                <p className="font-serif text-2xl md:text-3xl leading-relaxed">{galleryDescription}</p>
+              </div>
+            )}
 
             {/* Exhibitions */}
             <div>

@@ -64,3 +64,13 @@ pnpm --filter @artflaneur/studio sync:directus galleries,artists,exhibitions
 ```
 
 The script paginates Directus data, batches Sanity mutations, and records the `syncedAt` timestamp on each document for auditing.
+
+## Removing exhibitions
+
+To fully clear all exhibition documents from the connected Sanity dataset, provide the same Sanity credentials (.env works) and run:
+
+```bash
+pnpm --filter @artflaneur/studio clear:exhibitions
+```
+
+The script counts existing exhibition docs, removes them in a single query, and logs progress so you can confirm the dataset is clean.

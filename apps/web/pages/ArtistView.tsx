@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { client } from '../sanity/lib/client';
 import { ARTIST_QUERY } from '../sanity/lib/queries';
+import { getDisplayDomain } from '../lib/formatters';
 
 type ArtistQueryResponse = {
   _id: string;
@@ -87,6 +88,8 @@ const ArtistView: React.FC = () => {
     { label: 'Twitter', href: artist.social?.twitter },
   ].filter((link): link is { label: string; href: string } => Boolean(link.href));
 
+  const websiteLabel = artist.website ? getDisplayDomain(artist.website) ?? artist.website.replace(/^https?:\/\//i, '').replace(/\/$/, '') : null;
+
   return (
     <div className="bg-white">
         {/* Split Screen Hero */}
@@ -110,10 +113,10 @@ const ArtistView: React.FC = () => {
                     {artist.birthYear && (
                       <p><strong className="text-black">Born:</strong> {artist.birthYear}</p>
                     )}
-                    {artist.website && (
+                    {artist.website && websiteLabel && (
                       <p>
                         <strong className="text-black">Website:</strong>{' '}
-                        <a href={artist.website} target="_blank" rel="noreferrer" className="underline hover:text-art-blue">Visit</a>
+                        <a href={artist.website} target="_blank" rel="noreferrer" className="underline hover:text-art-blue">{websiteLabel}</a>
                       </p>
                     )}
                 </div>

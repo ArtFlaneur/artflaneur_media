@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MapPin, Navigation, Clock, Globe, X, Locate } from 'lucide-react';
-import { directusClient, DirectusGallery } from '../lib/directus';
+import { directusClient } from '../lib/directus';
+import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
 
 interface MapPoint {
     id: number;
@@ -445,6 +446,11 @@ const MapPage: React.FC = () => {
         ? galleries 
         : galleries.filter(g => g.type === filterType);
 
+    const selectedPointWorkingHours = selectedPoint ? formatWorkingHoursSchedule(selectedPoint.opening_hours) : [];
+    const selectedPointWebsiteLabel = selectedPoint?.website
+        ? getDisplayDomain(selectedPoint.website) ?? selectedPoint.website.replace(/^https?:\/\//i, '').replace(/\/$/, '')
+        : null;
+
     return (
         <div className="h-screen flex flex-col">
             {/* Map Container */}
@@ -524,17 +530,21 @@ const MapPage: React.FC = () => {
                                         <span>{selectedPoint.address}, {selectedPoint.city}, {selectedPoint.country}</span>
                                     </p>
                                 )}
-                                {selectedPoint.opening_hours && (
-                                    <p className="flex items-start gap-2">
+                                {selectedPointWorkingHours.length > 0 && (
+                                    <div className="flex items-start gap-2">
                                         <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                        <span className="whitespace-pre-line">{selectedPoint.opening_hours}</span>
-                                    </p>
+                                        <ul className="font-mono text-[11px] space-y-0.5">
+                                            {selectedPointWorkingHours.map((line) => (
+                                                <li key={line}>{line}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
                                 )}
-                                {selectedPoint.website && (
+                                {selectedPoint.website && selectedPointWebsiteLabel && (
                                     <p className="flex items-start gap-2">
                                         <Globe className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                         <a href={selectedPoint.website} target="_blank" rel="noopener noreferrer" className="text-art-blue hover:underline">
-                                            Visit Website
+                                            {selectedPointWebsiteLabel}
                                         </a>
                                     </p>
                                 )}

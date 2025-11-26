@@ -278,6 +278,10 @@ export const PAGINATED_GALLERIES_QUERY = defineQuery(`*[
   }
 }`)
 
+export const GALLERIES_COUNT_QUERY = defineQuery(`count(*[
+  _type == "gallery"
+])`)
+
 export const GALLERY_QUERY = defineQuery(`*[
   _type == "gallery"
   && slug.current == $slug

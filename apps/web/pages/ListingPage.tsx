@@ -8,6 +8,7 @@ import {
   GUIDES_QUERY,
   PAGINATED_ARTISTS_QUERY,
   PAGINATED_GALLERIES_QUERY,
+  GALLERIES_COUNT_QUERY,
 } from '../sanity/lib/queries';
 import {
   REVIEWS_QUERYResult,
@@ -16,6 +17,7 @@ import {
   GUIDES_QUERYResult,
   AUTHORS_QUERYResult,
   GALLERIES_QUERYResult,
+  GALLERIES_COUNT_QUERYResult,
 } from '../sanity/queryResults';
 import { Article, Artist, Exhibition, Guide, Author, ContentType, Gallery } from '../types';
 import { directusClient } from '../lib/directus';
@@ -29,36 +31,29 @@ type ListingEntity = Article | Artist | Exhibition | Guide | Author | Gallery;
 
 const PAGE_SIZE = 10;
 const PAGINATED_TYPES = new Set<ListingPageProps['type']>(['artists', 'galleries']);
-const SCRAPE_WINDOW_MS = 5 * 60 * 1000;
-const SCRAPE_LIMIT = 6;
 
-const registerListingFetch = (listingType: ListingPageProps['type']) => {
-  if (typeof window === 'undefined') {
-    return true;
+const getArtistImage = (artist: ARTISTS_QUERYResult[number]) => artist.photo?.asset?.url ?? null;
+
+const hasArtistContent = (artist: ARTISTS_QUERYResult[number]) =>
+  Boolean(artist.name?.trim() && artist.bio?.trim() && getArtistImage(artist));
+
+const getGalleryPrimaryImage = (gallery: GALLERIES_QUERYResult[number]) => {
+  if (gallery.directusImageFile) {
+    try {
+      return directusClient.getImageUrl(gallery.directusImageFile, { width: 900, quality: 80 });
+    } catch (error) {
+      console.warn('Failed to build Directus image URL', error);
+    }
   }
-
-  const storageKey = `listing-fetch:${listingType}`;
-  const now = Date.now();
-  let history: number[] = [];
-
-  try {
-    history = JSON.parse(sessionStorage.getItem(storageKey) ?? '[]');
-  } catch (error) {
-    console.warn('Unable to parse listing fetch history', error);
-    history = [];
-  }
-
-  history = history.filter((timestamp) => now - timestamp < SCRAPE_WINDOW_MS);
-
-  if (history.length >= SCRAPE_LIMIT) {
-    sessionStorage.setItem(storageKey, JSON.stringify(history));
-    return false;
-  }
-
-  history.push(now);
-  sessionStorage.setItem(storageKey, JSON.stringify(history));
-  return true;
+  return gallery.mainImage?.asset?.url ?? null;
 };
+
+const hasGalleryContent = (gallery: GALLERIES_QUERYResult[number]) =>
+  Boolean(
+    gallery.name?.trim() &&
+    getGalleryPrimaryImage(gallery) &&
+    (gallery.description?.trim() || gallery.address?.trim() || gallery.city?.trim() || gallery.country?.trim())
+  );
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -99,16 +94,19 @@ const mapExhibitionToCard = (exhibition: EXHIBITIONS_QUERYResult[number]): Exhib
   description: exhibition.description ?? '',
 });
 
-const mapArtistToCard = (artist: ARTISTS_QUERYResult[number]): Artist => ({
-  id: artist._id,
-  slug: artist.slug?.current ?? artist._id,
-  name: artist.name ?? 'Unknown Artist',
-  image: artist.photo?.asset?.url ?? `https://picsum.photos/seed/${artist._id}/600/600`,
-  bio: artist.bio ?? '',
-  discipline: [],
-  location: '',
-  featuredWork: artist.photo?.asset?.url ?? `https://picsum.photos/seed/${artist._id}-work/600/600`,
-});
+const mapArtistToCard = (artist: ARTISTS_QUERYResult[number]): Artist => {
+  const image = getArtistImage(artist) ?? '';
+  return {
+    id: artist._id,
+    slug: artist.slug?.current ?? artist._id,
+    name: artist.name ?? 'Unknown Artist',
+    image,
+    bio: artist.bio ?? '',
+    discipline: [],
+    location: '',
+    featuredWork: image,
+  };
+};
 
 const mapGuideToCard = (guide: GUIDES_QUERYResult[number]): Guide => ({
   id: guide._id,
@@ -143,34 +141,19 @@ const mapAuthorToCard = (author: AUTHORS_QUERYResult[number]): Author => ({
   bio: author.bio ?? '',
 });
 
-const buildGalleryImageUrl = (
-  directusImageFile?: string | null,
-  sanityImageUrl?: string | null,
-  fallbackSeed?: string
-) => {
-  if (directusImageFile) {
-    try {
-      return directusClient.getImageUrl(directusImageFile, { width: 900, quality: 80 });
-    } catch (error) {
-      console.warn('Failed to build Directus image URL', error);
-    }
-  }
-  if (sanityImageUrl) {
-    return sanityImageUrl;
-  }
-  return fallbackSeed ? `https://picsum.photos/seed/${fallbackSeed}/600/600` : `https://picsum.photos/600/600`;
+const mapGalleryToCard = (gallery: GALLERIES_QUERYResult[number]): Gallery => {
+  const image = getGalleryPrimaryImage(gallery) ?? '';
+  return {
+    id: gallery._id,
+    slug: gallery.slug?.current ?? gallery._id,
+    name: gallery.name ?? 'Gallery',
+    city: gallery.city ?? undefined,
+    country: gallery.country ?? undefined,
+    address: gallery.address ?? undefined,
+    image,
+    description: gallery.description ?? undefined,
+  };
 };
-
-const mapGalleryToCard = (gallery: GALLERIES_QUERYResult[number]): Gallery => ({
-  id: gallery._id,
-  slug: gallery.slug?.current ?? gallery._id,
-  name: gallery.name ?? 'Gallery',
-  city: gallery.city ?? undefined,
-  country: gallery.country ?? undefined,
-  address: gallery.address ?? undefined,
-  image: buildGalleryImageUrl(gallery.directusImageFile, gallery.mainImage?.asset?.url, gallery._id),
-  description: gallery.description ?? undefined,
-});
 
 const CARD_TYPE_MAP = {
   reviews: 'article',
@@ -190,10 +173,12 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
-  const [scrapeBlocked, setScrapeBlocked] = useState(false);
+  const [galleryTotalCount, setGalleryTotalCount] = useState<number | null>(null);
   const isPaginatedType = PAGINATED_TYPES.has(type);
+  const isGalleryListing = type === 'galleries';
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isMountedRef = useRef(true);
+  const pendingCardsRef = useRef<ListingEntity[]>([]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -207,19 +192,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
       const listingType = type;
       if (!PAGINATED_TYPES.has(listingType)) return;
 
-      if (!registerListingFetch(listingType)) {
-        if (isMountedRef.current && listingType === type) {
-          setScrapeBlocked(true);
-          setHasMore(false);
-          setError('Scrolling paused. Please take a short break before loading more.');
-          if (replace) {
-            setLoading(false);
-          }
-        }
-        return;
-      }
-
       if (replace) {
+        pendingCardsRef.current = [];
         setLoading(true);
         setData([]);
       } else {
@@ -227,33 +201,92 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
       }
 
       try {
-        const params = { offset: startOffset, end: startOffset + PAGE_SIZE + 1 };
-        let mappedBatch: ListingEntity[] = [];
-        let hasExtra = false;
-        let processedCount = 0;
+        const nextBatch: ListingEntity[] = [];
+        let nextOffset = startOffset;
+        let reachedEnd = false;
 
-        if (listingType === 'artists') {
-          const rawArtists = await client.fetch<ARTISTS_QUERYResult>(PAGINATED_ARTISTS_QUERY, params);
-          const rows = Array.isArray(rawArtists) ? rawArtists : [];
-          hasExtra = rows.length > PAGE_SIZE;
-          const trimmed = hasExtra ? rows.slice(0, PAGE_SIZE) : rows;
-          mappedBatch = trimmed.map(mapArtistToCard);
-          processedCount = trimmed.length;
-        } else {
-          const rawGalleries = await client.fetch<GALLERIES_QUERYResult>(PAGINATED_GALLERIES_QUERY, params);
-          const rows = Array.isArray(rawGalleries) ? rawGalleries : [];
-          hasExtra = rows.length > PAGE_SIZE;
-          const trimmed = hasExtra ? rows.slice(0, PAGE_SIZE) : rows;
-          mappedBatch = trimmed.map(mapGalleryToCard);
-          processedCount = trimmed.length;
+        if (pendingCardsRef.current.length) {
+          const take = Math.min(PAGE_SIZE, pendingCardsRef.current.length);
+          nextBatch.push(...pendingCardsRef.current.splice(0, take));
+        }
+
+        while (nextBatch.length < PAGE_SIZE && !reachedEnd) {
+          const params = { offset: nextOffset, end: nextOffset + PAGE_SIZE + 1 };
+
+          if (listingType === 'artists') {
+            const rawArtists = await client.fetch<ARTISTS_QUERYResult>(PAGINATED_ARTISTS_QUERY, params);
+            const rows = Array.isArray(rawArtists) ? rawArtists : [];
+
+            if (!rows.length) {
+              reachedEnd = true;
+              break;
+            }
+
+            nextOffset += rows.length;
+
+            const mapped = rows.filter(hasArtistContent).map(mapArtistToCard);
+
+            if (!mapped.length) {
+              if (rows.length <= PAGE_SIZE) {
+                reachedEnd = true;
+              }
+              continue;
+            }
+
+            const slots = PAGE_SIZE - nextBatch.length;
+            nextBatch.push(...mapped.slice(0, slots));
+            const leftover = mapped.slice(slots);
+
+            if (leftover.length) {
+              pendingCardsRef.current = leftover;
+              break;
+            }
+
+            if (rows.length <= PAGE_SIZE) {
+              reachedEnd = true;
+            }
+          } else {
+            const rawGalleries = await client.fetch<GALLERIES_QUERYResult>(PAGINATED_GALLERIES_QUERY, params);
+            const rows = Array.isArray(rawGalleries) ? rawGalleries : [];
+
+            if (!rows.length) {
+              reachedEnd = true;
+              break;
+            }
+
+            nextOffset += rows.length;
+
+            const mapped = rows.filter(hasGalleryContent).map(mapGalleryToCard);
+
+            if (!mapped.length) {
+              if (rows.length <= PAGE_SIZE) {
+                reachedEnd = true;
+              }
+              continue;
+            }
+
+            const slots = PAGE_SIZE - nextBatch.length;
+            nextBatch.push(...mapped.slice(0, slots));
+            const leftover = mapped.slice(slots);
+
+            if (leftover.length) {
+              pendingCardsRef.current = leftover;
+              break;
+            }
+
+            if (rows.length <= PAGE_SIZE) {
+              reachedEnd = true;
+            }
+          }
         }
 
         if (!isMountedRef.current || listingType !== type) return;
 
-        setData((prev) => (replace ? mappedBatch : [...prev, ...mappedBatch]));
-        setHasMore(hasExtra);
-        setOffset(startOffset + processedCount);
-        setError(mappedBatch.length === 0 && replace ? 'No published entries yet.' : null);
+        setData((prev) => (replace ? nextBatch : [...prev, ...nextBatch]));
+        const hasPending = pendingCardsRef.current.length > 0;
+        setHasMore(hasPending || !reachedEnd);
+        setOffset(nextOffset);
+        setError(nextBatch.length === 0 && replace ? 'No published entries yet.' : null);
       } catch (err) {
         console.error(`❌ Error fetching ${listingType}:`, err);
         if (!isMountedRef.current || listingType !== type) return;
@@ -279,7 +312,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     setError(null);
     setHasMore(false);
     setOffset(0);
-    setScrapeBlocked(false);
+  pendingCardsRef.current = [];
 
     const loadData = async () => {
       if (isPaginatedType) {
@@ -342,11 +375,11 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   }, [type, isPaginatedType, fetchPaginatedPage]);
 
   const loadMore = useCallback(() => {
-    if (!isPaginatedType || loading || loadingMore || !hasMore || scrapeBlocked) {
+    if (!isPaginatedType || loading || loadingMore || !hasMore) {
       return;
     }
     fetchPaginatedPage(offset, false);
-  }, [fetchPaginatedPage, hasMore, isPaginatedType, loading, loadingMore, offset, scrapeBlocked]);
+  }, [fetchPaginatedPage, hasMore, isPaginatedType, loading, loadingMore, offset]);
 
   useEffect(() => {
     if (!isPaginatedType) return;
@@ -369,6 +402,35 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     };
   }, [isPaginatedType, loadMore]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!isGalleryListing) {
+      setGalleryTotalCount(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const fetchCount = async () => {
+      try {
+        const count = await client.fetch<GALLERIES_COUNT_QUERYResult>(GALLERIES_COUNT_QUERY);
+        if (!isMounted) return;
+        setGalleryTotalCount(typeof count === 'number' ? count : 0);
+      } catch (err) {
+        console.error('❌ Error fetching gallery count:', err);
+        if (!isMounted) return;
+        setGalleryTotalCount(null);
+      }
+    };
+
+    fetchCount();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isGalleryListing]);
+
   const cardType: Parameters<typeof EntityCard>[0]['type'] = CARD_TYPE_MAP[type];
 
   return (
@@ -376,7 +438,16 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
       {/* Header */}
       <div className="bg-white border-b-2 border-black pt-20 pb-12">
         <div className="container mx-auto px-4 md:px-6">
-          <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter mb-8">{title}</h1>
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-6 mb-8">
+            <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter flex flex-wrap items-baseline gap-4">
+              <span>{title}</span>
+              {isGalleryListing && (
+                <span className="text-xl md:text-3xl font-black text-gray-600">
+                  ({galleryTotalCount === null ? ' … ' : galleryTotalCount.toLocaleString('en-US')})
+                </span>
+              )}
+            </h1>
+          </div>
 
           {/* Simulated Filters */}
           <div className="flex flex-wrap gap-4 font-mono text-xs uppercase font-bold">
@@ -405,13 +476,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           <p className="font-mono text-sm text-gray-600">No entries to display yet.</p>
         )}
 
-        {scrapeBlocked && (
-          <p className="mt-6 font-mono text-xs text-amber-600">
-            Мы временно остановили подгрузку, чтобы защитить списки от автоматического копирования. Попробуйте снова через минуту.
-          </p>
-        )}
-
-        {isPaginatedType && !scrapeBlocked && (
+        {isPaginatedType && (
           <div ref={loadMoreRef} className="mt-8 flex flex-col items-center">
             {loadingMore && <p className="font-mono text-xs text-gray-500">Loading more…</p>}
             {!hasMore && !loadingMore && data.length > 0 && (

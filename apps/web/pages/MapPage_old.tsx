@@ -3,7 +3,8 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MAP_POINTS } from '../constants';
 import { MapPin, Navigation, Clock, Globe, X } from 'lucide-react';
-import { directusClient, DirectusGallery } from '../lib/directus';
+import { directusClient } from '../lib/directus';
+import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
 
 interface MapPoint {
     id: number;
@@ -197,7 +198,12 @@ const MapPage: React.FC = () => {
                 ))}
 
                 {/* Selected Point Card */}
-                {selectedPoint && selectedGallery && (
+                {selectedPoint && selectedGallery && (() => {
+                    const workingHours = formatWorkingHoursSchedule(selectedGallery.opening_hours);
+                    const websiteLabel = selectedGallery.website
+                        ? getDisplayDomain(selectedGallery.website) ?? selectedGallery.website.replace(/^https?:\/\//i, '').replace(/\/$/, '')
+                        : null;
+                    return (
                     <div className="absolute bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-80 bg-white p-0 shadow-2xl animate-in slide-in-from-bottom-5 z-30">
                         <div className="h-32 bg-gray-100 relative">
                             <img src={`https://picsum.photos/400/400?random=${selectedPoint}`} className="w-full h-full object-cover" alt={selectedGallery.name} />
@@ -214,17 +220,21 @@ const MapPage: React.FC = () => {
                                         <span>{selectedGallery.address}, {selectedGallery.city}, {selectedGallery.country}</span>
                                     </p>
                                 )}
-                                {selectedGallery.opening_hours && (
-                                    <p className="flex items-start gap-2">
+                                {workingHours.length > 0 && (
+                                    <div className="flex items-start gap-2">
                                         <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                        <span className="whitespace-pre-line">{selectedGallery.opening_hours}</span>
-                                    </p>
+                                        <ul className="font-mono text-[11px] space-y-0.5">
+                                            {workingHours.map((line) => (
+                                                <li key={line}>{line}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
                                 )}
-                                {selectedGallery.website && (
+                                {selectedGallery.website && websiteLabel && (
                                     <p className="flex items-start gap-2">
                                         <Globe className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                         <a href={selectedGallery.website} target="_blank" rel="noopener noreferrer" className="text-art-blue hover:underline">
-                                            Visit Website
+                                            {websiteLabel}
                                         </a>
                                     </p>
                                 )}
@@ -235,7 +245,8 @@ const MapPage: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                )}
+                    );
+                })()}
             </div>
         </div>
     );

@@ -7,6 +7,7 @@ import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
 import { BlockContent } from '../sanity/types';
 import { REVIEW_QUERYResult, REVIEWS_QUERYResult } from '../sanity/queryResults';
 import { Article, ContentType } from '../types';
+import { getDisplayDomain } from '../lib/formatters';
 
 // Функция для определения платформы пользователя
 const getAppStoreLink = () => {
@@ -196,6 +197,9 @@ const ArticleView: React.FC = () => {
   const galleryAddress = review?.gallery?.address ?? review?.exhibition?.gallery?.address;
   const galleryWebsite = review?.gallery?.website ?? review?.exhibition?.gallery?.website;
   const galleryDoc = review?.exhibition?.gallery ?? review?.gallery;
+  const galleryWebsiteLabel = galleryWebsite
+    ? getDisplayDomain(galleryWebsite) ?? galleryWebsite.replace(/^https?:\/\//i, '').replace(/\/$/, '')
+    : null;
 
   const artistList = useMemo<LinkedDocument[]>(() => {
     if (!review) return [];
@@ -359,14 +363,14 @@ const ArticleView: React.FC = () => {
                              <div>
                                  <p className="font-bold">{location}</p>
                                  <p className="text-gray-500 text-xs">{galleryAddress ?? 'Address available soon'}</p>
-                                 {galleryWebsite && (
+                                 {galleryWebsite && galleryWebsiteLabel && (
                                    <a
                                      href={galleryWebsite}
                                      target="_blank"
                                      rel="noreferrer"
                                      className="text-art-blue underline text-[10px]"
                                    >
-                                     Visit website
+                                     {galleryWebsiteLabel}
                                    </a>
                                  )}
                              </div>

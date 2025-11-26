@@ -193,6 +193,8 @@ export type ARTISTS_QUERYResult = Array<{
   } | null;
 }>;
 
+export type GALLERIES_COUNT_QUERYResult = number;
+
 export type GUIDES_QUERYResult = Array<{
   _id: string;
   slug: Slug | null;
