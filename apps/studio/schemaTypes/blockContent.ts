@@ -14,6 +14,29 @@ export const blockContent = defineType({
   title: 'Block Content',
   name: 'blockContent',
   type: 'array',
+  validation: (rule: any) => rule.custom((blocks: any[]) => {
+    if (!Array.isArray(blocks)) return true
+
+    const headings = blocks
+      .filter((block) => block?._type === 'block' && typeof block.style === 'string' && /^h[2-4]$/.test(block.style))
+      .map((block) => block.style)
+
+    if (!headings.length) return true
+
+    if (headings[0] !== 'h2') {
+      return 'Первый заголовок в тексте должен быть H2, чтобы сохранить правильную иерархию'
+    }
+
+    for (let i = 1; i < headings.length; i += 1) {
+      const currentLevel = Number(headings[i].substring(1))
+      const previousLevel = Number(headings[i - 1].substring(1))
+      if (currentLevel - previousLevel > 1) {
+        return `Нельзя перепрыгивать с ${headings[i - 1].toUpperCase()} на ${headings[i].toUpperCase()}`
+      }
+    }
+
+    return true
+  }),
   of: [
     defineArrayMember({
       title: 'Block',
@@ -24,12 +47,15 @@ export const blockContent = defineType({
       // use your content.
       styles: [
         {title: 'Normal', value: 'normal'},
-        {title: 'H1', value: 'h1'},
-        {title: 'H2', value: 'h2'},
-        {title: 'H3', value: 'h3'},
+        {title: 'H2 — Main Section', value: 'h2'},
+        {title: 'H3 — Subsection', value: 'h3'},
+        {title: 'H4 — Detail', value: 'h4'},
         {title: 'Quote', value: 'blockquote'},
       ],
-      lists: [{title: 'Bullet', value: 'bullet'}],
+      lists: [
+        {title: 'Bullet', value: 'bullet'},
+        {title: 'Numbered', value: 'number'},
+      ],
       // Marks let you mark up inline text in the block editor.
       marks: {
         // Decorators usually describe a single property – e.g. a typographic
@@ -54,6 +80,14 @@ export const blockContent = defineType({
           },
         ],
       },
+    }),
+    defineArrayMember({
+      type: 'factTable',
+      title: 'Fact Table',
+    }),
+    defineArrayMember({
+      type: 'keyInsights',
+      title: 'Key Insights',
     }),
     // You can add additional types here. Note that you can't use
     // primitive types such as 'string' and 'number' in the same array

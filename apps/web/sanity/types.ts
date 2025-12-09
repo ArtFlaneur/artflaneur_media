@@ -278,6 +278,27 @@ export type Curator = {
   bio?: string;
 };
 
+export type KeyInsights = {
+  _type: "keyInsights";
+  heading?: string;
+  insights?: Array<{
+    insight?: string;
+    _type: "insight";
+    _key: string;
+  }>;
+};
+
+export type FactTable = {
+  _type: "factTable";
+  caption?: string;
+  rows?: Array<{
+    parameter?: string;
+    value?: string;
+    _type: "factRow";
+    _key: string;
+  }>;
+};
+
 export type BlockContent = Array<{
   children?: Array<{
     marks?: Array<string>;
@@ -285,8 +306,8 @@ export type BlockContent = Array<{
     _type: "span";
     _key: string;
   }>;
-  style?: "normal" | "h1" | "h2" | "h3" | "blockquote";
-  listItem?: "bullet";
+  style?: "normal" | "h2" | "h3" | "h4" | "blockquote";
+  listItem?: "bullet" | "number";
   markDefs?: Array<{
     href?: string;
     _type: "link";
@@ -296,6 +317,10 @@ export type BlockContent = Array<{
   _type: "block";
   _key: string;
 } | {
+  _key: string;
+} & FactTable | {
+  _key: string;
+} & KeyInsights | {
   asset?: {
     _ref: string;
     _type: "reference";
@@ -562,16 +587,56 @@ export type Artist = {
     crop?: SanityImageCrop;
     _type: "image";
   };
+  summary?: string;
   bio?: string;
+  body?: BlockContent;
   birthYear?: number;
   country?: string;
+  basedIn?: string;
+  practiceFocus?: string;
   website?: string;
+  keyWorks?: Array<{
+    title?: string;
+    year?: string;
+    exhibition?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "exhibition";
+    };
+    concept?: string;
+    _type: "keyWork";
+    _key: string;
+  }>;
+  exhibitions?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "exhibition";
+  }>;
+  collections?: Array<{
+    institution?: string;
+    location?: string;
+    _type: "collectionEntry";
+    _key: string;
+  }>;
   social?: {
     instagram?: string;
     facebook?: string;
     twitter?: string;
   };
   syncedAt?: string;
+  appCta?: {
+    text?: string;
+    deeplink?: string;
+  };
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: Array<string>;
+  };
+  schemaMarkup?: string;
 };
 
 export type Review = {
@@ -582,6 +647,7 @@ export type Review = {
   _rev: string;
   title?: string;
   slug?: Slug;
+  summary?: string;
   excerpt?: string;
   mainImage?: {
     asset?: {
@@ -658,6 +724,16 @@ export type Review = {
     [internalGroqTypeReferenceTo]?: "review";
   }>;
   ctaText?: string;
+  appCta?: {
+    text?: string;
+    deeplink?: string;
+  };
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: Array<string>;
+  };
+  schemaMarkup?: string;
   sponsorshipEnabled?: "no" | "yes";
   sponsor?: {
     _ref: string;
@@ -831,6 +907,7 @@ export type Gallery = {
   _updatedAt: string;
   _rev: string;
   directusId?: string;
+  directusImageFile?: string;
   name?: string;
   slug?: Slug;
   image?: {
@@ -845,11 +922,28 @@ export type Gallery = {
     crop?: SanityImageCrop;
     _type: "image";
   };
+  summary?: string;
+  description?: string;
   address?: string;
   city?: string;
   country?: string;
   geopoint?: Geopoint;
   website?: string;
+  focus?: string;
+  artists?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "artist";
+  }>;
+  upcomingShows?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "exhibition";
+  }>;
   workingHours?: string;
   contact?: {
     phone?: string;
@@ -860,7 +954,22 @@ export type Gallery = {
     facebook?: string;
     twitter?: string;
   };
+  exportTrends?: {
+    headline?: string;
+    details?: string;
+  };
+  body?: BlockContent;
   syncedAt?: string;
+  appCta?: {
+    text?: string;
+    deeplink?: string;
+  };
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: Array<string>;
+  };
+  schemaMarkup?: string;
 };
 
 export type Author = {
@@ -883,14 +992,47 @@ export type Author = {
     crop?: SanityImageCrop;
     _type: "image";
   };
+  summary?: string;
   bio?: string;
+  body?: BlockContent;
   role?: "author" | "editor" | "chiefEditor";
+  specialization?: string;
+  currentInterests?: string;
+  recommendations?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "gallery";
+  } | {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "exhibition";
+  } | {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "guide";
+  }>;
   email?: string;
   social?: {
     instagram?: string;
     twitter?: string;
     website?: string;
   };
+  appCta?: {
+    text?: string;
+    deeplink?: string;
+  };
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: Array<string>;
+  };
+  schemaMarkup?: string;
 };
 
 export type InternationalizedArrayReference = Array<{
@@ -1015,7 +1157,7 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = SiteSettings | MapData | HomepageContent | LandingPage | Curator | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ArtistStory | Artist | Review | Sponsor | Color | Exhibition | Gallery | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = SiteSettings | MapData | HomepageContent | LandingPage | Curator | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ArtistStory | Artist | Review | Sponsor | Color | Exhibition | Gallery | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ../web/pages/SearchResults.tsx
 // Variable: SEARCH_QUERY
@@ -1323,7 +1465,7 @@ export type EXHIBITION_QUERYResult = {
   } | null;
 } | null;
 // Variable: GALLERIES_QUERY
-// Query: *[  _type == "gallery"] | order(name asc) {  _id,  name,  slug,  city,  country,  address,  location,  description,  mainImage {    asset->{      url    },    alt  }}
+// Query: *[  _type == "gallery"] | order(name asc) {  _id,  name,  slug,  city,  country,  address,  location,  description,  directusImageFile,  mainImage {    asset->{      url    },    alt  }}
 export type GALLERIES_QUERYResult = Array<{
   _id: string;
   name: string | null;
@@ -1332,11 +1474,29 @@ export type GALLERIES_QUERYResult = Array<{
   country: string | null;
   address: string | null;
   location: null;
-  description: null;
+  description: string | null;
+  directusImageFile: string | null;
   mainImage: null;
 }>;
+// Variable: PAGINATED_GALLERIES_QUERY
+// Query: *[  _type == "gallery"] | order(name asc) [$offset...$end] {  _id,  name,  slug,  city,  country,  address,  location,  description,  directusImageFile,  mainImage {    asset->{      url    },    alt  }}
+export type PAGINATED_GALLERIES_QUERYResult = Array<{
+  _id: string;
+  name: string | null;
+  slug: Slug | null;
+  city: string | null;
+  country: string | null;
+  address: string | null;
+  location: null;
+  description: string | null;
+  directusImageFile: string | null;
+  mainImage: null;
+}>;
+// Variable: GALLERIES_COUNT_QUERY
+// Query: count(*[  _type == "gallery"])
+export type GALLERIES_COUNT_QUERYResult = number;
 // Variable: GALLERY_QUERY
-// Query: *[  _type == "gallery"  && slug.current == $slug][0] {  _id,  name,  slug,  city,  country,  address,  location,  description,  website,  workingHours,  social,  contact,  mainImage {    asset->{      url    },    alt  },  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {    _id,    title,    slug,    startDate,    endDate,    description,    gallery->{      _id,      name,      city    },    "image": image{      asset->{        url      },      alt    }  },  "reviews": *[    _type == "review"    && publishStatus == "published"    && (      gallery._ref == ^._id      || exhibition->gallery._ref == ^._id    )  ] | order(publishedAt desc) [0...8] {    _id,    title,    slug,    excerpt,    publishedAt,    mainImage {      asset->{        url      },      alt    },    author->{      _id,      name,      slug,      photo {        asset->{          url        }      }    }  }}
+// Query: *[  _type == "gallery"  && slug.current == $slug][0] {  _id,  name,  slug,  city,  country,  address,  location,  description,  website,  workingHours,  social,  contact,  directusImageFile,  mainImage {    asset->{      url    },    alt  },  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {    _id,    title,    slug,    startDate,    endDate,    description,    gallery->{      _id,      name,      city    },    "image": image{      asset->{        url      },      alt    }  },  "reviews": *[    _type == "review"    && publishStatus == "published"    && (      gallery._ref == ^._id      || exhibition->gallery._ref == ^._id    )  ] | order(publishedAt desc) [0...8] {    _id,    title,    slug,    excerpt,    publishedAt,    mainImage {      asset->{        url      },      alt    },    author->{      _id,      name,      slug,      photo {        asset->{          url        }      }    }  }}
 export type GALLERY_QUERYResult = {
   _id: string;
   name: string | null;
@@ -1345,7 +1505,7 @@ export type GALLERY_QUERYResult = {
   country: string | null;
   address: string | null;
   location: null;
-  description: null;
+  description: string | null;
   website: string | null;
   workingHours: string | null;
   social: {
@@ -1357,6 +1517,7 @@ export type GALLERY_QUERYResult = {
     phone?: string;
     email?: string;
   } | null;
+  directusImageFile: string | null;
   mainImage: null;
   exhibitions: Array<{
     _id: string;
@@ -1404,6 +1565,20 @@ export type GALLERY_QUERYResult = {
 // Variable: ARTISTS_QUERY
 // Query: *[  _type == "artist"] | order(name asc) {  _id,  name,  slug,  bio,  photo {    asset->{      url    },    alt  }}
 export type ARTISTS_QUERYResult = Array<{
+  _id: string;
+  name: string | null;
+  slug: Slug | null;
+  bio: string | null;
+  photo: {
+    asset: {
+      url: string | null;
+    } | null;
+    alt: null;
+  } | null;
+}>;
+// Variable: PAGINATED_ARTISTS_QUERY
+// Query: *[  _type == "artist"] | order(name asc) [$offset...$end] {  _id,  name,  slug,  bio,  photo {    asset->{      url    },    alt  }}
+export type PAGINATED_ARTISTS_QUERYResult = Array<{
   _id: string;
   name: string | null;
   slug: Slug | null;
@@ -1774,9 +1949,12 @@ declare module "@sanity/client" {
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...$limit] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": LATEST_REVIEWS_QUERYResult;
     "*[\n  _type == \"exhibition\"\n  && defined(startDate)\n] | order(startDate desc) [0...20] {\n  _id,\n  title,\n  slug,\n  description,\n  startDate,\n  endDate,\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    location\n  },\n  artists[]->{\n    _id,\n    name,\n    slug\n  },\n  \"mainImage\": image{\n    asset->{\n      url\n    },\n    alt\n  },\n  ticketing{\n    access,\n    ticketPrice,\n    bookingUrl,\n    ctaLabel\n  }\n}": EXHIBITIONS_QUERYResult;
     "*[\n  _type == \"exhibition\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  description,\n  startDate,\n  endDate,\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    location,\n    website,\n    openingHours\n  },\n  artists[]->{\n    _id,\n    name,\n    slug,\n    bio,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  \"mainImage\": image{\n    asset->{\n      url\n    },\n    alt\n  },\n  ticketing{\n    access,\n    ticketPrice,\n    bookingUrl,\n    ctaLabel\n  }\n}": EXHIBITION_QUERYResult;
-    "*[\n  _type == \"gallery\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  }\n}": GALLERIES_QUERYResult;
-    "*[\n  _type == \"gallery\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  website,\n  workingHours,\n  social,\n  contact,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{\n      _id,\n      name,\n      city\n    },\n    \"image\": image{\n      asset->{\n        url\n      },\n      alt\n    }\n  },\n  \"reviews\": *[\n    _type == \"review\"\n    && publishStatus == \"published\"\n    && (\n      gallery._ref == ^._id\n      || exhibition->gallery._ref == ^._id\n    )\n  ] | order(publishedAt desc) [0...8] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      slug,\n      photo {\n        asset->{\n          url\n        }\n      }\n    }\n  }\n}": GALLERY_QUERYResult;
+    "*[\n  _type == \"gallery\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  directusImageFile,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  }\n}": GALLERIES_QUERYResult;
+    "*[\n  _type == \"gallery\"\n] | order(name asc) [$offset...$end] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  directusImageFile,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  }\n}": PAGINATED_GALLERIES_QUERYResult;
+    "count(*[\n  _type == \"gallery\"\n])": GALLERIES_COUNT_QUERYResult;
+    "*[\n  _type == \"gallery\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  location,\n  description,\n  website,\n  workingHours,\n  social,\n  contact,\n  directusImageFile,\n  mainImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{\n      _id,\n      name,\n      city\n    },\n    \"image\": image{\n      asset->{\n        url\n      },\n      alt\n    }\n  },\n  \"reviews\": *[\n    _type == \"review\"\n    && publishStatus == \"published\"\n    && (\n      gallery._ref == ^._id\n      || exhibition->gallery._ref == ^._id\n    )\n  ] | order(publishedAt desc) [0...8] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      slug,\n      photo {\n        asset->{\n          url\n        }\n      }\n    }\n  }\n}": GALLERY_QUERYResult;
     "*[\n  _type == \"artist\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  }\n}": ARTISTS_QUERYResult;
+    "*[\n  _type == \"artist\"\n] | order(name asc) [$offset...$end] {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  }\n}": PAGINATED_ARTISTS_QUERYResult;
     "*[\n  _type == \"artist\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  bio,\n  birthYear,\n  country,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  website,\n  social,\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...10] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    gallery->{\n      name,\n      city\n    }\n  }\n}": ARTIST_QUERYResult;
     "*[\n  _type == \"homepageContent\"\n  && !(_id in path(\"drafts.**\"))\n][0] {\n  _id,\n  title,\n  heroSection{\n    featuredReview->{\n      _id,\n      title,\n      slug,\n      excerpt,\n      publishedAt,\n      mainImage{\n        asset->{\n          url\n        },\n        alt\n      },\n      author->{\n        _id,\n        name,\n        photo{\n          asset->{\n            url\n          }\n        }\n      }\n    },\n    weeklyStory->{\n      _id,\n      title,\n      slug,\n      excerpt,\n      portrait{\n        asset->{\n          url\n        },\n        alt\n      },\n      artist->{\n        _id,\n        name,\n        slug\n      }\n    }\n  },\n  latestReviews[]->{\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      photo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  featuredArtistStory->{\n    _id,\n    title,\n    slug,\n    portrait{\n      asset->{\n        url\n      },\n      alt\n    },\n    artist->{\n      _id,\n      name,\n      slug\n    }\n  },\n  weekendGuide->{\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    ctaText,\n    coverImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    sponsorshipStatus,\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  aiChatbotTeaser{\n    headline,\n    description,\n    ctaText\n  },\n  newsletterSignup{\n    headline,\n    description,\n    placeholder,\n    submitText\n  }\n}": HOMEPAGE_QUERYResult;
     "*[\n  _type == \"siteSettings\"\n][0] {\n  _id,\n  title,\n  description,\n  keywords,\n  logo {\n    asset->{\n      url\n    }\n  },\n  social,\n  tickerMessages[]{\n    message,\n    isActive\n  }\n}": SITE_SETTINGS_QUERYResult;

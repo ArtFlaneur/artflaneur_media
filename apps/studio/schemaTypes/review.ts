@@ -1,5 +1,6 @@
 import {defineType, defineField, defineArrayMember} from 'sanity'
 import {DocumentTextIcon, StarIcon} from '@sanity/icons'
+import {appCtaField, publishDateField, schemaMarkupField, seoField, slugField, summaryField} from './fields/commonFields'
 
 export const review = defineType({
   name: 'review',
@@ -22,29 +23,14 @@ export const review = defineType({
         Rule.max(100).warning('Titles should be under 100 characters for better SEO'),
       ],
     }),
-    defineField({
-      name: 'slug',
-      type: 'slug',
-      group: 'content',
-      options: {
-        source: 'title',
-        maxLength: 96,
-      },
-      validation: (Rule) => [
-        Rule.required().error('Slug is required to generate a URL'),
-        Rule.custom((slug) => 
-          slug?.current && slug.current.length > 96
-            ? 'Slug cannot be longer than 96 characters'
-            : true
-        ),
-      ],
-    }),
+    slugField({group: 'content'}),
+    summaryField({group: 'content'}),
     defineField({
       name: 'excerpt',
       type: 'text',
       rows: 3,
       group: 'content',
-      description: 'Brief summary for previews and SEO',
+      description: 'Optional teaser for cards and SEO (summary already feeds AI)',
       validation: (Rule) => [
         Rule.max(200).warning('Excerpts work best under 200 characters'),
       ],
@@ -127,12 +113,7 @@ export const review = defineType({
       },
       initialValue: 'draft',
     }),
-    defineField({
-      name: 'publishedAt',
-      type: 'datetime',
-      group: 'editorial',
-      validation: (Rule) => Rule.required().error('Publication date is required'),
-    }),
+    publishDateField({group: 'editorial'}),
     defineField({
       name: 'scheduledPublishAt',
       type: 'datetime',
@@ -208,6 +189,15 @@ export const review = defineType({
       type: 'string',
       group: 'metadata',
       initialValue: 'Add to your Planner',
+    }),
+    appCtaField({
+      group: 'metadata',
+      description: 'Optional CTA that deep links readers into the Art Flaneur app',
+    }),
+    seoField({group: 'metadata'}),
+    schemaMarkupField({
+      group: 'metadata',
+      description: 'Paste JSON-LD or leave blank to populate via automation later',
     }),
     defineField({
       name: 'sponsorshipEnabled',

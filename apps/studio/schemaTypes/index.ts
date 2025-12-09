@@ -6,6 +6,8 @@ import {gallery} from './gallery'
 import {curator} from './curator'
 import {artist} from './artist'
 import {blockContent} from './blockContent'
+import {factTable} from './factTable'
+import {keyInsights} from './keyInsights'
 import {artistStory} from './artistStory'
 import {guide} from './guide'
 import {landingPage} from './landingPage'
@@ -20,6 +22,8 @@ import {sponsor} from './sponsor'
 
 export const schemaTypes = [
   blockContent,
+  factTable,
+  keyInsights,
   sponsor,
   exhibition,
   review,

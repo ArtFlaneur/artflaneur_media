@@ -1,5 +1,6 @@
 import {PinIcon} from '@sanity/icons'
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
+import {appCtaField, schemaMarkupField, seoField, slugField, summaryField} from './fields/commonFields'
 
 export const gallery = defineType({
   name: 'gallery',
@@ -27,15 +28,11 @@ export const gallery = defineType({
       type: 'string',
       validation: (Rule) => Rule.required(),
     }),
-    defineField({
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
+    slugField({
       options: {
         source: 'name',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'image',
@@ -44,6 +41,16 @@ export const gallery = defineType({
       options: {
         hotspot: true,
       },
+    }),
+    summaryField({
+      description: '1–2 sentence positioning statement for AI and cards',
+    }),
+    defineField({
+      name: 'description',
+      title: 'Description',
+      type: 'text',
+      rows: 4,
+      validation: (Rule) => Rule.required().error('Description helps AI understand the gallery focus'),
     }),
     defineField({
       name: 'address',
@@ -70,6 +77,26 @@ export const gallery = defineType({
       name: 'website',
       title: 'Website',
       type: 'url',
+    }),
+    defineField({
+      name: 'focus',
+      title: 'Focus / Specialization',
+      type: 'string',
+      description: 'Primary mediums, eras, or curatorial lens',
+    }),
+    defineField({
+      name: 'artists',
+      title: 'Represented Artists',
+      type: 'array',
+      of: [defineArrayMember({type: 'reference', to: [{type: 'artist'}]})],
+      description: 'Link any artists formally represented by the gallery',
+    }),
+    defineField({
+      name: 'upcomingShows',
+      title: 'Upcoming Shows',
+      type: 'array',
+      of: [defineArrayMember({type: 'reference', to: [{type: 'exhibition'}]})],
+      description: 'Reference relevant future programming to power recommendations',
     }),
     defineField({
       name: 'workingHours',
@@ -99,12 +126,32 @@ export const gallery = defineType({
       ],
     }),
     defineField({
+      name: 'exportTrends',
+      title: 'Export Trends',
+      type: 'object',
+      description: 'Optional notes on markets, fairs, and regions',
+      fields: [
+        defineField({name: 'headline', title: 'Headline', type: 'string'}),
+        defineField({name: 'details', title: 'Details', type: 'text', rows: 3}),
+      ],
+      options: {collapsible: true, collapsed: true},
+    }),
+    defineField({
+      name: 'body',
+      title: 'Editorial Overview',
+      type: 'blockContent',
+      description: 'Long-form story mixing Portable Text, fact tables, and key insights',
+    }),
+    defineField({
       name: 'syncedAt',
       title: 'Last Synced At',
       type: 'datetime',
       description: 'Timestamp of the most recent Directus sync',
       readOnly: true,
     }),
+    appCtaField(),
+    seoField(),
+    schemaMarkupField(),
   ],
   preview: {
     select: {

@@ -1,5 +1,6 @@
-import {defineType, defineField} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 import {UserIcon} from '@sanity/icons'
+import {appCtaField, schemaMarkupField, seoField, slugField, summaryField} from './fields/commonFields'
 
 export const author = defineType({
   name: 'author',
@@ -12,15 +13,11 @@ export const author = defineType({
       type: 'string',
       validation: (Rule) => Rule.required().error('Name is required'),
     }),
-    defineField({
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
+    slugField({
       options: {
         source: 'name',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'photo',
@@ -30,11 +27,20 @@ export const author = defineType({
         hotspot: true,
       },
     }),
+    summaryField({
+      description: 'One-liner that describes this ambassador’s POV',
+    }),
     defineField({
       name: 'bio',
       title: 'Bio',
       type: 'text',
       rows: 4,
+    }),
+    defineField({
+      name: 'body',
+      title: 'Full Profile',
+      type: 'blockContent',
+      description: 'Structured long-form story for AI-ready ambassador pages',
     }),
     defineField({
       name: 'role',
@@ -49,6 +55,30 @@ export const author = defineType({
         layout: 'radio',
       },
       initialValue: 'author',
+    }),
+    defineField({
+      name: 'specialization',
+      title: 'Specialization',
+      type: 'string',
+      description: 'Primary beat, discipline, or geographic focus',
+    }),
+    defineField({
+      name: 'currentInterests',
+      title: 'Current Interests',
+      type: 'text',
+      rows: 3,
+      description: 'What this ambassador is researching or covering right now',
+    }),
+    defineField({
+      name: 'recommendations',
+      title: 'Recommendations',
+      type: 'array',
+      description: 'Link galleries, exhibitions, or guides they recommend',
+      of: [
+        defineArrayMember({name: 'galleryRecommendation', type: 'reference', to: [{type: 'gallery'}]}),
+        defineArrayMember({name: 'exhibitionRecommendation', type: 'reference', to: [{type: 'exhibition'}]}),
+        defineArrayMember({name: 'guideRecommendation', type: 'reference', to: [{type: 'guide'}]}),
+      ],
     }),
     defineField({
       name: 'email',
@@ -66,6 +96,9 @@ export const author = defineType({
         {name: 'website', type: 'url', title: 'Личный сайт'},
       ],
     }),
+    appCtaField(),
+    seoField(),
+    schemaMarkupField(),
   ],
   preview: {
     select: {
