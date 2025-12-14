@@ -171,7 +171,7 @@ export const EXHIBITIONS_QUERY = defineQuery(`*[
     slug,
     city,
     address,
-    location
+    "location": coalesce(location, geopoint)
   },
   artists[]->{
     _id,
@@ -208,9 +208,9 @@ export const EXHIBITION_QUERY = defineQuery(`*[
     slug,
     city,
     address,
-    location,
+    "location": coalesce(location, geopoint),
     website,
-    openingHours
+    "openingHours": coalesce(openingHours, workingHours)
   },
   artists[]->{
     _id,
@@ -247,10 +247,10 @@ export const GALLERIES_QUERY = defineQuery(`*[
   city,
   country,
   address,
-  location,
+  "location": coalesce(location, geopoint),
   description,
   directusImageFile,
-  mainImage {
+  "mainImage": coalesce(mainImage, image) {
     asset->{
       url
     },
@@ -267,10 +267,10 @@ export const PAGINATED_GALLERIES_QUERY = defineQuery(`*[
   city,
   country,
   address,
-  location,
+  "location": coalesce(location, geopoint),
   description,
   directusImageFile,
-  mainImage {
+  "mainImage": coalesce(mainImage, image) {
     asset->{
       url
     },
@@ -292,14 +292,14 @@ export const GALLERY_QUERY = defineQuery(`*[
   city,
   country,
   address,
-  location,
+  "location": coalesce(location, geopoint),
   description,
   website,
   workingHours,
   social,
   contact,
   directusImageFile,
-  mainImage {
+  "mainImage": coalesce(mainImage, image) {
     asset->{
       url
     },

@@ -10,7 +10,7 @@ export const landingPage = defineType({
       name: 'title',
       title: 'Title',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Title is required to publish a landing page')],
     }),
     defineField({
       name: 'slug',
@@ -20,7 +20,7 @@ export const landingPage = defineType({
         source: 'title',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Slug is required to generate a URL')],
     }),
     defineField({
       name: 'pageType',
@@ -39,11 +39,11 @@ export const landingPage = defineType({
       title: 'Hero Section',
       type: 'object',
       fields: [
-        {name: 'headline', type: 'string', title: 'Headline'},
-        {name: 'subheadline', type: 'text', title: 'Subheadline', rows: 2},
-        {name: 'heroImage', type: 'image', title: 'Hero Image', options: {hotspot: true}},
-        {name: 'ctaText', type: 'string', title: 'CTA Text'},
-        {name: 'ctaUrl', type: 'string', title: 'CTA URL'},
+        defineField({name: 'headline', type: 'string'}),
+        defineField({name: 'subheadline', type: 'text', rows: 2}),
+        defineField({name: 'heroImage', type: 'image', options: {hotspot: true}}),
+        defineField({name: 'ctaText', type: 'string'}),
+        defineField({name: 'ctaUrl', type: 'string'}),
       ],
     }),
     defineField({
@@ -54,9 +54,9 @@ export const landingPage = defineType({
         defineArrayMember({
           type: 'object',
           fields: [
-            {name: 'title', type: 'string', title: 'Title'},
-            {name: 'description', type: 'text', title: 'Description', rows: 3},
-            {name: 'icon', type: 'image', title: 'Icon', options: {hotspot: true}},
+            defineField({name: 'title', type: 'string'}),
+            defineField({name: 'description', type: 'text', rows: 3}),
+            defineField({name: 'icon', type: 'image', options: {hotspot: true}}),
           ],
         }),
       ],
@@ -69,15 +69,15 @@ export const landingPage = defineType({
         defineArrayMember({
           type: 'object',
           fields: [
-            {name: 'name', type: 'string', title: 'Package Name'},
-            {name: 'price', type: 'string', title: 'Price'},
+            defineField({name: 'name', type: 'string', title: 'Package Name'}),
+            defineField({name: 'price', type: 'string'}),
             {
               name: 'features',
               type: 'array',
               title: 'Features',
               of: [defineArrayMember({type: 'string'})],
             },
-            {name: 'ctaText', type: 'string', title: 'CTA Text'},
+            defineField({name: 'ctaText', type: 'string'}),
           ],
         }),
       ],
@@ -90,10 +90,10 @@ export const landingPage = defineType({
         defineArrayMember({
           type: 'object',
           fields: [
-            {name: 'quote', type: 'text', title: 'Quote', rows: 3},
-            {name: 'author', type: 'string', title: 'Author'},
-            {name: 'role', type: 'string', title: 'Role'},
-            {name: 'photo', type: 'image', title: 'Photo', options: {hotspot: true}},
+            defineField({name: 'quote', type: 'text', rows: 3}),
+            defineField({name: 'author', type: 'string'}),
+            defineField({name: 'role', type: 'string'}),
+            defineField({name: 'photo', type: 'image', options: {hotspot: true}}),
           ],
         }),
       ],
@@ -106,8 +106,8 @@ export const landingPage = defineType({
         defineArrayMember({
           type: 'object',
           fields: [
-            {name: 'question', type: 'string', title: 'Question'},
-            {name: 'answer', type: 'text', title: 'Answer', rows: 3},
+            defineField({name: 'question', type: 'string'}),
+            defineField({name: 'answer', type: 'text', rows: 3}),
           ],
         }),
       ],
@@ -117,9 +117,9 @@ export const landingPage = defineType({
       title: 'Contact Form',
       type: 'object',
       fields: [
-        {name: 'headline', type: 'string', title: 'Headline'},
-        {name: 'description', type: 'text', title: 'Description', rows: 2},
-        {name: 'submitText', type: 'string', title: 'Submit Button Text'},
+        defineField({name: 'headline', type: 'string'}),
+        defineField({name: 'description', type: 'text', rows: 2}),
+        defineField({name: 'submitText', type: 'string', title: 'Submit Button Text'}),
       ],
     }),
     defineField({
@@ -127,8 +127,8 @@ export const landingPage = defineType({
       title: 'Trial CTA',
       type: 'object',
       fields: [
-        {name: 'text', type: 'string', title: 'CTA Text'},
-        {name: 'url', type: 'string', title: 'CTA URL'},
+        defineField({name: 'text', type: 'string', title: 'CTA Text'}),
+        defineField({name: 'url', type: 'string'}),
       ],
     }),
   ],

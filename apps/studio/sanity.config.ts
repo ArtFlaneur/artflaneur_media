@@ -10,12 +10,21 @@ import {googleMapsInput} from '@sanity/google-maps-input'
 import {schemaTypes} from './schemaTypes'
 import {structure} from './structure'
 
+const projectId = process.env.SANITY_STUDIO_PROJECT_ID
+const dataset = process.env.SANITY_STUDIO_DATASET
+
+if (!projectId || !dataset) {
+  throw new Error(
+    'Missing required Sanity Studio env. Set SANITY_STUDIO_PROJECT_ID and SANITY_STUDIO_DATASET in apps/studio/.env (or your shell environment).',
+  )
+}
+
 export default defineConfig({
   name: 'default',
   title: 'Art Flaneur Media',
   
-  projectId: process.env.SANITY_STUDIO_PROJECT_ID || 'your-project-id',
-  dataset: process.env.SANITY_STUDIO_DATASET || 'production',
+  projectId,
+  dataset,
 
   plugins: [
     structureTool({

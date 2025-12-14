@@ -5,7 +5,7 @@ import { ArticleCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
 import { BlockContent } from '../sanity/types';
-import { REVIEW_QUERYResult, REVIEWS_QUERYResult } from '../sanity/queryResults';
+import { REVIEW_QUERYResult, REVIEWS_QUERYResult } from '../sanity/types';
 import { Article, ContentType } from '../types';
 import { getDisplayDomain } from '../lib/formatters';
 

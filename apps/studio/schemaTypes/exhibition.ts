@@ -17,7 +17,7 @@ export const exhibition = defineType({
       name: 'title',
       title: 'Title',
       type: 'string',
-      validation: (Rule) => Rule.required().error('Title is required'),
+      validation: (Rule) => [Rule.required().error('Title is required')],
     }),
     defineField({
       name: 'slug',
@@ -27,14 +27,14 @@ export const exhibition = defineType({
         source: 'title',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Slug is required to generate a URL')],
     }),
     defineField({
       name: 'gallery',
       title: 'Gallery',
       type: 'reference',
       to: [{type: 'gallery'}],
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Gallery is required to publish an exhibition')],
     }),
     defineField({
       name: 'directusGalleryId',
@@ -51,11 +51,7 @@ export const exhibition = defineType({
         hotspot: true,
       },
       fields: [
-        {
-          name: 'alt',
-          type: 'string',
-          title: 'Alt text',
-        },
+        defineField({name: 'alt', type: 'string', title: 'Alt text'}),
       ],
     }),
     defineField({
@@ -80,13 +76,13 @@ export const exhibition = defineType({
       name: 'startDate',
       title: 'Start Date',
       type: 'datetime',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Start date is required')],
     }),
     defineField({
       name: 'endDate',
       title: 'End Date',
       type: 'datetime',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('End date is required')],
     }),
     defineField({
       name: 'ticketing',

@@ -10,7 +10,7 @@ export const mapData = defineType({
       name: 'title',
       title: 'Map Title',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Map title is required')],
     }),
     defineField({
       name: 'galleries',

@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { client } from '../sanity/lib/client';
 import { HOMEPAGE_QUERY, LATEST_REVIEWS_QUERY } from '../sanity/lib/queries';
-import { HOMEPAGE_QUERYResult, LATEST_REVIEWS_QUERYResult } from '../sanity/queryResults';
+import { HOMEPAGE_QUERYResult, LATEST_REVIEWS_QUERYResult } from '../sanity/types';
 import { Article, ContentType } from '../types';
 
 type HomepageData = NonNullable<HOMEPAGE_QUERYResult>;

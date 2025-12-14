@@ -9,7 +9,7 @@ export const guide = defineType({
       name: 'title',
       title: 'Title',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Title is required to publish a guide')],
     }),
     defineField({
       name: 'slug',
@@ -19,14 +19,14 @@ export const guide = defineType({
         source: 'title',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Slug is required to generate a URL')],
     }),
     defineField({
       name: 'city',
       title: 'City',
       type: 'string',
       description: 'Primary city covered by this weekend guide',
-      validation: (Rule) => Rule.required().error('City name is required to publish a guide'),
+      validation: (Rule) => [Rule.required().error('City name is required to publish a guide')],
     }),
     defineField({
       name: 'coverImage',
@@ -34,7 +34,7 @@ export const guide = defineType({
       type: 'image',
       options: {hotspot: true},
       fields: [
-        {name: 'alt', type: 'string', title: 'Alt text'},
+        defineField({name: 'alt', type: 'string', title: 'Alt text'}),
       ],
     }),
     defineField({
@@ -42,7 +42,9 @@ export const guide = defineType({
       title: 'Short Description',
       type: 'text',
       rows: 4,
-      validation: (Rule) => Rule.required().error('Add a short description to help users understand the trail'),
+      validation: (Rule) => [
+        Rule.required().error('Add a short description to help users understand the trail'),
+      ],
     }),
     defineField({
       name: 'stops',
@@ -52,7 +54,12 @@ export const guide = defineType({
         defineArrayMember({
           type: 'object',
           fields: [
-            defineField({name: 'title', type: 'string', title: 'Stop Title', validation: (Rule) => Rule.required()}),
+            defineField({
+              name: 'title',
+              type: 'string',
+              title: 'Stop Title',
+              validation: (Rule) => [Rule.required().error('Stop title is required')],
+            }),
             defineField({name: 'summary', type: 'text', title: 'Summary', rows: 3}),
             defineField({name: 'gallery', type: 'reference', title: 'Gallery', to: [{type: 'gallery'}]}),
             defineField({name: 'exhibition', type: 'reference', title: 'Exhibition', to: [{type: 'exhibition'}]}),
@@ -69,7 +76,7 @@ export const guide = defineType({
           ],
         }),
       ],
-      validation: (Rule) => Rule.min(1).warning('Add at least one stop to publish the guide'),
+      validation: (Rule) => [Rule.min(1).warning('Add at least one stop to publish the guide')],
     }),
     defineField({
       name: 'ctaText',

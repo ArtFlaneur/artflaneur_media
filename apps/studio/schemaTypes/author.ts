@@ -11,7 +11,7 @@ export const author = defineType({
       name: 'name',
       title: 'Name',
       type: 'string',
-      validation: (Rule) => Rule.required().error('Name is required'),
+      validation: (Rule) => [Rule.required().error('Name is required')],
     }),
     slugField({
       options: {
@@ -84,7 +84,7 @@ export const author = defineType({
       name: 'email',
       title: 'Email',
       type: 'string',
-      validation: (Rule) => Rule.email(),
+      validation: (Rule) => [Rule.email()],
     }),
     defineField({
       name: 'social',

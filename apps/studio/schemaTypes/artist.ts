@@ -19,7 +19,7 @@ export const artist = defineType({
       name: 'name',
       title: 'Name',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Name is required to publish an artist profile')],
     }),
     slugField({
       options: {
@@ -88,7 +88,12 @@ export const artist = defineType({
           name: 'keyWork',
           title: 'Key Work',
           fields: [
-            defineField({name: 'title', title: 'Title', type: 'string', validation: (Rule) => Rule.required()}),
+            defineField({
+              name: 'title',
+              title: 'Title',
+              type: 'string',
+              validation: (Rule) => [Rule.required().error('Work title is required')],
+            }),
             defineField({name: 'year', title: 'Year', type: 'string'}),
             defineField({
               name: 'exhibition',
@@ -100,7 +105,7 @@ export const artist = defineType({
           ],
         }),
       ],
-      validation: (Rule) => Rule.max(5).warning('Select the most relevant works (max 5)'),
+      validation: (Rule) => [Rule.max(5).warning('Select the most relevant works (max 5)')],
     }),
     defineField({
       name: 'exhibitions',
@@ -119,12 +124,17 @@ export const artist = defineType({
           name: 'collectionEntry',
           title: 'Collection',
           fields: [
-            defineField({name: 'institution', title: 'Institution', type: 'string', validation: (Rule) => Rule.required()}),
+            defineField({
+              name: 'institution',
+              title: 'Institution',
+              type: 'string',
+              validation: (Rule) => [Rule.required().error('Institution is required')],
+            }),
             defineField({name: 'location', title: 'Location', type: 'string'}),
           ],
         }),
       ],
-      validation: (Rule) => Rule.max(10).warning('List the most recognizable collections (max 10)'),
+      validation: (Rule) => [Rule.max(10).warning('List the most recognizable collections (max 10)')],
     }),
     defineField({
       name: 'social',

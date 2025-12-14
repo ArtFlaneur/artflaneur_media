@@ -18,8 +18,18 @@ export const homepageContent = defineType({
       title: 'Hero Section',
       type: 'object',
       fields: [
-        {name: 'featuredReview', type: 'reference', to: [{type: 'review'}], title: 'Featured Review'},
-        {name: 'weeklyStory', type: 'reference', to: [{type: 'artistStory'}], title: 'Weekly Artist Story'},
+        defineField({
+          name: 'featuredReview',
+          type: 'reference',
+          to: [{type: 'review'}],
+          title: 'Featured Review',
+        }),
+        defineField({
+          name: 'weeklyStory',
+          type: 'reference',
+          to: [{type: 'artistStory'}],
+          title: 'Weekly Artist Story',
+        }),
       ],
     }),
     defineField({
@@ -27,7 +37,7 @@ export const homepageContent = defineType({
       title: 'Latest Reviews',
       type: 'array',
       of: [defineArrayMember({type: 'reference', to: [{type: 'review'}]})],
-      validation: (Rule) => Rule.max(6),
+      validation: (Rule) => [Rule.max(6).warning('Homepage supports up to 6 curated reviews')],
     }),
     defineField({
       name: 'featuredArtistStory',
@@ -46,9 +56,9 @@ export const homepageContent = defineType({
       title: 'AI Chatbot Teaser',
       type: 'object',
       fields: [
-        {name: 'headline', type: 'string', title: 'Headline'},
-        {name: 'description', type: 'text', title: 'Description', rows: 2},
-        {name: 'ctaText', type: 'string', title: 'CTA Text'},
+        defineField({name: 'headline', type: 'string'}),
+        defineField({name: 'description', type: 'text', rows: 2}),
+        defineField({name: 'ctaText', type: 'string', title: 'CTA Text'}),
       ],
     }),
     defineField({
@@ -56,10 +66,10 @@ export const homepageContent = defineType({
       title: 'Newsletter Signup',
       type: 'object',
       fields: [
-        {name: 'headline', type: 'string', title: 'Headline'},
-        {name: 'description', type: 'text', title: 'Description', rows: 2},
-        {name: 'placeholder', type: 'string', title: 'Email Placeholder'},
-        {name: 'submitText', type: 'string', title: 'Submit Button Text'},
+        defineField({name: 'headline', type: 'string'}),
+        defineField({name: 'description', type: 'text', rows: 2}),
+        defineField({name: 'placeholder', type: 'string', title: 'Email Placeholder'}),
+        defineField({name: 'submitText', type: 'string', title: 'Submit Button Text'}),
       ],
     }),
   ],

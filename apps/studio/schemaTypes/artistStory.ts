@@ -9,7 +9,7 @@ export const artistStory = defineType({
       name: 'title',
       title: 'Title',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+          validation: (Rule) => [Rule.required().error('Title is required to publish an artist story')],
     }),
     defineField({
       name: 'slug',
@@ -19,14 +19,14 @@ export const artistStory = defineType({
         source: 'title',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
+          validation: (Rule) => [Rule.required().error('Slug is required to generate a URL')],
     }),
     defineField({
       name: 'artist',
       title: 'Artist',
       type: 'reference',
       to: [{type: 'artist'}],
-      validation: (Rule) => Rule.required(),
+          validation: (Rule) => [Rule.required().error('Artist reference is required to publish this story')],
     }),
     defineField({
       name: 'portrait',
@@ -34,7 +34,7 @@ export const artistStory = defineType({
       type: 'image',
       options: {hotspot: true},
       fields: [
-        {name: 'alt', type: 'string', title: 'Alt text'},
+            defineField({name: 'alt', type: 'string', title: 'Alt text'}),
       ],
     }),
     defineField({
@@ -51,10 +51,10 @@ export const artistStory = defineType({
           type: 'image',
           options: {hotspot: true},
           fields: [
-            {name: 'alt', type: 'string', title: 'Alt text'},
-            {name: 'caption', type: 'string', title: 'Caption'},
-            {name: 'title', type: 'string', title: 'Artwork Title'},
-            {name: 'year', type: 'string', title: 'Year'},
+                defineField({name: 'alt', type: 'string', title: 'Alt text'}),
+                defineField({name: 'caption', type: 'string', title: 'Caption'}),
+                defineField({name: 'title', type: 'string', title: 'Artwork Title'}),
+                defineField({name: 'year', type: 'string', title: 'Year'}),
           ],
         }),
       ],
@@ -115,13 +115,13 @@ export const artistStory = defineType({
       type: 'reference',
       to: [{type: 'sponsor'}],
       hidden: ({document}) => document?.sponsorshipStatus !== 'sponsored',
-      validation: (Rule) => Rule.custom((sponsor, context) => {
+          validation: (Rule) => [Rule.custom((sponsor, context) => {
         const isSponsored = (context.document as any)?.sponsorshipStatus === 'sponsored'
         if (isSponsored && !sponsor) {
           return 'Please select a sponsor for sponsored content'
         }
         return true
-      }),
+          })],
     }),
     defineField({
       name: 'sponsorBadgeSettings',
@@ -217,14 +217,14 @@ export const artistStory = defineType({
               type: 'number',
               title: 'Max Width (px)',
               hidden: ({parent}) => parent?.mode !== 'custom',
-              validation: (Rule) => Rule.min(20).max(500),
+              validation: (Rule) => [Rule.min(20).max(500)],
             }),
             defineField({
               name: 'maxHeight',
               type: 'number',
               title: 'Max Height (px)',
               hidden: ({parent}) => parent?.mode !== 'custom',
-              validation: (Rule) => Rule.min(20).max(200),
+              validation: (Rule) => [Rule.min(20).max(200)],
             }),
           ],
         },

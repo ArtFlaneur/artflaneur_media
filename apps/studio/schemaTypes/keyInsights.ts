@@ -12,9 +12,9 @@ export const keyInsights = defineType({
       title: 'Section Heading',
       type: 'string',
       initialValue: 'Key Insights',
-  validation: (rule: any) => [
-        rule.required().error('Provide a heading for the insights list'),
-        rule.max(80).warning('Headings should stay under 80 characters'),
+      validation: (Rule) => [
+        Rule.required().error('Provide a heading for the insights list'),
+        Rule.max(80).warning('Headings should stay under 80 characters'),
       ],
     }),
     defineField({
@@ -32,18 +32,18 @@ export const keyInsights = defineType({
               title: 'Insight Text',
               type: 'text',
               rows: 2,
-              validation: (rule: any) => [
-                rule.required().error('Write the insight text'),
-                rule.max(280).warning('Insights should remain scannable (max 280 characters)'),
+              validation: (Rule) => [
+                Rule.required().error('Write the insight text'),
+                Rule.max(280).warning('Insights should remain scannable (max 280 characters)'),
               ],
             }),
           ],
         }),
       ],
-  validation: (rule: any) => [
-        rule.required().error('Add at least one insight'),
-        rule.min(3).warning('Aim for at least three insights to provide context'),
-        rule.max(5).warning('Limit to five insights for clarity'),
+      validation: (Rule) => [
+        Rule.required().error('Add at least one insight'),
+        Rule.min(3).warning('Aim for at least three insights to provide context'),
+        Rule.max(5).warning('Limit to five insights for clarity'),
       ],
     }),
   ],

@@ -9,7 +9,7 @@ export const siteSettings = defineType({
       name: 'title',
       title: 'Site Title',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Site title is required')],
     }),
     defineField({
       name: 'navigation',
@@ -19,9 +19,13 @@ export const siteSettings = defineType({
         defineArrayMember({
           type: 'object',
           fields: [
-            {name: 'label', type: 'string', title: 'Label'},
-            {name: 'url', type: 'string', title: 'URL'},
-            {name: 'page', type: 'reference', to: [{type: 'review'}, {type: 'guide'}, {type: 'artistStory'}, {type: 'landingPage'}], title: 'Page'},
+            defineField({name: 'label', type: 'string'}),
+            defineField({name: 'url', type: 'string'}),
+            defineField({
+              name: 'page',
+              type: 'reference',
+              to: [{type: 'review'}, {type: 'guide'}, {type: 'artistStory'}, {type: 'landingPage'}],
+            }),
           ],
         }),
       ],
@@ -31,7 +35,7 @@ export const siteSettings = defineType({
       title: 'Footer',
       type: 'object',
       fields: [
-        {
+        defineField({
           name: 'links',
           type: 'array',
           title: 'Footer Links',
@@ -39,13 +43,13 @@ export const siteSettings = defineType({
             defineArrayMember({
               type: 'object',
               fields: [
-                {name: 'label', type: 'string', title: 'Label'},
-                {name: 'url', type: 'string', title: 'URL'},
+                defineField({name: 'label', type: 'string'}),
+                defineField({name: 'url', type: 'string'}),
               ],
             }),
           ],
-        },
-        {name: 'copyright', type: 'string', title: 'Copyright Text'},
+        }),
+        defineField({name: 'copyright', type: 'string', title: 'Copyright Text'}),
       ],
     }),
     defineField({
@@ -57,19 +61,19 @@ export const siteSettings = defineType({
         defineArrayMember({
           type: 'object',
           fields: [
-            {
+            defineField({
               name: 'message',
               type: 'string',
               title: 'Message',
-              validation: (Rule) => Rule.required(),
-            },
-            {
+              validation: (Rule) => [Rule.required().error('Message is required for ticker items')],
+            }),
+            defineField({
               name: 'isActive',
               type: 'boolean',
               title: 'Active',
               description: 'Show this message in the ticker',
               initialValue: true,
-            },
+            }),
           ],
           preview: {
             select: {
@@ -91,10 +95,10 @@ export const siteSettings = defineType({
       title: 'Social Media',
       type: 'object',
       fields: [
-        {name: 'instagram', type: 'url', title: 'Instagram'},
-        {name: 'facebook', type: 'url', title: 'Facebook'},
-        {name: 'twitter', type: 'url', title: 'Twitter/X'},
-        {name: 'linkedin', type: 'url', title: 'LinkedIn'},
+        defineField({name: 'instagram', type: 'url', title: 'Instagram'}),
+        defineField({name: 'facebook', type: 'url', title: 'Facebook'}),
+        defineField({name: 'twitter', type: 'url', title: 'Twitter/X'}),
+        defineField({name: 'linkedin', type: 'url', title: 'LinkedIn'}),
       ],
     }),
     defineField({
@@ -105,8 +109,8 @@ export const siteSettings = defineType({
         defineArrayMember({
           type: 'object',
           fields: [
-            {name: 'name', type: 'string', title: 'City Name'},
-            {name: 'slug', type: 'slug', title: 'Slug'},
+            defineField({name: 'name', type: 'string', title: 'City Name'}),
+            defineField({name: 'slug', type: 'slug', title: 'Slug'}),
           ],
         }),
       ],
@@ -169,40 +173,40 @@ export const siteSettings = defineType({
           initialValue: 'supportedBy',
           description: 'Default template if not specified by sponsor',
         },
-        {
+        defineField({
           name: 'logoSizeDefaults',
           type: 'object',
           title: 'Logo Size Defaults',
           fields: [
-            {
+            defineField({
               name: 'horizontal',
               type: 'object',
               title: 'Horizontal Logos',
               fields: [
-                {name: 'maxWidth', type: 'number', title: 'Max Width (px)', initialValue: 200},
-                {name: 'maxHeight', type: 'number', title: 'Max Height (px)', initialValue: 40},
+                defineField({name: 'maxWidth', type: 'number', title: 'Max Width (px)', initialValue: 200}),
+                defineField({name: 'maxHeight', type: 'number', title: 'Max Height (px)', initialValue: 40}),
               ],
-            },
-            {
+            }),
+            defineField({
               name: 'vertical',
               type: 'object',
               title: 'Vertical Logos',
               fields: [
-                {name: 'maxWidth', type: 'number', title: 'Max Width (px)', initialValue: 100},
-                {name: 'maxHeight', type: 'number', title: 'Max Height (px)', initialValue: 80},
+                defineField({name: 'maxWidth', type: 'number', title: 'Max Width (px)', initialValue: 100}),
+                defineField({name: 'maxHeight', type: 'number', title: 'Max Height (px)', initialValue: 80}),
               ],
-            },
-            {
+            }),
+            defineField({
               name: 'square',
               type: 'object',
               title: 'Square Logos',
               fields: [
-                {name: 'maxWidth', type: 'number', title: 'Max Width (px)', initialValue: 60},
-                {name: 'maxHeight', type: 'number', title: 'Max Height (px)', initialValue: 60},
+                defineField({name: 'maxWidth', type: 'number', title: 'Max Width (px)', initialValue: 60}),
+                defineField({name: 'maxHeight', type: 'number', title: 'Max Height (px)', initialValue: 60}),
               ],
-            },
+            }),
           ],
-        },
+        }),
       ],
     }),
   ],

@@ -1,4 +1,4 @@
-import {defineType, defineArrayMember} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 /**
  * This is the schema definition for the rich text fields used for
@@ -14,29 +14,40 @@ export const blockContent = defineType({
   title: 'Block Content',
   name: 'blockContent',
   type: 'array',
-  validation: (rule: any) => rule.custom((blocks: any[]) => {
-    if (!Array.isArray(blocks)) return true
+  validation: (Rule) => [
+    Rule.custom((blocks) => {
+      if (!Array.isArray(blocks)) return true
 
-    const headings = blocks
-      .filter((block) => block?._type === 'block' && typeof block.style === 'string' && /^h[2-4]$/.test(block.style))
-      .map((block) => block.style)
+      const headings = blocks
+        .filter(
+          (block) => {
+            if (!block || typeof block !== 'object') return false
+            const candidate = block as Record<string, unknown>
+            if (candidate['_type'] !== 'block') return false
 
-    if (!headings.length) return true
+            const {style} = candidate as {style?: unknown}
+            return typeof style === 'string' && /^h[2-4]$/.test(style)
+          },
+        )
+        .map((block) => (block as {style: string}).style)
 
-    if (headings[0] !== 'h2') {
-      return 'Первый заголовок в тексте должен быть H2, чтобы сохранить правильную иерархию'
-    }
+      if (!headings.length) return true
 
-    for (let i = 1; i < headings.length; i += 1) {
-      const currentLevel = Number(headings[i].substring(1))
-      const previousLevel = Number(headings[i - 1].substring(1))
-      if (currentLevel - previousLevel > 1) {
-        return `Нельзя перепрыгивать с ${headings[i - 1].toUpperCase()} на ${headings[i].toUpperCase()}`
+      if (headings[0] !== 'h2') {
+        return 'Первый заголовок в тексте должен быть H2, чтобы сохранить правильную иерархию'
       }
-    }
 
-    return true
-  }),
+      for (let i = 1; i < headings.length; i += 1) {
+        const currentLevel = Number(headings[i].substring(1))
+        const previousLevel = Number(headings[i - 1].substring(1))
+        if (currentLevel - previousLevel > 1) {
+          return `Нельзя перепрыгивать с ${headings[i - 1].toUpperCase()} на ${headings[i].toUpperCase()}`
+        }
+      }
+
+      return true
+    }),
+  ],
   of: [
     defineArrayMember({
       title: 'Block',
@@ -71,11 +82,7 @@ export const blockContent = defineType({
             name: 'link',
             type: 'object',
             fields: [
-              {
-                title: 'URL',
-                name: 'href',
-                type: 'url',
-              },
+              defineField({name: 'href', title: 'URL', type: 'url'}),
             ],
           },
         ],
@@ -98,18 +105,18 @@ export const blockContent = defineType({
       title: 'Image',
       options: {hotspot: true},
       fields: [
-        {
+        defineField({
           name: 'alt',
           type: 'string',
           title: 'Alternative text',
           description: 'Image description for SEO and accessibility',
-        },
-        {
+        }),
+        defineField({
           name: 'caption',
           type: 'string',
           title: 'Caption',
           description: 'Image caption',
-        },
+        }),
       ],
     }),
   ],

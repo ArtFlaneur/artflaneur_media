@@ -1,34 +1,41 @@
 import {defineArrayMember, defineField} from 'sanity'
+import type {FieldDefinition} from 'sanity'
 
 type FieldOverrides = Record<string, unknown>
 
-const withOverrides = <T extends Record<string, unknown>>(base: T, overrides: FieldOverrides = {}) => {
-  const merged = {
-    ...base,
+type OverrideableFieldProps = {
+  options?: unknown
+  fields?: unknown
+}
+
+const withOverrides = (base: FieldDefinition & OverrideableFieldProps, overrides: FieldOverrides = {}) => {
+  const merged: Record<string, unknown> = {
+    ...(base as unknown as Record<string, unknown>),
     ...overrides,
   }
 
   if ('options' in overrides) {
-    merged.options = overrides.options
-  } else if ('options' in base) {
-    merged.options = base.options
+    merged['options'] = (overrides as OverrideableFieldProps).options
+  } else if ('options' in (base as unknown as Record<string, unknown>)) {
+    merged['options'] = (base as OverrideableFieldProps).options
   } else {
-    delete merged.options
+    delete merged['options']
   }
 
   if ('fields' in overrides) {
-    merged.fields = overrides.fields
-  } else if ('fields' in base) {
-    merged.fields = base.fields
+    merged['fields'] = (overrides as OverrideableFieldProps).fields
+  } else if ('fields' in (base as unknown as Record<string, unknown>)) {
+    merged['fields'] = (base as OverrideableFieldProps).fields
   } else {
-    delete merged.fields
+    delete merged['fields']
   }
 
-  return merged
+  return merged as unknown as FieldDefinition & OverrideableFieldProps
 }
 
 export const slugField = (overrides: FieldOverrides = {}) =>
-  defineField(withOverrides({
+{
+  const base: FieldDefinition = {
     name: 'slug',
     title: 'Slug',
     type: 'slug',
@@ -36,41 +43,51 @@ export const slugField = (overrides: FieldOverrides = {}) =>
       source: 'title',
       maxLength: 96,
     },
-  validation: (rule: any) => [
-      rule.required().error('Slug is required to generate a URL'),
-      rule.custom((slug: {current?: string}) =>
-        slug?.current && slug.current.length > 96
-          ? 'Slug cannot be longer than 96 characters'
-          : true
+    validation: (Rule) => [
+      Rule.required().error('Slug is required to generate a URL'),
+      Rule.custom((slug?: {current?: string}) =>
+        slug?.current && slug.current.length > 96 ? 'Slug cannot be longer than 96 characters' : true,
       ),
     ],
-  }, overrides))
+  }
+
+  return defineField(withOverrides(base, overrides))
+}
 
 export const publishDateField = (overrides: FieldOverrides = {}) =>
-  defineField(withOverrides({
+{
+  const base: FieldDefinition = {
     name: 'publishedAt',
     title: 'Published At',
     type: 'datetime',
     description: 'Controls scheduling, feeds, and schema timestamps',
     initialValue: () => new Date().toISOString(),
-  validation: (rule: any) => rule.required().error('Publication date is required'),
-  }, overrides))
+    validation: (Rule) => [Rule.required().error('Publication date is required')],
+  }
+
+  return defineField(withOverrides(base, overrides))
+}
 
 export const summaryField = (overrides: FieldOverrides = {}) =>
-  defineField(withOverrides({
+{
+  const base: FieldDefinition = {
     name: 'summary',
     title: 'TL;DR Summary',
     type: 'text',
     rows: 3,
     description: '1–2 sentences that help AI and previews capture the core idea',
-  validation: (rule: any) => [
-      rule.required().error('Add a short summary so aggregators understand the piece'),
-      rule.max(260).warning('Summaries work best under 260 characters'),
+    validation: (Rule) => [
+      Rule.required().error('Add a short summary so aggregators understand the piece'),
+      Rule.max(260).warning('Summaries work best under 260 characters'),
     ],
-  }, overrides))
+  }
+
+  return defineField(withOverrides(base, overrides))
+}
 
 export const appCtaField = (overrides: FieldOverrides = {}) =>
-  defineField(withOverrides({
+{
+  const base: FieldDefinition = {
     name: 'appCta',
     title: 'App CTA',
     type: 'object',
@@ -81,9 +98,9 @@ export const appCtaField = (overrides: FieldOverrides = {}) =>
         name: 'text',
         title: 'CTA Text',
         type: 'string',
-  validation: (rule: any) => [
-          rule.required().error('CTA text is required when promoting the app'),
-          rule.max(140).warning('Keep CTAs short and action oriented'),
+        validation: (Rule) => [
+          Rule.required().error('CTA text is required when promoting the app'),
+          Rule.max(140).warning('Keep CTAs short and action oriented'),
         ],
       }),
       defineField({
@@ -91,13 +108,19 @@ export const appCtaField = (overrides: FieldOverrides = {}) =>
         title: 'Deep Link',
         type: 'url',
         description: 'Link to the corresponding screen inside the app',
-  validation: (rule: any) => rule.uri({allowRelative: true}).warning('Use https:// or an app deeplink'),
+        validation: (Rule) => [
+          Rule.uri({allowRelative: true}).warning('Use https:// or an app deeplink'),
+        ],
       }),
     ],
-  }, overrides))
+  }
+
+  return defineField(withOverrides(base, overrides))
+}
 
 export const seoField = (overrides: FieldOverrides = {}) =>
-  defineField(withOverrides({
+{
+  const base: FieldDefinition = {
     name: 'seo',
     title: 'SEO Metadata',
     type: 'object',
@@ -107,17 +130,15 @@ export const seoField = (overrides: FieldOverrides = {}) =>
         name: 'metaTitle',
         title: 'Meta Title',
         type: 'string',
-  validation: (rule: any) => [
-          rule.max(60).warning('Meta titles truncate after ~60 characters'),
-        ],
+        validation: (Rule) => [Rule.max(60).warning('Meta titles truncate after ~60 characters')],
       }),
       defineField({
         name: 'metaDescription',
         title: 'Meta Description',
         type: 'text',
         rows: 3,
-  validation: (rule: any) => [
-          rule.max(160).warning('Meta descriptions truncate after ~160 characters'),
+        validation: (Rule) => [
+          Rule.max(160).warning('Meta descriptions truncate after ~160 characters'),
         ],
       }),
       defineField({
@@ -132,25 +153,36 @@ export const seoField = (overrides: FieldOverrides = {}) =>
             title: 'Keyword',
           }),
         ],
-  validation: (rule: any) => rule.max(10).warning('Stick to the most relevant keywords (max 10)'),
+        validation: (Rule) => [
+          Rule.max(10).warning('Stick to the most relevant keywords (max 10)'),
+        ],
       }),
     ],
-  }, overrides))
+  }
+
+  return defineField(withOverrides(base, overrides))
+}
 
 export const schemaMarkupField = (overrides: FieldOverrides = {}) =>
-  defineField(withOverrides({
+{
+  const base: FieldDefinition = {
     name: 'schemaMarkup',
     title: 'Schema Markup (JSON-LD)',
     type: 'text',
     rows: 6,
     description: 'Optional JSON-LD snippet. Populate via plugin or paste valid JSON.',
-  validation: (rule: any) => rule.custom((value?: string) => {
-      if (!value) return true
-      try {
-        JSON.parse(value)
-        return true
-      } catch (error) {
-        return 'Schema markup must be valid JSON'
-      }
-    }),
-  }, overrides))
+    validation: (Rule) => [
+      Rule.custom((value?: string) => {
+        if (!value) return true
+        try {
+          JSON.parse(value)
+          return true
+        } catch (error) {
+          return 'Schema markup must be valid JSON'
+        }
+      }),
+    ],
+  }
+
+  return defineField(withOverrides(base, overrides))
+}

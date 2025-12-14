@@ -26,7 +26,7 @@ export const gallery = defineType({
       name: 'name',
       title: 'Gallery Name',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Gallery name is required')],
     }),
     slugField({
       options: {
@@ -50,7 +50,9 @@ export const gallery = defineType({
       title: 'Description',
       type: 'text',
       rows: 4,
-      validation: (Rule) => Rule.required().error('Description helps AI understand the gallery focus'),
+      validation: (Rule) => [
+        Rule.required().error('Description helps AI understand the gallery focus'),
+      ],
     }),
     defineField({
       name: 'address',
@@ -110,8 +112,8 @@ export const gallery = defineType({
       type: 'object',
       description: 'Additional contact information',
       fields: [
-        {name: 'phone', type: 'string', title: 'Phone'},
-        {name: 'email', type: 'string', title: 'Email'},
+        defineField({name: 'phone', type: 'string', title: 'Phone'}),
+        defineField({name: 'email', type: 'string', title: 'Email'}),
       ],
     }),
     defineField({
@@ -120,9 +122,9 @@ export const gallery = defineType({
       type: 'object',
       description: 'Social media links',
       fields: [
-        {name: 'instagram', type: 'url', title: 'Instagram'},
-        {name: 'facebook', type: 'url', title: 'Facebook'},
-        {name: 'twitter', type: 'url', title: 'Twitter/X'},
+        defineField({name: 'instagram', type: 'url', title: 'Instagram'}),
+        defineField({name: 'facebook', type: 'url', title: 'Facebook'}),
+        defineField({name: 'twitter', type: 'url', title: 'Twitter/X'}),
       ],
     }),
     defineField({

@@ -18,7 +18,7 @@ import {
   AUTHORS_QUERYResult,
   GALLERIES_QUERYResult,
   GALLERIES_COUNT_QUERYResult,
-} from '../sanity/queryResults';
+} from '../sanity/types';
 import { Article, Artist, Exhibition, Guide, Author, ContentType, Gallery } from '../types';
 import { directusClient } from '../lib/directus';
 

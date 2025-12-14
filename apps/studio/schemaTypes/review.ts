@@ -46,7 +46,7 @@ export const review = defineType({
           type: 'string',
           title: 'Alternative text',
           description: 'Required for SEO and accessibility',
-          validation: (Rule) => Rule.required().error('Alt text is required for accessibility'),
+          validation: (Rule) => [Rule.required().error('Alt text is required for accessibility')],
         }),
       ],
     }),
@@ -59,7 +59,7 @@ export const review = defineType({
         defineField({
           name: 'alt',
           type: 'string',
-          validation: (Rule) => Rule.required().error('Alt text is required'),
+          validation: (Rule) => [Rule.required().error('Alt text is required')],
         }),
         defineField({
           name: 'caption',
@@ -71,7 +71,7 @@ export const review = defineType({
       name: 'body',
       type: 'blockContent',
       group: 'content',
-      validation: (Rule) => Rule.required().error('Body content is required'),
+      validation: (Rule) => [Rule.required().error('Body content is required')],
     }),
     defineField({
       name: 'rating',
@@ -96,7 +96,7 @@ export const review = defineType({
         layout: 'radio',
       },
       initialValue: 'inReview',
-      validation: (Rule) => Rule.required().error('Status is required'),
+      validation: (Rule) => [Rule.required().error('Status is required')],
     }),
     defineField({
       name: 'publishStatus',
@@ -125,7 +125,7 @@ export const review = defineType({
       type: 'reference',
       to: [{type: 'author'}],
       group: 'metadata',
-      validation: (Rule) => Rule.required().error('Author is required'),
+      validation: (Rule) => [Rule.required().error('Author is required')],
     }),
     defineField({
       name: 'exhibition',
@@ -135,13 +135,13 @@ export const review = defineType({
       options: {
         filter: 'defined(title)',
       },
-      validation: (Rule) => Rule.custom((exhibition, context) => {
+      validation: (Rule) => [Rule.custom((exhibition, context) => {
         const gallery = (context.document as any)?.gallery
         if (!exhibition && !gallery) {
           return 'Select either an Exhibition or a Gallery'
         }
         return true
-      }),
+      })],
     }),
     defineField({
       name: 'gallery',
@@ -219,13 +219,13 @@ export const review = defineType({
       to: [{type: 'sponsor'}],
       group: 'sponsorship',
       hidden: ({document}) => document?.sponsorshipEnabled !== 'yes',
-      validation: (Rule) => Rule.custom((sponsor, context) => {
+      validation: (Rule) => [Rule.custom((sponsor, context) => {
         const enabled = (context.document as any)?.sponsorshipEnabled
         if (enabled === 'yes' && !sponsor) {
           return 'Select a sponsor for sponsored content'
         }
         return true
-      }),
+      })],
     }),
     defineField({
       name: 'sponsorshipType',
@@ -332,13 +332,13 @@ export const review = defineType({
               name: 'maxWidth',
               type: 'number',
               hidden: ({parent}) => parent?.enabled !== 'yes',
-              validation: (Rule) => Rule.min(20).max(500),
+              validation: (Rule) => [Rule.min(20).max(500)],
             }),
             defineField({
               name: 'maxHeight',
               type: 'number',
               hidden: ({parent}) => parent?.enabled !== 'yes',
-              validation: (Rule) => Rule.min(20).max(200),
+              validation: (Rule) => [Rule.min(20).max(200)],
             }),
           ],
         }),

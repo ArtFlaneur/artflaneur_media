@@ -9,7 +9,7 @@ export const curator = defineType({
       name: 'name',
       title: 'Name',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => [Rule.required().error('Name is required to publish a curator profile')],
     }),
     defineField({
       name: 'slug',

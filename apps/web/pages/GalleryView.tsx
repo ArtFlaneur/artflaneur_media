@@ -14,7 +14,7 @@ import {
 import { ArticleCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import { GALLERY_QUERY } from '../sanity/lib/queries';
-import { GALLERY_QUERYResult } from '../sanity/queryResults';
+import { GALLERY_QUERYResult } from '../sanity/types';
 import { Article, ContentType } from '../types';
 import { directusClient } from '../lib/directus';
 import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
