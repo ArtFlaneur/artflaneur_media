@@ -2,6 +2,14 @@ import { Gallery } from '../types';
 import { GraphqlGallery } from './graphql';
 
 const buildGraphqlGalleryImage = (gallery: GraphqlGallery): string => {
+  // Debug: log image URLs
+  if (import.meta.env.DEV && (gallery.gallery_img_url || gallery.logo_img_url)) {
+    console.log(`🖼️ Gallery ${gallery.galleryname} images:`, {
+      gallery_img_url: gallery.gallery_img_url,
+      logo_img_url: gallery.logo_img_url,
+    });
+  }
+
   if (gallery.gallery_img_url) {
     return gallery.gallery_img_url;
   }
