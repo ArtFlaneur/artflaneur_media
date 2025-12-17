@@ -1,64 +1,67 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { MapPin, Globe, ExternalLink } from 'lucide-react';
 import {
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Clock,
-  Instagram,
-  Facebook,
-  Twitter,
-  ExternalLink,
-} from 'lucide-react';
-import { ArticleCard } from '../components/Shared';
-import { client } from '../sanity/lib/client';
-import { GALLERY_QUERY } from '../sanity/lib/queries';
-import { GALLERY_QUERYResult } from '../sanity/types';
-import { Article, ContentType } from '../types';
+  fetchExhibitionsByGallery,
+  fetchGalleryById,
+  GraphqlExhibition,
+  GraphqlGallery,
+} from '../lib/graphql';
 import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1600&q=80';
 
-const buildGoogleMapsLink = (gallery: GALLERY_QUERYResult | null) => {
+const parseCoordinate = (value?: string | number | null): number | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const buildGoogleMapsLink = (gallery: GraphqlGallery | null) => {
   if (!gallery) return undefined;
-  if (gallery.location?.lat && gallery.location?.lng) {
-    return `https://www.google.com/maps/search/?api=1&query=${gallery.location.lat},${gallery.location.lng}`;
+
+  const lat = parseCoordinate(gallery.lat);
+  const lon = parseCoordinate(gallery.lon);
+
+  if (lat !== null && lon !== null) {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
   }
-  if (gallery.address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gallery.address)}`;
+
+  if (gallery.fulladdress) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gallery.fulladdress)}`;
   }
+
   return undefined;
 };
 
-const buildHeroImage = (gallery: GALLERY_QUERYResult | null) => {
+const buildHeroImage = (gallery: GraphqlGallery | null) => {
   if (!gallery) return FALLBACK_IMAGE;
-  return gallery.mainImage?.asset?.url ?? FALLBACK_IMAGE;
+  return gallery.gallery_img_url ?? gallery.logo_img_url ?? FALLBACK_IMAGE;
 };
 
-const mapReviewToArticle = (review: NonNullable<GALLERY_QUERYResult>['reviews'][number]): Article => ({
-  id: review._id,
-  slug: review.slug?.current ?? review._id,
-  type: ContentType.REVIEW,
-  title: review.title ?? 'Untitled review',
-  subtitle: review.excerpt ?? undefined,
-  image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/600/600`,
-  date: review.publishedAt ?? undefined,
-  author: review.author
-    ? {
-        id: review.author._id,
-        slug: review.author.slug?.current ?? review.author._id,
-        name: review.author.name ?? 'Contributor',
-        role: 'Ambassador',
-        image: review.author.photo?.asset?.url ?? '',
-      }
-    : undefined,
-});
+const normalizeUrl = (value: string) => (/^https?:\/\//i.test(value) ? value : `https://${value}`);
+
+const DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+};
+
+const formatDate = (value?: string | null) =>
+  value ? new Date(value).toLocaleDateString('en-US', DATE_FORMAT) : 'TBA';
 
 const GalleryView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [gallery, setGallery] = useState<GALLERY_QUERYResult>(null);
+  const [gallery, setGallery] = useState<GraphqlGallery | null>(null);
+  const [exhibitions, setExhibitions] = useState<GraphqlExhibition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,18 +70,35 @@ const GalleryView: React.FC = () => {
     const fetchGallery = async () => {
       if (!id) {
         setError('Missing gallery identifier.');
+        setGallery(null);
+        setExhibitions([]);
         setLoading(false);
         return;
       }
 
       try {
-        const data = await client.fetch<GALLERY_QUERYResult>(GALLERY_QUERY, { slug: id });
+        setLoading(true);
+        const [galleryData, exhibitionsData] = await Promise.all([
+          fetchGalleryById(id),
+          fetchExhibitionsByGallery(id, 12),
+        ]);
+
         if (!isMounted) return;
-        setGallery(data ?? null);
-        setError(data ? null : 'Gallery not found.');
+
+        if (!galleryData) {
+          setGallery(null);
+          setExhibitions([]);
+          setError('Gallery not found.');
+        } else {
+          setGallery(galleryData);
+          setExhibitions(exhibitionsData ?? []);
+          setError(null);
+        }
       } catch (err) {
         console.error('❌ Error fetching gallery:', err);
         if (!isMounted) return;
+        setGallery(null);
+        setExhibitions([]);
         setError('Unable to load this gallery right now.');
       } finally {
         if (isMounted) {
@@ -93,10 +113,9 @@ const GalleryView: React.FC = () => {
     };
   }, [id]);
 
-  const workingHours = formatWorkingHoursSchedule(gallery?.workingHours);
+  const workingHours = useMemo(() => formatWorkingHoursSchedule(gallery?.openinghours), [gallery?.openinghours]);
   const mapsLink = useMemo(() => buildGoogleMapsLink(gallery), [gallery]);
-  const relatedReviews = useMemo(() => (gallery?.reviews ?? []).map(mapReviewToArticle), [gallery?.reviews]);
-  const galleryDescription = gallery?.description?.trim();
+  const galleryDescription = gallery?.specialevent?.trim() ?? null;
 
   if (loading) {
     return (
@@ -126,29 +145,18 @@ const GalleryView: React.FC = () => {
   const locationLabel = [gallery.city, gallery.country].filter(Boolean).join(', ');
 
   const contactItems = [
-    gallery.address && {
+    gallery.fulladdress && {
       icon: MapPin,
       label: 'Visit',
-      value: gallery.address,
+      value: gallery.fulladdress,
       href: mapsLink,
     },
-    gallery.contact?.phone && {
-      icon: Phone,
-      label: 'Phone',
-      value: gallery.contact.phone,
-      href: `tel:${gallery.contact.phone}`,
-    },
-    gallery.contact?.email && {
-      icon: Mail,
-      label: 'Email',
-      value: gallery.contact.email,
-      href: `mailto:${gallery.contact.email}`,
-    },
-    gallery.website && {
+    gallery.placeurl && {
       icon: Globe,
       label: 'Website',
-      value: getDisplayDomain(gallery.website) ?? gallery.website.replace(/^https?:\/\//, '').replace(/\/$/, ''),
-      href: gallery.website,
+      value:
+        getDisplayDomain(gallery.placeurl) ?? gallery.placeurl.replace(/^https?:\/\//, '').replace(/\/$/, ''),
+      href: normalizeUrl(gallery.placeurl),
     },
   ].filter(Boolean) as Array<{
     icon: typeof MapPin;
@@ -157,22 +165,22 @@ const GalleryView: React.FC = () => {
     href?: string;
   }>;
 
-  const socialLinks = [
-    gallery.social?.instagram && { label: 'Instagram', icon: Instagram, href: gallery.social.instagram },
-    gallery.social?.facebook && { label: 'Facebook', icon: Facebook, href: gallery.social.facebook },
-    gallery.social?.twitter && { label: 'Twitter', icon: Twitter, href: gallery.social.twitter },
-  ].filter(Boolean) as Array<{ label: string; icon: typeof Instagram; href: string }>;
-
   return (
     <div className="bg-art-paper min-h-screen">
       <section className="relative h-[60vh] border-b-2 border-black">
-        <img src={heroImage} alt={gallery.name ?? 'Gallery'} className="absolute inset-0 w-full h-full object-cover" />
+        <img
+          src={heroImage}
+          alt={gallery.galleryname ?? 'Gallery'}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         <div className="relative z-10 h-full flex flex-col justify-end p-6 md:p-12 text-white">
           {locationLabel && (
             <p className="font-mono text-xs uppercase tracking-[0.4em] mb-4">{locationLabel}</p>
           )}
-          <h1 className="text-4xl md:text-7xl font-black uppercase leading-[0.9]">{gallery.name ?? 'Gallery'}</h1>
+          <h1 className="text-4xl md:text-7xl font-black uppercase leading-[0.9]">
+            {gallery.galleryname ?? 'Gallery'}
+          </h1>
         </div>
       </section>
 
@@ -215,29 +223,11 @@ const GalleryView: React.FC = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p className="font-mono text-xs text-gray-500">Opening hours available soon.</p>
+                  <p className="font-mono text-xs text-gray-500">
+                    {gallery.openinghours?.trim() ?? 'Opening hours available soon.'}
+                  </p>
                 )}
               </div>
-
-              {socialLinks.length > 0 && (
-                <div>
-                  <h3 className="font-black uppercase text-sm tracking-[0.3em] mb-3">Social</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {socialLinks.map((link) => (
-                      <a
-                        key={link.label}
-                        href={link.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 border border-black font-mono text-xs uppercase hover:bg-black hover:text-white transition-colors"
-                      >
-                        <link.icon className="w-3 h-3" />
-                        {link.label}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </aside>
 
@@ -258,28 +248,34 @@ const GalleryView: React.FC = () => {
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </div>
-              {gallery.exhibitions?.length ? (
+              {exhibitions.length ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {gallery.exhibitions.map((exhibition) => (
+                  {exhibitions.map((exhibition) => (
                     <Link
-                      key={exhibition._id}
-                      to={`/exhibitions/${exhibition.slug?.current ?? exhibition._id}`}
+                      key={exhibition.id}
+                      to={`/exhibitions/${exhibition.id}`}
                       className="group border-2 border-black bg-white hover:-translate-y-1 transition-all"
                     >
                       <div className="aspect-[4/3] border-b-2 border-black overflow-hidden">
                         <img
-                          src={exhibition.image?.asset?.url ?? `https://picsum.photos/seed/${exhibition._id}/800/600`}
+                          src={
+                            exhibition.exhibition_img_url ??
+                            exhibition.logo_img_url ??
+                            `https://picsum.photos/seed/${exhibition.id}/800/600`
+                          }
                           alt={exhibition.title ?? 'Exhibition'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       </div>
                       <div className="p-5 space-y-2">
                         <p className="font-mono text-xs uppercase text-gray-500">
-                          {exhibition.startDate ?? 'TBA'} — {exhibition.endDate ?? 'TBA'}
+                          {formatDate(exhibition.datefrom)} — {formatDate(exhibition.dateto)}
                         </p>
-                        <h3 className="text-xl font-black uppercase leading-tight">{exhibition.title ?? 'Untitled exhibition'}</h3>
+                        <h3 className="text-xl font-black uppercase leading-tight">
+                          {exhibition.title ?? 'Untitled exhibition'}
+                        </h3>
                         <p className="font-mono text-sm text-gray-600 line-clamp-2">
-                          {exhibition.description ?? 'Details coming soon.'}
+                          {exhibition.description ?? exhibition.eventtype ?? 'Details coming soon.'}
                         </p>
                       </div>
                     </Link>
@@ -288,28 +284,6 @@ const GalleryView: React.FC = () => {
               ) : (
                 <div className="border-2 border-dashed border-black p-8 text-center font-mono text-sm text-gray-500">
                   Exhibitions will appear here once scheduled.
-                </div>
-              )}
-            </div>
-
-            {/* Reviews */}
-            <div>
-              <div className="flex items-center justify-between mb-6 border-b-2 border-black pb-3">
-                <h2 className="text-3xl font-black uppercase">Featured Reviews</h2>
-                <Link to="/reviews" className="font-mono text-xs uppercase flex items-center gap-2 hover:underline">
-                  Read more
-                  <ExternalLink className="w-4 h-4" />
-                </Link>
-              </div>
-              {relatedReviews.length ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {relatedReviews.map((article) => (
-                    <ArticleCard key={article.id} article={article} />
-                  ))}
-                </div>
-              ) : (
-                <div className="border-2 border-dashed border-black p-8 text-center font-mono text-sm text-gray-500">
-                  No reviews yet. Check back soon for ambassador perspectives.
                 </div>
               )}
             </div>

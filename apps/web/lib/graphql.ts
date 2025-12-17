@@ -20,13 +20,16 @@ export interface GraphqlGallery {
   galleryname: string;
   placeurl?: string | null;
   openinghours?: string | null;
+  specialevent?: string | null;
+  eventtype?: string | null;
   country?: string | null;
-  city?: string | null;
   fulladdress?: string | null;
   gallery_img_url?: string | null;
   logo_img_url?: string | null;
   lat?: number | string | null;
   lon?: number | string | null;
+  city?: string | null; // derived client-side when not provided by the API
+  distanceInKm?: number | null;
 }
 
 export interface GraphqlExhibition {
@@ -103,12 +106,13 @@ const LIST_GALLERIES_QUERY = `#graphql
         id
         galleryname
         country
-        city
         fulladdress
         lat
         lon
         placeurl
         openinghours
+        specialevent
+        eventtype
         gallery_img_url
         logo_img_url
       }
@@ -124,13 +128,14 @@ const NEARBY_GALLERIES_QUERY = `#graphql
         id
         galleryname
         country
-        city
         fulladdress
         lat
         lon
         distanceInKm
         placeurl
         openinghours
+        specialevent
+        eventtype
         gallery_img_url
       }
       nextToken
@@ -138,9 +143,111 @@ const NEARBY_GALLERIES_QUERY = `#graphql
   }
 `;
 
+const GET_GALLERY_QUERY = `#graphql
+  query GetGalleryById($id: ID!) {
+    getGalleryById(id: $id) {
+      id
+      galleryname
+      country
+      fulladdress
+      lat
+      lon
+      placeurl
+      openinghours
+      specialevent
+      eventtype
+      gallery_img_url
+      logo_img_url
+    }
+  }
+`;
+
+const deriveCityFromAddress = (address?: string | null, country?: string | null): string | undefined => {
+  if (!address?.trim()) {
+    return undefined;
+  }
+
+  const normalizedCountry = country?.trim().toLowerCase();
+  const segments = address
+    .split(',')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (segments.length === 0) {
+    return undefined;
+  }
+
+  if (normalizedCountry && segments.length > 1) {
+    const last = segments[segments.length - 1];
+    if (last?.toLowerCase() === normalizedCountry) {
+      segments.pop();
+    }
+  }
+
+  const candidate = segments[segments.length - 1] ?? '';
+  const tokens = candidate.split(/\s+/).filter(Boolean);
+  if (!tokens.length) {
+    return undefined;
+  }
+
+  const letterPattern = /\p{L}/u;
+  const regionPattern = /^[A-Z]{1,3}$/;
+  const cityTokens: string[] = [];
+  for (let index = tokens.length - 1; index >= 0; index -= 1) {
+    const token = tokens[index];
+    if (!letterPattern.test(token)) {
+      continue;
+    }
+    if (regionPattern.test(token)) {
+      continue;
+    }
+    cityTokens.unshift(token);
+  }
+
+  const derived = cityTokens.join(' ').trim();
+  return derived || candidate || undefined;
+};
+
+const enrichGallery = <T extends GraphqlGallery>(gallery: T): T => {
+  if (gallery.city) {
+    return gallery;
+  }
+
+  const derivedCity = deriveCityFromAddress(gallery.fulladdress, gallery.country);
+  return {
+    ...gallery,
+    city: derivedCity ?? null,
+  };
+};
+
 const LIST_EXHIBITIONS_QUERY = `#graphql
   query ListAllExhibitions($limit: Int, $nextToken: String) {
     listAllExhibitions(limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        gallery_id
+        galleryname
+        city
+        title
+        description
+        artist
+        eventtype
+        exhibition_type
+        exhibition_img_url
+        logo_img_url
+        datefrom
+        dateto
+        datefrom_epoch
+        dateto_epoch
+      }
+      nextToken
+    }
+  }
+`;
+
+const LIST_EXHIBITIONS_BY_GALLERY_QUERY = `#graphql
+  query ListExhibitionsByGallery($galleryId: ID!, $limit: Int, $nextToken: String) {
+    listExhibitionsByGalleryId(galleryId: $galleryId, limit: $limit, nextToken: $nextToken) {
       items {
         id
         gallery_id
@@ -181,7 +288,11 @@ export async function fetchGalleries(params: FetchGalleriesParams = {}): Promise
     variables
   );
 
-  return data.listGalleriesById ?? { items: [], nextToken: null };
+  const connection = data.listGalleriesById ?? { items: [], nextToken: null };
+  return {
+    ...connection,
+    items: connection.items?.map(enrichGallery) ?? [],
+  };
 }
 
 export async function searchGalleries(query: string, limit = 50): Promise<GraphqlGallery[]> {
@@ -213,7 +324,7 @@ export async function fetchNearbyGalleries(
   params: NearbyGalleriesParams
 ): Promise<GraphqlGallery[]> {
   const data = await executeGraphQL<{
-    nearbyGalleriesById: GraphqlListResult<GraphqlGallery & { distanceInKm?: number | null }>;
+    nearbyGalleriesById: GraphqlListResult<GraphqlGallery>;
   }>(NEARBY_GALLERIES_QUERY, {
     latitude: params.latitude,
     longitude: params.longitude,
@@ -221,7 +332,7 @@ export async function fetchNearbyGalleries(
     limit: params.limit,
   });
 
-  return data.nearbyGalleriesById?.items ?? [];
+  return (data.nearbyGalleriesById?.items ?? []).map(enrichGallery);
 }
 
 export async function fetchExhibitions(limit = 50): Promise<GraphqlExhibition[]> {
@@ -230,4 +341,23 @@ export async function fetchExhibitions(limit = 50): Promise<GraphqlExhibition[]>
     { limit }
   );
   return data.listAllExhibitions?.items ?? [];
+}
+
+export async function fetchGalleryById(id: string): Promise<GraphqlGallery | null> {
+  const data = await executeGraphQL<{ getGalleryById: GraphqlGallery | null }>(GET_GALLERY_QUERY, { id });
+  return data.getGalleryById ? enrichGallery(data.getGalleryById) : null;
+}
+
+export async function fetchExhibitionsByGallery(
+  galleryId: string,
+  limit = 12
+): Promise<GraphqlExhibition[]> {
+  const data = await executeGraphQL<{
+    listExhibitionsByGalleryId: GraphqlListResult<GraphqlExhibition>;
+  }>(LIST_EXHIBITIONS_BY_GALLERY_QUERY, {
+    galleryId,
+    limit,
+  });
+
+  return data.listExhibitionsByGalleryId?.items ?? [];
 }

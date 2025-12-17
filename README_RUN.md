@@ -32,30 +32,16 @@ npm run dev:web
 
 ## 🏗️ Архитектура проекта
 
-### Dual Database Architecture
+### Data Sources & Responsibilities
 
-Проект использует две базы данных:
-
-1. **Sanity CMS** - для редакционного контента:
-   - Reviews (обзоры выставок)
-   - Authors (авторы, амбассадоры)
-   - Sponsors (спонсоры, партнеры)
-   - Guides (гайды по городам)
-
-2. **Directus/PostgreSQL** - для больших объемов данных:
-   - Galleries (10000+ галерей)
-   - Exhibitions (выставки)
-   - Artists (художники)
-
-3. **Supabase** - для Gallery Dashboard:
-   - User authentication
-   - Exhibition submissions (черновики, модерация)
-   - Image storage
+1. **Sanity CMS** — редакционный контент (ревью, лендинги, авторы, гайды, спонсоры). Все схемы находятся в `apps/studio/schemaTypes` и автоматически типизируются для фронтенда.
+2. **AppSync GraphQL API** — продуктивный каталог галерей и выставок (10k+ записей). Клиентская обёртка и запросы лежат в `apps/web/lib/graphql.ts` и используют API ключ + `x-tenant-id` для мульти-арендной фильтрации.
+3. **Supabase** — кабинет галерей, аутентификация и модерация заявок. Запросы реализованы в `apps/web/lib/supabase.ts`, схема описана в `apps/web/lib/database.types.ts` и сопровождающих документах.
 
 ### Data Flow
 
 ```
-Gallery Owner → Supabase (draft) → Admin Moderation → Directus (published) → Website
+Gallery Owner → Supabase (draft + moderation) → AppSync GraphQL (published) → React/Vite Web
 ```
 
 ---
@@ -66,17 +52,20 @@ Gallery Owner → Supabase (draft) → Admin Moderation → Directus (published)
 - Обновлен `sanity/lib/client.ts` для работы с Vite
 - Поддержка переменных окружения через `import.meta.env`
 
-### ✅ 2. GROQ Queries
-Создан `sanity/lib/queries.ts` с готовыми запросами:
-- `REVIEWS_QUERY` / `REVIEW_QUERY` - обзоры выставок
-- `POSTS_QUERY` / `POST_QUERY` - статьи и блог-посты
-- `EXHIBITIONS_QUERY` / `EXHIBITION_QUERY` - выставки
-- `GALLERIES_QUERY` / `GALLERY_QUERY` - галереи
-- `ARTISTS_QUERY` / `ARTIST_QUERY` - художники
-- `HOMEPAGE_QUERY` - контент главной страницы
-- `SITE_SETTINGS_QUERY` - настройки сайта
+### ✅ 2. GraphQL API Client
+- Создан `apps/web/lib/graphql.ts` с общим `executeGraphQL`, фильтрами и пост-обработкой городов
+- Реализованы запросы `fetchGalleries`, `searchGalleries`, `fetchNearbyGalleries`, `fetchExhibitions`
+- Добавлена обработка `VITE_GRAPHQL_TENANT_ID` для мультитенантного доступа
 
-### ✅ 3. Environment Variables
+### ✅ 3. Supabase Dashboard
+- `apps/web/lib/supabase.ts` инкапсулирует авторизацию, CRUD по галереям и модерацию выставок
+- Все типы берутся из `apps/web/lib/database.types.ts`
+- Кабинет галерей и модерация используют эти хелперы напрямую
+
+### ✅ 4. GROQ Queries
+- `sanity/lib/queries.ts` содержит запросы для редакционных страниц (`REVIEWS_QUERY`, `HOMEPAGE_QUERY`, `SITE_SETTINGS_QUERY` и т.д.)
+
+### ✅ 5. Environment Variables
 Настроены переменные окружения:
 
 **apps/studio/.env** (уже существует):
@@ -91,6 +80,11 @@ VITE_SANITY_PROJECT_ID=o1yl0ri9
 VITE_SANITY_DATASET=blog
 VITE_SANITY_API_VERSION=2024-01-01
 VITE_SANITY_STUDIO_URL=http://localhost:3333
+VITE_GRAPHQL_ENDPOINT=<https://your-appsync-endpoint>
+VITE_GRAPHQL_API_KEY=<graphQLApiKey>
+VITE_GRAPHQL_TENANT_ID=artflaneur
+VITE_SUPABASE_URL=<https://your-project.supabase.co>
+VITE_SUPABASE_ANON_KEY=<anon-key>
 ```
 
 ### ✅ 4. Package.json Updates
@@ -228,7 +222,10 @@ artflaneur_media/
 │
 ├── package.json                   # Корневой package.json
 ├── pnpm-workspace.yaml            # Workspace конфигурация
-├── DIRECTUS_MIGRATION.md          # Миграция на Directus для exhibitions
+├── CLIENT_GRAPHQL_API_ACCESS.md   # Параметры AppSync GraphQL
+├── GALLERY_SYSTEM_SETUP.md        # Описание цепочки данных галерей
+├── MULTI_TENANT_SUPABASE.md       # Мультиарендность и Supabase
+├── SUPABASE_STORAGE_SETUP.md      # Хранилище изображений
 └── README_RUN.md                  # Этот файл
 ```
 
@@ -340,11 +337,12 @@ npm run typecheck
 
 ## 📚 Документация
 
-- [DIRECTUS_MIGRATION.md](./DIRECTUS_MIGRATION.md) - Миграция exhibitions/galleries на Directus
-- [DIRECTUS_ADD_FIELDS_UI.md](./DIRECTUS_ADD_FIELDS_UI.md) - Добавление полей через Directus Admin UI
-- [SUPABASE_STORAGE_SETUP.md](./SUPABASE_STORAGE_SETUP.md) - Настройка Supabase Storage для изображений
-- [Sanity Docs](https://www.sanity.io/docs) - Для работы с reviews и sponsors
-- [Directus Docs](https://docs.directus.io/) - Для работы с galleries и exhibitions
+- [CLIENT_GRAPHQL_API_ACCESS.md](./CLIENT_GRAPHQL_API_ACCESS.md) — параметры AppSync GraphQL, политика ключей и переменные окружения
+- [GALLERY_SYSTEM_SETUP.md](./GALLERY_SYSTEM_SETUP.md) — описание полного контура данных галерей
+- [MULTI_TENANT_SUPABASE.md](./MULTI_TENANT_SUPABASE.md) — архитектура кабинета галерей, роли и миграции
+- [SUPABASE_STORAGE_SETUP.md](./SUPABASE_STORAGE_SETUP.md) — конфигурация хранения медиа
+- [Sanity Docs](https://www.sanity.io/docs) — схемы и GROQ
+- [AWS AppSync Docs](https://docs.aws.amazon.com/appsync/) — управление GraphQL API
 - [GROQ Tutorial](https://www.sanity.io/docs/groq)
 
 ---
