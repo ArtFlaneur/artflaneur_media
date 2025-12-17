@@ -8,6 +8,10 @@ const DAY_DEFINITIONS = [
   { key: 'sunday', label: 'Sunday', aliases: ['sunday', 'sun'] },
 ] as const;
 
+const ALL_DAY_KEYS = DAY_DEFINITIONS.map((day) => day.key);
+const WEEKDAY_KEYS = DAY_DEFINITIONS.slice(0, 5).map((day) => day.key);
+const WEEKEND_KEYS = DAY_DEFINITIONS.slice(5).map((day) => day.key);
+
 const DAY_KEY_BY_ALIAS = DAY_DEFINITIONS.reduce<Record<string, (typeof DAY_DEFINITIONS)[number]['key']>>((acc, day) => {
   day.aliases.forEach((alias) => {
     acc[alias] = day.key;
@@ -22,6 +26,12 @@ const DAY_KEY_TO_INDEX = DAY_DEFINITIONS.reduce<Record<string, number>>((acc, da
 
 const DAY_RANGE_REGEX = /\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b\s*(?:-|–|—|to)\s*\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b/;
 const CLOSED_PATTERN = /(closed|off|tbd|n\/?a|unavailable)/i;
+const DAY_ALIAS_PATTERN = /\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b/g;
+const DAY_TOKEN_PATTERN = /\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?|weekdays?|week\s*days?|weekends?|week\s*ends?|daily|every\s*day|7\s*days|seven\s*days|all\s*week|all\s*days)\b/gi;
+const FILLER_TOKEN_PATTERN = /\b(and|from|until|till|through|thru|hrs?|hours?|hour|open|opening)\b/gi;
+const DAILY_PATTERN = /\b(daily|every\s*day|7\s*days|seven\s*days|all\s*week|all\s*days)\b/;
+const WEEKDAY_PATTERN = /\bweekday(s)?\b/;
+const WEEKEND_PATTERN = /\bweekend(s)?\b/;
 
 const splitEntries = (value?: string | null) =>
   value
@@ -76,13 +86,20 @@ const normalizeTimeSegment = (segment: string) => {
 };
 
 const formatDayValue = (label: string, raw?: string) => {
-  if (!raw) return `${label}: Closed`;
-  const [, remainder] = raw.split(/:(.+)/);
-  const schedule = (remainder ?? raw).trim();
-  if (!schedule) return `${label}: Closed`;
-  if (CLOSED_PATTERN.test(schedule)) return `${label}: Closed`;
+  const closedLabel = `${label}: Closed`;
+  if (!raw) return closedLabel;
 
-  const sanitized = schedule.replace(/[–—]/g, '-');
+  const stripped = raw
+    .replace(DAY_TOKEN_PATTERN, '')
+    .replace(FILLER_TOKEN_PATTERN, '')
+    .replace(/[,|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!stripped) return closedLabel;
+  if (CLOSED_PATTERN.test(stripped)) return closedLabel;
+
+  const sanitized = stripped.replace(/[–—]/g, '-').replace(/\bto\b/gi, '-');
   const [openRaw, closeRaw] = sanitized
     .split('-')
     .map((entry) => entry.trim())
@@ -92,27 +109,40 @@ const formatDayValue = (label: string, raw?: string) => {
     return `${label}: ${normalizeTimeSegment(openRaw)} - ${normalizeTimeSegment(closeRaw)}`;
   }
 
-  if (!openRaw && closeRaw) {
-    return `${label}: ${normalizeTimeSegment(closeRaw)}`;
-  }
-
-  if (openRaw && !closeRaw) {
+  if (openRaw) {
     return `${label}: ${normalizeTimeSegment(openRaw)}`;
   }
 
-  return `${label}: ${schedule.replace(/:/g, '.').trim()}`;
+  return closedLabel;
 };
 
 export const formatWorkingHoursSchedule = (value?: string | null): string[] => {
   const entries = splitEntries(value);
-  if (!entries.length) return [];
-
   const dayMap = new Map<string, string>();
+
+  const assignEntryToKeys = (keys: string[], entry: string) => {
+    keys.forEach((key) => dayMap.set(key, entry));
+  };
 
   entries.forEach((entry) => {
     const normalized = entry.toLowerCase();
-    const rangeMatch = normalized.match(DAY_RANGE_REGEX);
 
+    if (DAILY_PATTERN.test(normalized)) {
+      assignEntryToKeys(ALL_DAY_KEYS, entry);
+      return;
+    }
+
+    if (WEEKDAY_PATTERN.test(normalized)) {
+      assignEntryToKeys(WEEKDAY_KEYS, entry);
+      return;
+    }
+
+    if (WEEKEND_PATTERN.test(normalized)) {
+      assignEntryToKeys(WEEKEND_KEYS, entry);
+      return;
+    }
+
+    const rangeMatch = normalized.match(DAY_RANGE_REGEX);
     if (rangeMatch) {
       const startKey = resolveDayKey(rangeMatch[1]);
       const endKey = resolveDayKey(rangeMatch[2]);
@@ -129,15 +159,24 @@ export const formatWorkingHoursSchedule = (value?: string | null): string[] => {
       }
     }
 
-    DAY_DEFINITIONS.forEach((day) => {
-      if (day.aliases.some((alias) => new RegExp(`\\b${alias}`).test(normalized))) {
-        dayMap.set(day.key, entry);
-      }
-    });
+    const aliasMatches = normalized.match(DAY_ALIAS_PATTERN);
+    if (aliasMatches?.length) {
+      aliasMatches.forEach((token) => {
+        const key = resolveDayKey(token);
+        if (key) {
+          dayMap.set(key, entry);
+        }
+      });
+      return;
+    }
   });
 
+  if (!entries.length) {
+    return DAY_DEFINITIONS.map((day) => `${day.label}: Closed`);
+  }
+
   if (!dayMap.size) {
-    return entries.map((entry) => entry.replace(/:/g, '.'));
+    assignEntryToKeys(ALL_DAY_KEYS, entries[0]);
   }
 
   return DAY_DEFINITIONS.map((day) => formatDayValue(day.label, dayMap.get(day.key)));

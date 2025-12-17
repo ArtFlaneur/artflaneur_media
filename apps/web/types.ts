@@ -24,7 +24,7 @@ export interface Author {
 export interface Article {
   id: string;
   slug?: string; // URL-friendly identifier
-  type: ContentType;
+  website?: string;
   title: string;
   subtitle?: string;
   author?: Author;
@@ -34,6 +34,7 @@ export interface Article {
   content?: string;
   galleryImages?: string[];
   tags?: string[];
+  type?: ContentType;
 }
 
 export interface Artist {
@@ -79,6 +80,7 @@ export interface Gallery {
   city?: string;
   country?: string;
   address?: string;
+  website?: string;
   image: string;
   description?: string;
 }

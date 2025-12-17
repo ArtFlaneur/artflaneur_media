@@ -8,6 +8,7 @@ import {
   GraphqlGallery,
 } from '../lib/graphql';
 import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
+import SecureImage from '../components/SecureImage';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1600&q=80';
@@ -168,7 +169,7 @@ const GalleryView: React.FC = () => {
   return (
     <div className="bg-art-paper min-h-screen">
       <section className="relative h-[60vh] border-b-2 border-black">
-        <img
+        <SecureImage
           src={heroImage}
           alt={gallery.galleryname ?? 'Gallery'}
           className="absolute inset-0 w-full h-full object-cover"
@@ -257,7 +258,7 @@ const GalleryView: React.FC = () => {
                       className="group border-2 border-black bg-white hover:-translate-y-1 transition-all"
                     >
                       <div className="aspect-[4/3] border-b-2 border-black overflow-hidden">
-                        <img
+                        <SecureImage
                           src={
                             exhibition.exhibition_img_url ??
                             exhibition.logo_img_url ??

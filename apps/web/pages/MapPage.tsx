@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { MapPin, Navigation, Clock, Globe, X, Locate } from 'lucide-react';
 import { fetchNearbyGalleries, GraphqlGallery, searchGalleries as searchGalleriesApi } from '../lib/graphql';
 import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
+import SecureImage from '../components/SecureImage';
 
 interface MapPoint {
     id: number | string;
@@ -446,13 +447,14 @@ const MapPage: React.FC = () => {
                     <div className="absolute bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-80 bg-white p-0 shadow-2xl z-20 rounded-sm">
                         <div className="h-32 bg-gray-100 relative">
                             {selectedPoint.image ? (
-                                <img 
+                                <SecureImage 
                                     src={selectedPoint.image} 
                                     className="w-full h-full object-cover" 
                                     alt={selectedPoint.name}
-                                    onError={(e) => {
-                                        // Fallback если изображение не загрузилось
-                                        e.currentTarget.src = `https://picsum.photos/400/400?random=${selectedPoint.id}`;
+                                    onError={(event) => {
+                                        if (event.currentTarget instanceof HTMLImageElement) {
+                                            event.currentTarget.src = `https://picsum.photos/400/400?random=${selectedPoint.id}`;
+                                        }
                                     }}
                                 />
                             ) : (

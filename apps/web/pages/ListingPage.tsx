@@ -15,6 +15,7 @@ import {
 } from '../sanity/types';
 import { Article, Artist, Exhibition, Guide, Author, ContentType, Gallery } from '../types';
 import { fetchExhibitions, fetchGalleries, GraphqlExhibition, GraphqlGallery } from '../lib/graphql';
+import { mapGraphqlGalleryToEntity } from '../lib/galleryMapping';
 
 interface ListingPageProps {
   title: string;
@@ -30,29 +31,6 @@ const getArtistImage = (artist: ARTISTS_QUERYResult[number]) => artist.photo?.as
 
 const hasArtistContent = (artist: ARTISTS_QUERYResult[number]) =>
   Boolean(artist.name?.trim() && artist.bio?.trim() && getArtistImage(artist));
-
-const buildGraphqlGalleryImage = (gallery: GraphqlGallery): string => {
-  if (gallery.gallery_img_url) {
-    return gallery.gallery_img_url;
-  }
-
-  if (gallery.logo_img_url) {
-    return gallery.logo_img_url;
-  }
-
-  return `https://picsum.photos/seed/graphql-gallery-${gallery.id}/600/600`;
-};
-
-const mapGraphqlGalleryToCard = (gallery: GraphqlGallery): Gallery => ({
-  id: String(gallery.id),
-  slug: String(gallery.id),
-  name: gallery.galleryname ?? 'Gallery',
-  city: gallery.city ?? undefined,
-  country: gallery.country ?? undefined,
-  address: gallery.fulladdress ?? undefined,
-  image: buildGraphqlGalleryImage(gallery),
-  description: gallery.openinghours ?? undefined,
-});
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -244,7 +222,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
                 break;
               }
 
-              const mapped = rows.map(mapGraphqlGalleryToCard);
+              const mapped = rows.map(mapGraphqlGalleryToEntity);
 
               const slots = PAGE_SIZE - nextBatch.length;
               nextBatch.push(...mapped.slice(0, slots));

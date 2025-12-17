@@ -3,7 +3,9 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { client } from '../sanity/lib/client';
 import { defineQuery } from 'groq';
 import { ArticleCard, EntityCard } from '../components/Shared';
-import { Author, ContentType, Guide, GuideStep } from '../types';
+import { Author, ContentType, Gallery, Guide, GuideStep } from '../types';
+import { searchGalleries } from '../lib/graphql';
+import { mapGraphqlGalleryToEntity } from '../lib/galleryMapping';
 
 type Slug = { current?: string | null } | null | undefined;
 type ImageField = { asset?: { url?: string | null } | null } | null | undefined;
@@ -43,13 +45,6 @@ type ArtistDoc = {
   photo?: ImageField;
 };
 
-type GalleryDoc = {
-  _id: string;
-  name?: string | null;
-  slug?: Slug;
-  city?: string | null;
-};
-
 type GuideDoc = {
   _id: string;
   title?: string | null;
@@ -72,7 +67,6 @@ type SearchQueryResponse = {
   reviews?: ReviewDoc[];
   exhibitions?: ExhibitionDoc[];
   artists?: ArtistDoc[];
-  galleries?: GalleryDoc[];
   guides?: GuideDoc[];
   ambassadors?: AmbassadorDoc[];
 };
@@ -81,7 +75,7 @@ type FilteredResults = {
   reviews: ReviewDoc[];
   exhibitions: ExhibitionDoc[];
   artists: ArtistDoc[];
-  galleries: GalleryDoc[];
+  galleries: Gallery[];
   guides: Guide[];
   ambassadors: Author[];
 };
@@ -164,12 +158,6 @@ const SEARCH_QUERY = defineQuery(`{
       asset->{ url }
     }
   },
-  "galleries": *[_type == "gallery"] {
-    _id,
-    name,
-    slug,
-    city
-  },
   "guides": *[_type == "guide"] {
     _id,
     title,
@@ -211,12 +199,20 @@ const SearchResults: React.FC = () => {
         console.log('🔍 Searching for:', query);
         
         // Получаем все данные
-        const data = await client.fetch<SearchQueryResponse>(SEARCH_QUERY);
+        const [data, graphqlGalleries] = await Promise.all([
+          client.fetch<SearchQueryResponse>(SEARCH_QUERY),
+          searchGalleries(query, 40).catch((err) => {
+            console.error('⚠️ GraphQL gallery search failed:', err);
+            return [];
+          }),
+        ]);
+
+        const normalizedGalleries = graphqlGalleries.map(mapGraphqlGalleryToEntity);
         console.log('📦 All data fetched:', {
           reviews: data.reviews?.length ?? 0,
           exhibitions: data.exhibitions?.length ?? 0,
           artists: data.artists?.length ?? 0,
-          galleries: data.galleries?.length ?? 0,
+          galleries: normalizedGalleries.length,
           guides: data.guides?.length ?? 0,
           ambassadors: data.ambassadors?.length ?? 0,
         });
@@ -242,10 +238,7 @@ const SearchResults: React.FC = () => {
             ) ?? [],
           artists:
             data.artists?.filter((a) => matchesQuery(a.name, searchLower)) ?? [],
-          galleries:
-            data.galleries?.filter(
-              (g) => matchesQuery(g.name, searchLower) || matchesQuery(g.city, searchLower),
-            ) ?? [],
+          galleries: normalizedGalleries,
           guides:
             data.guides?.reduce<Guide[]>((acc, guide) => {
               if (
@@ -496,10 +489,7 @@ const SearchResults: React.FC = () => {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {results.galleries.map((gallery) => (
-                    <div key={gallery._id} className="border border-black p-4 bg-white hover:bg-art-yellow transition-colors">
-                      <h3 className="font-bold uppercase">{gallery.name}</h3>
-                      <p className="font-mono text-xs text-gray-600">{gallery.city}</p>
-                    </div>
+                    <EntityCard key={gallery.slug ?? gallery.id} data={gallery} type="gallery" />
                   ))}
                 </div>
               </section>

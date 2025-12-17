@@ -7,7 +7,9 @@
         "deploy": "sanity deploy",
         "import-json": "tsx scripts/importFromJSON.ts",
         "sync:directus": "tsx scripts/syncFromDirectus.ts",
-    "clear:exhibitions": "tsx scripts/clearExhibitions.ts",
+        "clear:exhibitions": "tsx scripts/clearExhibitions.ts",
+        "clear:galleries": "tsx scripts/clearGalleries.ts",
+        "clear:artists": "tsx scripts/clearArtists.ts",
         "typegen": "sanity schema extract --path=../web/sanity-schema.json && sanity typegen generate --enforce-required-fields",
         "typecheck": "tsc --noEmit"
     },
