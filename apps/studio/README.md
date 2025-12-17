@@ -1,76 +1,112 @@
-# Art Flaneur Media
+# Art Flaneur Studio
 
-Contemporary art exhibitions, reviews, and artist stories.
+Sanity Studio для управления редакционным контентом Art Flaneur.
 
-## Project Structure
-
-This is a monorepo containing:
-
-- **apps/studio** - Sanity Studio for content management
-- **apps/web** - Frontend (coming soon)
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- pnpm 9+
-
-Install pnpm globally if you haven't:
-
-# Art Flaneur Media Studio
-
-Sanity Studio for managing contemporary art exhibitions, reviews, and artist stories.
-
-## Project structure
-
-- `apps/studio` – Sanity Studio configuration (this package)
-- `apps/web` – Frontend web client
-
-## Getting started
-
-### Prerequisites
-
-- Node.js 18+
-- pnpm 9+
-
-Install dependencies from the repository root:
+## Запуск
 
 ```bash
-pnpm install
+npm run dev
 ```
 
-## Syncing Directus content
+Studio откроется на http://localhost:3333
 
-Populate Sanity with galleries, artists, and exhibitions from Directus so editors can select them via references.
+## Типы контента
 
-1. Provide environment variables (`.env` works):
-	- `SANITY_STUDIO_PROJECT_ID`
-	- `SANITY_STUDIO_DATASET`
-	- `SANITY_API_TOKEN`
-	- `DIRECTUS_URL`
-	- `DIRECTUS_TOKEN`
-2. Run the sync script:
+| Тип | Описание |
+|-----|----------|
+| `review` | Ревью выставок с рейтингом и спонсорством |
+| `exhibition` | Выставки (редакционные) |
+| `gallery` | Галереи (редакционные) |
+| `artist` | Художники |
+| `artistStory` | Истории художников |
+| `author` | Авторы / Амбассадоры |
+| `guide` | Путеводители по городам |
+| `curator` | Кураторы |
+| `sponsor` | Спонсоры |
+| `homepageContent` | Контент главной страницы |
+| `siteSettings` | Глобальные настройки |
+| `landingPage` | Лендинги |
+| `mapData` | Данные для карты |
+
+## Скрипты
+
+### Разработка
 
 ```bash
-pnpm --filter @artflaneur/studio sync:directus
+npm run dev          # Запустить Studio локально
+npm run build        # Собрать для деплоя
+npm run deploy       # Задеплоить на Sanity hosting
 ```
 
-По умолчанию скрипт обновляет только галереи и художников. Чтобы добавить другие коллекции, передайте их список через запятую:
+### Типы TypeScript
 
 ```bash
-pnpm --filter @artflaneur/studio sync:directus galleries,artists
-pnpm --filter @artflaneur/studio sync:directus galleries,artists,exhibitions
+npm run typegen      # Сгенерировать типы из схемы
+npm run typecheck    # Проверить типы
 ```
 
-The script paginates Directus data, batches Sanity mutations, and records the `syncedAt` timestamp on each document for auditing.
-
-## Removing exhibitions
-
-To fully clear all exhibition documents from the connected Sanity dataset, provide the same Sanity credentials (.env works) and run:
+### Импорт данных
 
 ```bash
-pnpm --filter @artflaneur/studio clear:exhibitions
+npm run import-json  # Импортировать из JSON файла
 ```
 
-The script counts existing exhibition docs, removes them in a single query, and logs progress so you can confirm the dataset is clean.
+### Очистка данных
+
+Удаление всех документов определённого типа (сначала снимаются ссылки, затем удаляются документы):
+
+```bash
+npm run clear:exhibitions    # Удалить все выставки
+npm run clear:galleries      # Удалить все галереи
+npm run clear:artists        # Удалить всех художников
+```
+
+> ⚠️ Требуется `SANITY_API_TOKEN` с правами на запись в `.env`
+
+### Синхронизация (legacy)
+
+```bash
+npm run sync:directus        # Синхронизация с Directus (устаревшее)
+```
+
+## Переменные окружения
+
+Создайте `.env` в папке `apps/studio`:
+
+```env
+SANITY_STUDIO_PROJECT_ID=o1yl0ri9
+SANITY_STUDIO_DATASET=blog
+SANITY_API_TOKEN=<write-token>
+```
+
+## Структура
+
+```
+apps/studio/
+├── schemaTypes/         # Схемы контента
+│   ├── review.ts
+│   ├── exhibition.ts
+│   ├── gallery.ts
+│   ├── artist.ts
+│   ├── author.ts
+│   ├── guide.ts
+│   └── ...
+├── scripts/             # Скрипты импорта/очистки
+│   ├── clearExhibitions.ts
+│   ├── clearGalleries.ts
+│   ├── clearArtists.ts
+│   └── ...
+├── components/          # Кастомные компоненты
+├── sanity.config.ts     # Конфигурация Studio
+├── structure.ts         # Структура навигации
+└── sanity-typegen.json  # Конфигурация TypeGen
+```
+
+## Плагины
+
+- `@sanity/vision` — GROQ playground
+- `@sanity/dashboard` — Dashboard
+- `@sanity/document-internationalization` — Локализация (EN/RU)
+- `@sanity/google-maps-input` — Ввод геолокации
+- `@sanity/color-input` — Выбор цвета
+- `@sanity/table` — Табличные данные

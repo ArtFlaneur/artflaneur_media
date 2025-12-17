@@ -1,6 +1,8 @@
 # Art Flaneur Media
 
-Проект объединяет **Sanity Studio** (CMS) и **веб-приложение** (React + Vite) в монорепо.
+Монорепо, объединяющее **Sanity Studio** (CMS), **React/Vite веб-приложение** и интеграции с **AWS AppSync GraphQL** и **Supabase**.
+
+---
 
 ## 🚀 Быстрый старт
 
@@ -12,145 +14,256 @@ npm install
 
 ### 2. Настройка переменных окружения
 
-Создайте файл `apps/web/.env.local` (уже существует):
+**apps/studio/.env** (уже существует):
+```env
+SANITY_STUDIO_PROJECT_ID=o1yl0ri9
+SANITY_STUDIO_DATASET=blog
+SANITY_API_TOKEN=<write-token-for-scripts>
+```
 
-```bash
+**apps/web/.env.local**:
+```env
 VITE_SANITY_PROJECT_ID=o1yl0ri9
 VITE_SANITY_DATASET=blog
 VITE_SANITY_API_VERSION=2024-01-01
 VITE_SANITY_STUDIO_URL=http://localhost:3333
-VITE_GRAPHQL_ENDPOINT=<https://your-appsync-endpoint.appsync-api.aws_region.amazonaws.com/graphql>
-VITE_GRAPHQL_API_KEY=<graphQLApiKey>
-# Опционально, если используется мульти-арендный слой
+
+# GraphQL API (каталог галерей/выставок)
+VITE_GRAPHQL_ENDPOINT=https://hv2h5zqj65hwvjq7ylemx3ayaa.appsync-api.ap-southeast-2.amazonaws.com/graphql
+VITE_GRAPHQL_API_KEY=da2-qola7vmdgbaqbkks6lje5bkta4
 VITE_GRAPHQL_TENANT_ID=artflaneur
-VITE_SUPABASE_URL=<https://your-project.supabase.co>
+
+# Supabase (кабинет галерей)
+VITE_SUPABASE_URL=https://esavlnghlshbzuytkykj.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon-key>
 ```
 
 ### 3. Запуск проекта
 
-#### Запустить всё одновременно:
 ```bash
 npm run dev
 ```
 
-Это запустит:
-- **Sanity Studio** на http://localhost:3333
-- **Веб-приложение** на http://localhost:3000
+Откроются:
+- **Sanity Studio**: http://localhost:3333
+- **Веб-приложение**: http://localhost:3000
 
-#### Или запустить отдельно:
-
-**Только Studio:**
-```bash
-npm run dev:studio
-```
-
-**Только Web:**
-```bash
-npm run dev:web
-```
+---
 
 ## 📦 Структура проекта
 
 ```
 artflaneur_media/
 ├── apps/
-│   ├── studio/          # Sanity Studio (CMS)
-│   │   ├── schemaTypes/ # Схемы контента
+│   ├── studio/                # Sanity Studio (CMS)
+│   │   ├── schemaTypes/       # Схемы контента
+│   │   ├── scripts/           # Скрипты импорта и очистки
 │   │   └── sanity.config.ts
-│   └── web/             # React приложение
-│       ├── pages/       # Страницы
-│       ├── components/  # Компоненты
-│       └── sanity/      # Sanity client & queries
-├── package.json
+│   └── web/                   # React + Vite приложение
+│       ├── pages/             # Страницы
+│       ├── components/        # Компоненты
+│       ├── lib/               # GraphQL, Supabase, утилиты
+│       └── sanity/            # Sanity client & GROQ запросы
+├── sanity/lib/                # Общие re-exports для Sanity
+├── package.json               # Корневой workspace
 └── pnpm-workspace.yaml
 ```
 
-## 🔗 Интеграции и потоки данных
+---
 
-- **Sanity CMS** — весь редакционный контент (ревью, авторы, гайды, лендинги). Код схем находится в `apps/studio/schemaTypes`.
-- **AppSync GraphQL API** — каталоги галерей и выставок для публичного сайта. Клиентская обёртка расположена в `apps/web/lib/graphql.ts`.
-- **Supabase** — аутентификация и личный кабинет галерей (через `apps/web/lib/supabase.ts`).
+## 🔗 Архитектура и потоки данных
 
-Поток данных для галерей и событий:
+### Источники данных
+
+| Источник | Назначение | Клиентский код |
+|----------|------------|----------------|
+| **Sanity CMS** | Редакционный контент (ревью, гайды, авторы, лендинги) | `apps/web/sanity/lib/queries.ts` |
+| **AppSync GraphQL** | Каталог галерей и выставок (10k+ записей) | `apps/web/lib/graphql.ts` |
+| **Supabase** | Авторизация галеристов, заявки на выставки, модерация | `apps/web/lib/supabase.ts` |
+
+### Поток публикации выставок
 
 ```
-Gallery Owner → Supabase (черновик + модерация) → GraphQL API (публикация) → Веб-приложение
+Gallery Owner → Supabase (draft → pending_review → approved)
+                            ↓
+                  Sync → Sanity / GraphQL API
+                            ↓
+                       Public Website
 ```
 
-## 🗄️ Импорт данных
+---
 
-Если база данных пустая, импортируйте тестовые данные:
+## 📋 Типы контента Sanity
+
+| Тип | Описание |
+|-----|----------|
+| `review` | Ревью выставок |
+| `exhibition` | Выставки (Sanity редакционные) |
+| `gallery` | Галереи (Sanity редакционные) |
+| `artist` | Художники |
+| `artistStory` | Истории художников |
+| `author` | Авторы / Амбассадоры |
+| `guide` | Путеводители по городам |
+| `curator` | Кураторы |
+| `sponsor` | Спонсоры |
+| `homepageContent` | Контент главной страницы |
+| `siteSettings` | Глобальные настройки сайта |
+| `landingPage` | Лендинги |
+| `mapData` | Данные для карты |
+
+---
+
+## 🌐 Страницы веб-приложения
+
+| Роут | Страница | Источник данных |
+|------|----------|-----------------|
+| `/` | Home | Sanity |
+| `/reviews` | Список ревью | Sanity |
+| `/reviews/:slug` | Ревью | Sanity |
+| `/exhibitions` | Выставки | Sanity |
+| `/galleries` | Галереи | GraphQL API |
+| `/galleries/:id` | Детали галереи | GraphQL API |
+| `/artists` | Художники | Sanity |
+| `/artists/:slug` | Профиль художника | Sanity |
+| `/guides` | Путеводители | Sanity |
+| `/guides/:slug` | Путеводитель | Sanity |
+| `/ambassadors` | Авторы | Sanity |
+| `/ambassadors/:slug` | Профиль автора | Sanity |
+| `/map` | Карта галерей | GraphQL API |
+| `/search` | Поиск | GraphQL API + Sanity |
+| `/gallery-login` | Вход галеристов | Supabase Auth |
+| `/gallery-dashboard/*` | Кабинет галереи | Supabase |
+| `/admin/moderation` | Модерация заявок | Supabase |
+
+---
+
+## 🛠️ Скрипты
+
+### Корневые команды
+
+```bash
+npm run dev              # Запустить Studio + Web
+npm run dev:studio       # Только Studio
+npm run dev:web          # Только Web
+npm run build            # Собрать оба проекта
+npm run typegen          # Сгенерировать TypeScript типы из Sanity схемы
+npm run typecheck        # Проверить типы во всём проекте
+```
+
+### Скрипты Studio (`apps/studio`)
+
+```bash
+npm run build            # Собрать Studio для деплоя
+npm run deploy           # Задеплоить Studio на Sanity hosting
+
+# Импорт данных
+npm run import-json      # Импортировать данные из JSON
+
+# Очистка данных (удаление документов)
+npm run clear:exhibitions    # Удалить все выставки
+npm run clear:galleries      # Удалить все галереи
+npm run clear:artists        # Удалить всех художников
+```
+
+---
+
+## 📝 Разработка
+
+### Добавление нового типа контента
+
+1. Создайте схему в `apps/studio/schemaTypes/newType.ts`
+2. Добавьте экспорт в `apps/studio/schemaTypes/index.ts`
+3. Создайте GROQ запрос в `apps/web/sanity/lib/queries.ts`
+4. Используйте в компонентах:
+
+```typescript
+import { client } from '../sanity/lib/client'
+import { MY_QUERY } from '../sanity/lib/queries'
+
+const data = await client.fetch(MY_QUERY)
+```
+
+### Работа с GraphQL API
+
+```typescript
+import { fetchGalleries, searchGalleries, fetchGalleryById } from '../lib/graphql'
+
+// Получить список галерей
+const { items, nextToken } = await fetchGalleries({ limit: 20 })
+
+// Поиск галерей
+const results = await searchGalleries('contemporary art')
+
+// Получить галерею по ID
+const gallery = await fetchGalleryById('gallery-123')
+```
+
+### Генерация типов
+
+После изменения схем Sanity:
+
+```bash
+npm run typegen
+```
+
+Типы появятся в `apps/web/sanity-schema.json` и `apps/studio/sanity.types.ts`.
+
+---
+
+## 🗄️ Импорт тестовых данных
 
 ```bash
 cd apps/studio
 npx sanity dataset import sample-data.ndjson blog --replace
 ```
 
-Это добавит:
-- 2 авторов
-- 4 отзыва (reviews)
-- Настройки главной страницы
-
-## 📝 Подключенные страницы к Sanity
-
-✅ **Home** (`/`) - показывает featured reviews и latest reviews из Sanity
-✅ **Reviews Listing** (`/reviews`) - список всех опубликованных reviews
-✅ **Single Review** (`/reviews/:slug`) - детальная страница отзыва
-✅ **Exhibitions** (`/exhibitions`) - список выставок из Sanity
-✅ **Artists** (`/artists`) - список художников
-✅ **Guides** (`/guides`) - путеводители по городам
-✅ **Map** (`/map`) - карта галерей из Sanity
-✅ **Ambassadors** (`/ambassadors`) - список авторов
-
-Страницы **Galleries**, **Map**, **SearchResults** и карта на `/map` дополнительно используют GraphQL API для подгрузки каталога галерей и ближайших локаций.
+---
 
 ## 🔍 Отладка
 
-Все страницы логируют данные из Sanity в консоль браузера:
-- `🔍 Fetching...` - начало загрузки
-- `📦 Data:` - полученные данные
-- `❌ Error:` - ошибки подключения
+### Логи в консоли браузера
 
-Откройте **DevTools (F12)** → **Console** чтобы увидеть логи.
+- `🔍 Fetching...` — начало загрузки
+- `📦 Data:` — полученные данные
+- `❌ Error:` — ошибки
 
-## 🛠️ Разработка
+### Частые проблемы
 
-### Добавление нового типа контента:
+| Проблема | Решение |
+|----------|---------|
+| Данные не загружаются | Проверьте `.env` файлы и переменные окружения |
+| GraphQL ошибки | Убедитесь, что `VITE_GRAPHQL_ENDPOINT` и `VITE_GRAPHQL_API_KEY` заданы |
+| Supabase не работает | Проверьте `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` |
+| TypeScript ошибки | Запустите `npm run typegen && npm run typecheck` |
+| Зависимости не ставятся | Удалите `node_modules` и `package-lock.json`, запустите `npm install` |
 
-1. Создайте схему в `apps/studio/schemaTypes/`
-2. Добавьте в `apps/studio/schemaTypes/index.ts`
-3. Создайте GROQ запрос в `apps/web/sanity/lib/queries.ts`
-4. Используйте в компонентах через `client.fetch(QUERY)`
+---
 
-### Пример GROQ запроса:
+## 📚 Дополнительная документация
 
-```typescript
-export const MY_QUERY = defineQuery(`*[
-  _type == "myType"
-  && publishStatus == "published"
-] | order(publishedAt desc) {
-  _id,
-  title,
-  mainImage {
-    asset->{ url }
-  }
-}`)
-```
+| Документ | Описание |
+|----------|----------|
+| [CLIENT_GRAPHQL_API_ACCESS.md](./CLIENT_GRAPHQL_API_ACCESS.md) | Параметры AppSync GraphQL API |
+| [GALLERY_SYSTEM_SETUP.md](./GALLERY_SYSTEM_SETUP.md) | Архитектура кабинета галерей |
+| [MULTI_TENANT_SUPABASE.md](./MULTI_TENANT_SUPABASE.md) | Мультитенантность и Supabase |
+| [SUPABASE_STORAGE_SETUP.md](./SUPABASE_STORAGE_SETUP.md) | Хранилище изображений |
+| [apps/studio/README.md](./apps/studio/README.md) | Документация Sanity Studio |
+| [apps/web/README.md](./apps/web/README.md) | Документация веб-приложения |
 
-## 📚 Документация
+---
 
-- [Sanity Documentation](https://www.sanity.io/docs)
-- [GROQ Query Language](https://www.sanity.io/docs/groq)
-- [React Router](https://reactrouter.com/)
-- [Vite](https://vitejs.dev/)
+## 🔧 Конфигурация проекта
 
-## 🆘 Проблемы?
+| Параметр | Значение |
+|----------|----------|
+| **Sanity Project ID** | `o1yl0ri9` |
+| **Sanity Dataset** | `blog` |
+| **Studio URL (local)** | http://localhost:3333 |
+| **Web App URL (local)** | http://localhost:3000 |
+| **GraphQL Region** | `ap-southeast-2` (Sydney) |
 
-Если данные не загружаются:
-1. Проверьте консоль браузера на ошибки
-2. Убедитесь, что Sanity Studio запущена
-3. Проверьте, что в Studio есть опубликованный контент (publishStatus = "published")
-4. Убедитесь, что `VITE_GRAPHQL_ENDPOINT` и `VITE_GRAPHQL_API_KEY` заданы — без них не загрузятся карты и каталоги
-5. Проверьте `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY`, если не открывается личный кабинет галерей
-6. Перезапустите `npm run dev`, чтобы пересчитать переменные окружения
+---
+
+## 📜 Лицензия
+
+UNLICENSED — проприетарный код Art Flaneur Global Pty Ltd.

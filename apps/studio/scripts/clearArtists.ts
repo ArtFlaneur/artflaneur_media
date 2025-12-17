@@ -64,6 +64,27 @@ async function applyPatchJobs(jobs: PatchJob[], label: string) {
 }
 
 async function unlinkArtistReferences() {
+  // artEvent.artist or artEvent.artists (single or array reference)
+  const artEventsSingle = await client.fetch<string[]>(
+    '*[_type == "artEvent" && defined(artist)]._id',
+    {},
+    RAW_PERSPECTIVE,
+  )
+  await applyPatchJobs(
+    artEventsSingle.map((id) => ({id, unsetPaths: ['artist']})),
+    'artEvent artist references',
+  )
+
+  const artEventsArray = await client.fetch<string[]>(
+    '*[_type == "artEvent" && count(artists) > 0]._id',
+    {},
+    RAW_PERSPECTIVE,
+  )
+  await applyPatchJobs(
+    artEventsArray.map((id) => ({id, unsetPaths: ['artists']})),
+    'artEvent artists arrays',
+  )
+
   // exhibition.artists (array of references)
   const exhibitions = await client.fetch<string[]>(
     '*[_type == "exhibition" && count(artists) > 0]._id',
