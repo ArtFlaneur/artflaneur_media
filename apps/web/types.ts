@@ -46,6 +46,7 @@ export interface Artist {
   discipline: string[];
   location: string;
   featuredWork: string;
+  lifespan?: string; // e.g. "1881–1973" or "b. 1965"
 }
 
 export interface GuideStep {

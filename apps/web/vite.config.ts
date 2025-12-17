@@ -34,6 +34,14 @@ export default defineConfig(({ mode }) => {
     } else {
       console.warn('⚠️ VITE_SANITY_PROJECT_ID not set. Skipping Sanity proxy.');
     }
+
+    // Proxy for secure assets to bypass CORS
+    proxyConfig['/api/assets'] = {
+      target: 'https://assets.artflaneur.com.au',
+      changeOrigin: true,
+      secure: true,
+      rewrite: (path: string) => path.replace(/^\/api\/assets/, ''),
+    };
     
     return {
       server: {

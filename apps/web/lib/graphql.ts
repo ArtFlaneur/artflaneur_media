@@ -361,3 +361,141 @@ export async function fetchExhibitionsByGallery(
 
   return data.listExhibitionsByGalleryId?.items ?? [];
 }
+
+// ============ ARTISTS ============
+
+export interface GraphqlArtist {
+  id: string;
+  name: string;
+  description?: string | null;
+  birth_year?: number | null;
+  death_year?: number | null;
+  country?: string | null;
+  wikipedia_url?: string | null;
+}
+
+const LIST_ARTISTS_QUERY = `#graphql
+  query ListAllArtists($limit: Int, $nextToken: String) {
+    listAllArtists(limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        name
+        description
+        birth_year
+        death_year
+        country
+        wikipedia_url
+      }
+      nextToken
+    }
+  }
+`;
+
+const GET_ARTIST_QUERY = `#graphql
+  query GetArtist($id: ID!) {
+    getArtist(id: $id) {
+      id
+      name
+      description
+      birth_year
+      death_year
+      country
+      wikipedia_url
+    }
+  }
+`;
+
+const EXHIBITIONS_FOR_ARTIST_QUERY = `#graphql
+  query ExhibitionsForArtist($artistId: ID!) {
+    exhibitionsForArtist(artistId: $artistId) {
+      items {
+        id
+        title
+        galleryname
+        gallery_id
+        city
+        description
+        datefrom
+        dateto
+        datefrom_epoch
+        dateto_epoch
+        exhibition_img_url
+      }
+    }
+  }
+`;
+
+export interface FetchArtistsParams {
+  limit?: number;
+  nextToken?: string | null;
+}
+
+export async function fetchArtists(
+  params: FetchArtistsParams = {}
+): Promise<GraphqlListResult<GraphqlArtist>> {
+  const data = await executeGraphQL<{ listAllArtists: GraphqlListResult<GraphqlArtist> }>(
+    LIST_ARTISTS_QUERY,
+    { limit: params.limit, nextToken: params.nextToken }
+  );
+
+  return data.listAllArtists ?? { items: [], nextToken: null };
+}
+
+export async function fetchArtistById(id: string): Promise<GraphqlArtist | null> {
+  const data = await executeGraphQL<{ getArtist: GraphqlArtist | null }>(GET_ARTIST_QUERY, { id });
+  return data.getArtist ?? null;
+}
+
+export async function fetchExhibitionsForArtist(
+  artistId: string
+): Promise<GraphqlExhibition[]> {
+  const data = await executeGraphQL<{
+    exhibitionsForArtist: { items: GraphqlExhibition[] };
+  }>(EXHIBITIONS_FOR_ARTIST_QUERY, { artistId });
+
+  return data.exhibitionsForArtist?.items ?? [];
+}
+
+// ============ SEARCH FUNCTIONS ============
+
+export async function searchArtists(
+  query: string,
+  limit = 50
+): Promise<GraphqlArtist[]> {
+  if (!query.trim()) {
+    return [];
+  }
+
+  // Fetch all artists and filter client-side since API doesn't support text search
+  const result = await fetchArtists({ limit: 500 });
+  const searchLower = query.toLowerCase();
+  
+  return (result.items ?? []).filter(
+    (artist) =>
+      artist.name?.toLowerCase().includes(searchLower) ||
+      artist.country?.toLowerCase().includes(searchLower) ||
+      artist.description?.toLowerCase().includes(searchLower)
+  ).slice(0, limit);
+}
+
+export async function searchExhibitions(
+  query: string,
+  limit = 50
+): Promise<GraphqlExhibition[]> {
+  if (!query.trim()) {
+    return [];
+  }
+
+  // Fetch exhibitions and filter client-side
+  const exhibitions = await fetchExhibitions(500);
+  const searchLower = query.toLowerCase();
+  
+  return exhibitions.filter(
+    (exhibition) =>
+      exhibition.title?.toLowerCase().includes(searchLower) ||
+      exhibition.galleryname?.toLowerCase().includes(searchLower) ||
+      exhibition.city?.toLowerCase().includes(searchLower) ||
+      exhibition.artist?.toLowerCase().includes(searchLower) ||
+      exhibition.description?.toLowerCase().includes(searchLower)
+  ).slice(0, limit);
+}

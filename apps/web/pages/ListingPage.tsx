@@ -5,16 +5,14 @@ import {
   REVIEWS_QUERY,
   AUTHORS_QUERY,
   GUIDES_QUERY,
-  PAGINATED_ARTISTS_QUERY,
 } from '../sanity/lib/queries';
 import {
   REVIEWS_QUERYResult,
-  ARTISTS_QUERYResult,
   GUIDES_QUERYResult,
   AUTHORS_QUERYResult,
 } from '../sanity/types';
 import { Article, Artist, Exhibition, Guide, Author, ContentType, Gallery } from '../types';
-import { fetchExhibitions, fetchGalleries, GraphqlExhibition, GraphqlGallery } from '../lib/graphql';
+import { fetchExhibitions, fetchGalleries, fetchArtists, GraphqlExhibition, GraphqlGallery, GraphqlArtist } from '../lib/graphql';
 import { mapGraphqlGalleryToEntity } from '../lib/galleryMapping';
 
 interface ListingPageProps {
@@ -27,10 +25,24 @@ type ListingEntity = Article | Artist | Exhibition | Guide | Author | Gallery;
 const PAGE_SIZE = 10;
 const PAGINATED_TYPES = new Set<ListingPageProps['type']>(['artists', 'galleries']);
 
-const getArtistImage = (artist: ARTISTS_QUERYResult[number]) => artist.photo?.asset?.url ?? null;
-
-const hasArtistContent = (artist: ARTISTS_QUERYResult[number]) =>
-  Boolean(artist.name?.trim() && artist.bio?.trim() && getArtistImage(artist));
+const mapGraphqlArtistToCard = (artist: GraphqlArtist): Artist => {
+  const lifespan = artist.birth_year
+    ? artist.death_year
+      ? `${artist.birth_year}–${artist.death_year}`
+      : `b. ${artist.birth_year}`
+    : '';
+  return {
+    id: artist.id,
+    slug: artist.id,
+    name: artist.name,
+    image: '', // GraphQL API does not provide image URL
+    bio: artist.description ?? '',
+    discipline: [],
+    location: artist.country ?? '',
+    featuredWork: '',
+    lifespan,
+  };
+};
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -70,20 +82,6 @@ const mapGraphqlExhibitionToCard = (exhibition: GraphqlExhibition): Exhibition =
   endDate: formatDate(exhibition.dateto ?? undefined) ?? 'TBC',
   description: exhibition.description ?? '',
 });
-
-const mapArtistToCard = (artist: ARTISTS_QUERYResult[number]): Artist => {
-  const image = getArtistImage(artist) ?? '';
-  return {
-    id: artist._id,
-    slug: artist.slug?.current ?? artist._id,
-    name: artist.name ?? 'Unknown Artist',
-    image,
-    bio: artist.bio ?? '',
-    discipline: [],
-    location: '',
-    featuredWork: image,
-  };
-};
 
 const mapGuideToCard = (guide: GUIDES_QUERYResult[number]): Guide => ({
   id: guide._id,
@@ -135,12 +133,11 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [offset, setOffset] = useState(0);
   const isPaginatedType = PAGINATED_TYPES.has(type);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isMountedRef = useRef(true);
   const pendingCardsRef = useRef<ListingEntity[]>([]);
-  const galleryCursorRef = useRef<string | null>(null);
+  const cursorRef = useRef<string | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -158,14 +155,13 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         pendingCardsRef.current = [];
         setLoading(true);
         setData([]);
-        galleryCursorRef.current = null;
+        cursorRef.current = null;
       } else {
         setLoadingMore(true);
       }
 
       try {
         const nextBatch: ListingEntity[] = [];
-        let nextOffset = startOffset;
         let reachedEnd = false;
 
         if (pendingCardsRef.current.length) {
@@ -174,27 +170,21 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         }
 
           while (nextBatch.length < PAGE_SIZE && !reachedEnd) {
-            const params = { offset: nextOffset, end: nextOffset + PAGE_SIZE + 1 };
-
             if (listingType === 'artists') {
-              const rawArtists = await client.fetch<ARTISTS_QUERYResult>(PAGINATED_ARTISTS_QUERY, params);
-              const rows = Array.isArray(rawArtists) ? rawArtists : [];
+              const connection = await fetchArtists({
+                limit: PAGE_SIZE + 1,
+                nextToken: cursorRef.current ?? undefined,
+              });
+
+              const rows = Array.isArray(connection.items) ? connection.items : [];
+              cursorRef.current = connection.nextToken ?? null;
 
               if (!rows.length) {
-                reachedEnd = true;
+                reachedEnd = !cursorRef.current;
                 break;
               }
 
-              nextOffset += rows.length;
-
-              const mapped = rows.filter(hasArtistContent).map(mapArtistToCard);
-
-              if (!mapped.length) {
-                if (rows.length <= PAGE_SIZE) {
-                  reachedEnd = true;
-                }
-                continue;
-              }
+              const mapped = rows.map(mapGraphqlArtistToCard);
 
               const slots = PAGE_SIZE - nextBatch.length;
               nextBatch.push(...mapped.slice(0, slots));
@@ -205,20 +195,20 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
                 break;
               }
 
-              if (rows.length <= PAGE_SIZE) {
+              if (!cursorRef.current) {
                 reachedEnd = true;
               }
             } else {
               const connection = await fetchGalleries({
                 limit: PAGE_SIZE + 1,
-                nextToken: galleryCursorRef.current ?? undefined,
+                nextToken: cursorRef.current ?? undefined,
               });
 
               const rows = Array.isArray(connection.items) ? connection.items : [];
-              galleryCursorRef.current = connection.nextToken ?? null;
+              cursorRef.current = connection.nextToken ?? null;
 
               if (!rows.length) {
-                reachedEnd = !galleryCursorRef.current;
+                reachedEnd = !cursorRef.current;
                 break;
               }
 
@@ -233,7 +223,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
                 break;
               }
 
-              if (!galleryCursorRef.current) {
+              if (!cursorRef.current) {
                 reachedEnd = true;
               }
             }
@@ -244,7 +234,6 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         setData((prev) => (replace ? nextBatch : [...prev, ...nextBatch]));
         const hasPending = pendingCardsRef.current.length > 0;
         setHasMore(hasPending || !reachedEnd);
-        setOffset(nextOffset);
         setError(nextBatch.length === 0 && replace ? 'No published entries yet.' : null);
       } catch (err) {
         console.error(`❌ Error fetching ${listingType}:`, err);
@@ -270,8 +259,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     setData([]);
     setError(null);
     setHasMore(false);
-    setOffset(0);
     pendingCardsRef.current = [];
+    cursorRef.current = null;
 
     const loadData = async () => {
       if (isPaginatedType) {
@@ -337,8 +326,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     if (!isPaginatedType || loading || loadingMore || !hasMore) {
       return;
     }
-    fetchPaginatedPage(offset, false);
-  }, [fetchPaginatedPage, hasMore, isPaginatedType, loading, loadingMore, offset]);
+    fetchPaginatedPage(0, false);
+  }, [fetchPaginatedPage, hasMore, isPaginatedType, loading, loadingMore]);
 
   useEffect(() => {
     if (!isPaginatedType) return;
@@ -362,7 +351,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   }, [isPaginatedType, loadMore]);
 
   useEffect(() => {
-    galleryCursorRef.current = null;
+    cursorRef.current = null;
   }, [type]);
 
   const cardType: Parameters<typeof EntityCard>[0]['type'] = CARD_TYPE_MAP[type];

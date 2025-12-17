@@ -3,6 +3,10 @@ const TOKEN_ENDPOINT = 'https://hgito8qnb0.execute-api.ap-southeast-2.amazonaws.
 const TOKEN_REFRESH_BUFFER_MS = 30_000;
 const DEFAULT_TOKEN_TTL_MS = 4 * 60 * 1000;
 
+// In development, use Vite proxy to bypass CORS
+const IS_DEV = import.meta.env.DEV;
+const ASSETS_BASE = IS_DEV ? '/api/assets' : 'https://assets.artflaneur.com.au';
+
 let cachedToken: { value: string; expiresAt: number } | null = null;
 let ongoingTokenRequest: Promise<string> | null = null;
 const imageCache = new Map<string, string>();
@@ -28,10 +32,6 @@ const decodeTokenExpiry = (token: string): number | null => {
 const requestNewToken = async (): Promise<string> => {
   const response = await fetch(TOKEN_ENDPOINT, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
   });
 
   if (!response.ok) {
@@ -63,9 +63,17 @@ const getValidToken = async (): Promise<string> => {
   return ongoingTokenRequest;
 };
 
+const rewriteUrlForProxy = (src: string): string => {
+  if (IS_DEV && SECURE_HOST_PATTERN.test(src)) {
+    return src.replace(/https?:\/\/assets\.artflaneur\.com\.au/i, ASSETS_BASE);
+  }
+  return src;
+};
+
 const fetchSecureBlob = async (src: string, allowRetry = true): Promise<Blob> => {
   const token = await getValidToken();
-  const response = await fetch(src, {
+  const proxiedSrc = rewriteUrlForProxy(src);
+  const response = await fetch(proxiedSrc, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

@@ -3,8 +3,8 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { client } from '../sanity/lib/client';
 import { defineQuery } from 'groq';
 import { ArticleCard, EntityCard } from '../components/Shared';
-import { Author, ContentType, Gallery, Guide, GuideStep } from '../types';
-import { searchGalleries } from '../lib/graphql';
+import { Artist, Author, ContentType, Gallery, Guide, GuideStep } from '../types';
+import { searchGalleries, searchArtists, searchExhibitions, GraphqlArtist, GraphqlExhibition } from '../lib/graphql';
 import { mapGraphqlGalleryToEntity } from '../lib/galleryMapping';
 
 type Slug = { current?: string | null } | null | undefined;
@@ -65,16 +65,14 @@ type AmbassadorDoc = {
 
 type SearchQueryResponse = {
   reviews?: ReviewDoc[];
-  exhibitions?: ExhibitionDoc[];
-  artists?: ArtistDoc[];
   guides?: GuideDoc[];
   ambassadors?: AmbassadorDoc[];
 };
 
 type FilteredResults = {
   reviews: ReviewDoc[];
-  exhibitions: ExhibitionDoc[];
-  artists: ArtistDoc[];
+  exhibitions: GraphqlExhibition[];
+  artists: GraphqlArtist[];
   galleries: Gallery[];
   guides: Guide[];
   ambassadors: Author[];
@@ -127,7 +125,7 @@ const createEmptyResults = (): FilteredResults => ({
   ambassadors: [],
 });
 
-// GROQ запрос для получения всех документов (временно без фильтров для отладки)
+// GROQ запрос для получения документов из Sanity (без художников и выставок - они теперь из GraphQL)
 const SEARCH_QUERY = defineQuery(`{
   "reviews": *[_type == "review"] {
     _id,
@@ -140,23 +138,6 @@ const SEARCH_QUERY = defineQuery(`{
     },
     publishedAt,
     author->{ _id, name, photo { asset->{ url } } }
-  },
-  "exhibitions": *[_type == "exhibition"] {
-    _id,
-    title,
-    slug,
-    startDate,
-    endDate,
-    description,
-    gallery->{ name, city }
-  },
-  "artists": *[_type == "artist"] {
-    _id,
-    name,
-    slug,
-    photo {
-      asset->{ url }
-    }
   },
   "guides": *[_type == "guide"] {
     _id,
@@ -198,23 +179,31 @@ const SearchResults: React.FC = () => {
         setLoading(true);
         console.log('🔍 Searching for:', query);
         
-        // Получаем все данные
-        const [data, graphqlGalleries] = await Promise.all([
+        // Получаем данные параллельно из Sanity и GraphQL
+        const [sanityData, graphqlGalleries, graphqlArtists, graphqlExhibitions] = await Promise.all([
           client.fetch<SearchQueryResponse>(SEARCH_QUERY),
           searchGalleries(query, 40).catch((err) => {
             console.error('⚠️ GraphQL gallery search failed:', err);
+            return [];
+          }),
+          searchArtists(query, 40).catch((err) => {
+            console.error('⚠️ GraphQL artist search failed:', err);
+            return [];
+          }),
+          searchExhibitions(query, 40).catch((err) => {
+            console.error('⚠️ GraphQL exhibition search failed:', err);
             return [];
           }),
         ]);
 
         const normalizedGalleries = graphqlGalleries.map(mapGraphqlGalleryToEntity);
         console.log('📦 All data fetched:', {
-          reviews: data.reviews?.length ?? 0,
-          exhibitions: data.exhibitions?.length ?? 0,
-          artists: data.artists?.length ?? 0,
+          reviews: sanityData.reviews?.length ?? 0,
+          exhibitions: graphqlExhibitions.length,
+          artists: graphqlArtists.length,
           galleries: normalizedGalleries.length,
-          guides: data.guides?.length ?? 0,
-          ambassadors: data.ambassadors?.length ?? 0,
+          guides: sanityData.guides?.length ?? 0,
+          ambassadors: sanityData.ambassadors?.length ?? 0,
         });
         
         // Фильтруем на клиенте (case-insensitive)
@@ -223,24 +212,16 @@ const SearchResults: React.FC = () => {
 
         const filteredResults: FilteredResults = {
           reviews:
-            data.reviews?.filter(
+            sanityData.reviews?.filter(
               (r) =>
                 r.publishStatus === 'published' &&
                 (matchesQuery(r.title, searchLower) || matchesQuery(r.excerpt, searchLower)),
             ) ?? [],
-          exhibitions:
-            data.exhibitions?.filter(
-              (e) =>
-                matchesQuery(e.title, searchLower) ||
-                matchesQuery(e.description, searchLower) ||
-                matchesQuery(e.gallery?.name, searchLower) ||
-                matchesQuery(e.gallery?.city, searchLower),
-            ) ?? [],
-          artists:
-            data.artists?.filter((a) => matchesQuery(a.name, searchLower)) ?? [],
+          exhibitions: graphqlExhibitions,
+          artists: graphqlArtists,
           galleries: normalizedGalleries,
           guides:
-            data.guides?.reduce<Guide[]>((acc, guide) => {
+            sanityData.guides?.reduce<Guide[]>((acc, guide) => {
               if (
                 matchesQuery(guide.title, searchLower) ||
                 matchesQuery(guide.description, searchLower) ||
@@ -251,7 +232,7 @@ const SearchResults: React.FC = () => {
               return acc;
             }, []) ?? [],
           ambassadors:
-            data.ambassadors?.reduce<Author[]>((acc, ambassador) => {
+            sanityData.ambassadors?.reduce<Author[]>((acc, ambassador) => {
               if (
                 matchesQuery(ambassador.name, searchLower) ||
                 matchesQuery(ambassador.role, searchLower) ||
@@ -386,32 +367,29 @@ const SearchResults: React.FC = () => {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {results.exhibitions.map((exhibition) => {
-                    const slug = exhibition.slug?.current ?? exhibition._id;
-                    const start = exhibition.startDate
-                      ? new Date(exhibition.startDate).toLocaleDateString()
+                    const start = exhibition.datefrom
+                      ? new Date(exhibition.datefrom).toLocaleDateString()
                       : 'TBC';
-                    const end = exhibition.endDate
-                      ? new Date(exhibition.endDate).toLocaleDateString()
+                    const end = exhibition.dateto
+                      ? new Date(exhibition.dateto).toLocaleDateString()
                       : 'TBC';
                     return (
-                      <div
-                        key={exhibition._id}
-                        className="border-2 border-black p-6 bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all"
-                      >
-                      <h3 className="text-xl font-bold uppercase mb-2">{exhibition.title}</h3>
-                      <p className="font-mono text-sm text-gray-600">
-                        {exhibition.gallery?.name} • {exhibition.gallery?.city}
-                      </p>
-                      <p className="font-mono text-xs text-gray-500 mt-2">
-                        {start} - {end}
-                      </p>
                       <Link
-                        to={`/exhibitions/${slug}`}
-                        className="inline-block mt-4 text-sm font-bold uppercase hover:text-art-blue"
+                        key={exhibition.id}
+                        to={`/galleries/${exhibition.gallery_id || ''}`}
+                        className="border-2 border-black p-6 bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all block"
                       >
-                        View Details →
+                        <h3 className="text-xl font-bold uppercase mb-2">{exhibition.title || 'Untitled'}</h3>
+                        <p className="font-mono text-sm text-gray-600">
+                          {exhibition.galleryname} • {exhibition.city}
+                        </p>
+                        <p className="font-mono text-xs text-gray-500 mt-2">
+                          {start} - {end}
+                        </p>
+                        <span className="inline-block mt-4 text-sm font-bold uppercase hover:text-art-blue">
+                          View Gallery →
+                        </span>
                       </Link>
-                    </div>
                     );
                   })}
                 </div>
@@ -445,22 +423,27 @@ const SearchResults: React.FC = () => {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {results.artists.map((artist) => {
-                    const artistSlug = artist.slug?.current ?? artist._id;
+                    const lifespan = artist.birth_year
+                      ? artist.death_year
+                        ? `${artist.birth_year}–${artist.death_year}`
+                        : `b. ${artist.birth_year}`
+                      : null;
                     return (
                       <Link
-                        key={artist._id}
-                        to={`/artists/${artistSlug}`}
-                      className="border-2 border-black p-4 bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group"
-                    >
-                      <div className="aspect-square mb-3 overflow-hidden">
-                        <img
-                          src={artist.photo?.asset?.url || 'https://picsum.photos/300/300'}
-                          alt={artist.name}
-                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
-                        />
-                      </div>
-                      <h3 className="font-bold uppercase text-sm">{artist.name}</h3>
-                    </Link>
+                        key={artist.id}
+                        to={`/artists/${artist.id}`}
+                        className="border-2 border-black p-4 bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group"
+                      >
+                        <div className="aspect-square mb-3 overflow-hidden bg-gray-100 flex items-center justify-center">
+                          <span className="font-mono text-xs uppercase text-gray-400">Portrait TBD</span>
+                        </div>
+                        <h3 className="font-bold uppercase text-sm">{artist.name}</h3>
+                        {(artist.country || lifespan) && (
+                          <p className="font-mono text-xs text-gray-500 mt-1">
+                            {[artist.country, lifespan].filter(Boolean).join(' • ')}
+                          </p>
+                        )}
+                      </Link>
                     );
                   })}
                 </div>
