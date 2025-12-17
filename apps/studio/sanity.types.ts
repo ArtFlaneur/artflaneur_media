@@ -601,7 +601,6 @@ export type Artist = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  directusId?: number;
   name?: string;
   slug?: Slug;
   photo?: {
@@ -829,7 +828,6 @@ export type Exhibition = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  directusId?: number;
   title?: string;
   slug?: Slug;
   gallery?: {
@@ -838,7 +836,6 @@ export type Exhibition = {
     _weak?: boolean;
     [internalGroqTypeReferenceTo]?: "gallery";
   };
-  directusGalleryId?: number;
   image?: {
     asset?: {
       _ref: string;
@@ -877,7 +874,6 @@ export type Gallery = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  directusId?: number;
   name?: string;
   slug?: Slug;
   image?: {

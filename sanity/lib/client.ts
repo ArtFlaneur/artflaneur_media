@@ -43,13 +43,87 @@ const useCdn = getProcessEnv('SANITY_USE_CDN')
   ? getProcessEnv('SANITY_USE_CDN') === 'true'
   : Boolean(getViteEnv('PROD')) || getProcessEnv('NODE_ENV') === 'production'
 
-export const client = createClient({
+const sanitizeProxyBase = (value?: string) => {
+  if (!value) {
+    return '/api/sanity'
+  }
+
+  return value.endsWith('/') ? value.slice(0, -1) : value
+}
+
+const isLocalHostname = (hostname: string) => {
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '0.0.0.0' ||
+    hostname.endsWith('.local') ||
+    hostname.startsWith('10.') ||
+    hostname.startsWith('192.168.') ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+  )
+}
+
+const shouldProxySanityRequests = () => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  return isLocalHostname(window.location.hostname)
+}
+
+const getNativeFetch = () => {
+  return typeof fetch === 'function' ? fetch.bind(globalThis) : undefined
+}
+
+const createSanityProxyFetch = (nativeFetch: typeof fetch, proxyBase: string) => {
+  const projectApiHost = `https://${projectId}.api.sanity.io`
+  const projectCdnHost = `https://${projectId}.apicdn.sanity.io`
+  const proxyHosts = [projectApiHost, projectCdnHost]
+
+  return (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
+    if (typeof Request === 'undefined') {
+      return nativeFetch(input as RequestInfo, init)
+    }
+
+    const originalRequest = new Request(input as RequestInfo | URL, init)
+    const matchedHost = proxyHosts.find((host) => originalRequest.url.startsWith(host))
+
+    if (!matchedHost) {
+      return nativeFetch(originalRequest as RequestInfo, init)
+    }
+
+    const proxiedUrl = `${proxyBase}${originalRequest.url.slice(matchedHost.length)}`
+    const proxiedRequest = new Request(proxiedUrl, originalRequest)
+
+    return nativeFetch(proxiedRequest)
+  }
+}
+
+const sanityProxyBase = sanitizeProxyBase(getViteEnv('VITE_SANITY_PROXY_PATH') || getProcessEnv('SANITY_PROXY_PATH'))
+const nativeFetch = getNativeFetch()
+const sanityProxyFetch = nativeFetch && shouldProxySanityRequests() ? createSanityProxyFetch(nativeFetch, sanityProxyBase) : undefined
+
+if (typeof window !== 'undefined' && typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) {
+  // Surface whether the proxy is active during local development to ease CORS debugging
+  console.info('🛰️ Sanity proxy', sanityProxyFetch ? 'enabled' : 'disabled', {
+    hostname: window.location.hostname,
+    proxyBase: sanityProxyBase,
+  })
+}
+
+const clientConfig = {
   projectId,
   dataset,
   apiVersion,
   useCdn,
-  perspective: 'published',
-})
+  perspective: 'published' as const,
+}
+
+if (sanityProxyFetch) {
+  Object.assign(clientConfig, {fetch: sanityProxyFetch})
+}
+
+export const client = createClient(clientConfig)
 
 export const sanityConfig = {
   projectId,

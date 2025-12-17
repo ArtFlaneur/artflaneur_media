@@ -9,13 +9,6 @@ export const artist = defineType({
   icon: UserIcon,
   fields: [
     defineField({
-      name: 'directusId',
-      title: 'Directus ID',
-      type: 'string',
-      description: 'Artist ID from Directus',
-      readOnly: true,
-    }),
-    defineField({
       name: 'name',
       title: 'Name',
       type: 'string',
@@ -145,13 +138,6 @@ export const artist = defineType({
         {name: 'facebook', type: 'url', title: 'Facebook'},
         {name: 'twitter', type: 'url', title: 'Twitter/X'},
       ],
-    }),
-    defineField({
-      name: 'syncedAt',
-      title: 'Last Synced At',
-      type: 'datetime',
-      description: 'Timestamp of the most recent Directus sync',
-      readOnly: true,
     }),
     appCtaField(),
     seoField(),

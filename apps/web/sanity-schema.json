@@ -3518,13 +3518,6 @@
           "type": "string"
         }
       },
-      "directusId": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
-        },
-        "optional": true
-      },
       "name": {
         "type": "objectAttribute",
         "value": {
@@ -3862,13 +3855,6 @@
               "optional": true
             }
           }
-        },
-        "optional": true
-      },
-      "syncedAt": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
         },
         "optional": true
       },
@@ -5351,13 +5337,6 @@
           "type": "string"
         }
       },
-      "directusId": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "number"
-        },
-        "optional": true
-      },
       "title": {
         "type": "objectAttribute",
         "value": {
@@ -5400,13 +5379,6 @@
             }
           },
           "dereferencesTo": "gallery"
-        },
-        "optional": true
-      },
-      "directusGalleryId": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "number"
         },
         "optional": true
       },
@@ -5678,20 +5650,6 @@
         "value": {
           "type": "string"
         }
-      },
-      "directusId": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
-        },
-        "optional": true
-      },
-      "directusImageFile": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
-        },
-        "optional": true
       },
       "name": {
         "type": "objectAttribute",
@@ -6010,13 +5968,6 @@
         "value": {
           "type": "inline",
           "name": "blockContent"
-        },
-        "optional": true
-      },
-      "syncedAt": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
         },
         "optional": true
       },

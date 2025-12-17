@@ -3,24 +3,18 @@ import { EntityCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import {
   REVIEWS_QUERY,
-  EXHIBITIONS_QUERY,
   AUTHORS_QUERY,
   GUIDES_QUERY,
   PAGINATED_ARTISTS_QUERY,
-  PAGINATED_GALLERIES_QUERY,
-  GALLERIES_COUNT_QUERY,
 } from '../sanity/lib/queries';
 import {
   REVIEWS_QUERYResult,
-  EXHIBITIONS_QUERYResult,
   ARTISTS_QUERYResult,
   GUIDES_QUERYResult,
   AUTHORS_QUERYResult,
-  GALLERIES_QUERYResult,
-  GALLERIES_COUNT_QUERYResult,
 } from '../sanity/types';
 import { Article, Artist, Exhibition, Guide, Author, ContentType, Gallery } from '../types';
-import { directusClient } from '../lib/directus';
+import { fetchExhibitions, fetchGalleries, GraphqlExhibition, GraphqlGallery } from '../lib/graphql';
 
 interface ListingPageProps {
   title: string;
@@ -37,23 +31,28 @@ const getArtistImage = (artist: ARTISTS_QUERYResult[number]) => artist.photo?.as
 const hasArtistContent = (artist: ARTISTS_QUERYResult[number]) =>
   Boolean(artist.name?.trim() && artist.bio?.trim() && getArtistImage(artist));
 
-const getGalleryPrimaryImage = (gallery: GALLERIES_QUERYResult[number]) => {
-  if (gallery.directusImageFile) {
-    try {
-      return directusClient.getImageUrl(gallery.directusImageFile, { width: 900, quality: 80 });
-    } catch (error) {
-      console.warn('Failed to build Directus image URL', error);
-    }
+const buildGraphqlGalleryImage = (gallery: GraphqlGallery): string => {
+  if (gallery.gallery_img_url) {
+    return gallery.gallery_img_url;
   }
-  return gallery.mainImage?.asset?.url ?? null;
+
+  if (gallery.logo_img_url) {
+    return gallery.logo_img_url;
+  }
+
+  return `https://picsum.photos/seed/graphql-gallery-${gallery.id}/600/600`;
 };
 
-const hasGalleryContent = (gallery: GALLERIES_QUERYResult[number]) =>
-  Boolean(
-    gallery.name?.trim() &&
-    getGalleryPrimaryImage(gallery) &&
-    (gallery.description?.trim() || gallery.address?.trim() || gallery.city?.trim() || gallery.country?.trim())
-  );
+const mapGraphqlGalleryToCard = (gallery: GraphqlGallery): Gallery => ({
+  id: String(gallery.id),
+  slug: String(gallery.id),
+  name: gallery.galleryname ?? 'Gallery',
+  city: gallery.city ?? undefined,
+  country: gallery.country ?? undefined,
+  address: gallery.fulladdress ?? undefined,
+  image: buildGraphqlGalleryImage(gallery),
+  description: gallery.openinghours ?? undefined,
+});
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -82,15 +81,15 @@ const mapReviewToArticle = (review: REVIEWS_QUERYResult[number]): Article => ({
     : undefined,
 });
 
-const mapExhibitionToCard = (exhibition: EXHIBITIONS_QUERYResult[number]): Exhibition => ({
-  id: exhibition._id,
-  slug: exhibition.slug?.current ?? exhibition._id,
+const mapGraphqlExhibitionToCard = (exhibition: GraphqlExhibition): Exhibition => ({
+  id: exhibition.id,
+  slug: exhibition.id,
   title: exhibition.title ?? 'Untitled Exhibition',
-  gallery: exhibition.gallery?.name ?? 'Gallery',
-  city: exhibition.gallery?.city ?? 'City',
-  image: `https://picsum.photos/seed/${exhibition._id}/600/600`,
-  startDate: formatDate(exhibition.startDate) ?? 'TBC',
-  endDate: formatDate(exhibition.endDate) ?? 'TBC',
+  gallery: exhibition.galleryname ?? 'Gallery',
+  city: exhibition.city ?? 'City',
+  image: exhibition.exhibition_img_url ?? `https://picsum.photos/seed/${exhibition.id}/600/600`,
+  startDate: formatDate(exhibition.datefrom ?? undefined) ?? 'TBC',
+  endDate: formatDate(exhibition.dateto ?? undefined) ?? 'TBC',
   description: exhibition.description ?? '',
 });
 
@@ -141,20 +140,6 @@ const mapAuthorToCard = (author: AUTHORS_QUERYResult[number]): Author => ({
   bio: author.bio ?? '',
 });
 
-const mapGalleryToCard = (gallery: GALLERIES_QUERYResult[number]): Gallery => {
-  const image = getGalleryPrimaryImage(gallery) ?? '';
-  return {
-    id: gallery._id,
-    slug: gallery.slug?.current ?? gallery._id,
-    name: gallery.name ?? 'Gallery',
-    city: gallery.city ?? undefined,
-    country: gallery.country ?? undefined,
-    address: gallery.address ?? undefined,
-    image,
-    description: gallery.description ?? undefined,
-  };
-};
-
 const CARD_TYPE_MAP = {
   reviews: 'article',
   exhibitions: 'exhibition',
@@ -173,12 +158,11 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
-  const [galleryTotalCount, setGalleryTotalCount] = useState<number | null>(null);
   const isPaginatedType = PAGINATED_TYPES.has(type);
-  const isGalleryListing = type === 'galleries';
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isMountedRef = useRef(true);
   const pendingCardsRef = useRef<ListingEntity[]>([]);
+  const galleryCursorRef = useRef<string | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -196,6 +180,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         pendingCardsRef.current = [];
         setLoading(true);
         setData([]);
+        galleryCursorRef.current = null;
       } else {
         setLoadingMore(true);
       }
@@ -210,75 +195,71 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           nextBatch.push(...pendingCardsRef.current.splice(0, take));
         }
 
-        while (nextBatch.length < PAGE_SIZE && !reachedEnd) {
-          const params = { offset: nextOffset, end: nextOffset + PAGE_SIZE + 1 };
+          while (nextBatch.length < PAGE_SIZE && !reachedEnd) {
+            const params = { offset: nextOffset, end: nextOffset + PAGE_SIZE + 1 };
 
-          if (listingType === 'artists') {
-            const rawArtists = await client.fetch<ARTISTS_QUERYResult>(PAGINATED_ARTISTS_QUERY, params);
-            const rows = Array.isArray(rawArtists) ? rawArtists : [];
+            if (listingType === 'artists') {
+              const rawArtists = await client.fetch<ARTISTS_QUERYResult>(PAGINATED_ARTISTS_QUERY, params);
+              const rows = Array.isArray(rawArtists) ? rawArtists : [];
 
-            if (!rows.length) {
-              reachedEnd = true;
-              break;
-            }
+              if (!rows.length) {
+                reachedEnd = true;
+                break;
+              }
 
-            nextOffset += rows.length;
+              nextOffset += rows.length;
 
-            const mapped = rows.filter(hasArtistContent).map(mapArtistToCard);
+              const mapped = rows.filter(hasArtistContent).map(mapArtistToCard);
 
-            if (!mapped.length) {
+              if (!mapped.length) {
+                if (rows.length <= PAGE_SIZE) {
+                  reachedEnd = true;
+                }
+                continue;
+              }
+
+              const slots = PAGE_SIZE - nextBatch.length;
+              nextBatch.push(...mapped.slice(0, slots));
+              const leftover = mapped.slice(slots);
+
+              if (leftover.length) {
+                pendingCardsRef.current = leftover;
+                break;
+              }
+
               if (rows.length <= PAGE_SIZE) {
                 reachedEnd = true;
               }
-              continue;
-            }
+            } else {
+              const connection = await fetchGalleries({
+                limit: PAGE_SIZE + 1,
+                nextToken: galleryCursorRef.current ?? undefined,
+              });
 
-            const slots = PAGE_SIZE - nextBatch.length;
-            nextBatch.push(...mapped.slice(0, slots));
-            const leftover = mapped.slice(slots);
+              const rows = Array.isArray(connection.items) ? connection.items : [];
+              galleryCursorRef.current = connection.nextToken ?? null;
 
-            if (leftover.length) {
-              pendingCardsRef.current = leftover;
-              break;
-            }
+              if (!rows.length) {
+                reachedEnd = !galleryCursorRef.current;
+                break;
+              }
 
-            if (rows.length <= PAGE_SIZE) {
-              reachedEnd = true;
-            }
-          } else {
-            const rawGalleries = await client.fetch<GALLERIES_QUERYResult>(PAGINATED_GALLERIES_QUERY, params);
-            const rows = Array.isArray(rawGalleries) ? rawGalleries : [];
+              const mapped = rows.map(mapGraphqlGalleryToCard);
 
-            if (!rows.length) {
-              reachedEnd = true;
-              break;
-            }
+              const slots = PAGE_SIZE - nextBatch.length;
+              nextBatch.push(...mapped.slice(0, slots));
+              const leftover = mapped.slice(slots);
 
-            nextOffset += rows.length;
+              if (leftover.length) {
+                pendingCardsRef.current = leftover;
+                break;
+              }
 
-            const mapped = rows.filter(hasGalleryContent).map(mapGalleryToCard);
-
-            if (!mapped.length) {
-              if (rows.length <= PAGE_SIZE) {
+              if (!galleryCursorRef.current) {
                 reachedEnd = true;
               }
-              continue;
-            }
-
-            const slots = PAGE_SIZE - nextBatch.length;
-            nextBatch.push(...mapped.slice(0, slots));
-            const leftover = mapped.slice(slots);
-
-            if (leftover.length) {
-              pendingCardsRef.current = leftover;
-              break;
-            }
-
-            if (rows.length <= PAGE_SIZE) {
-              reachedEnd = true;
             }
           }
-        }
 
         if (!isMountedRef.current || listingType !== type) return;
 
@@ -293,7 +274,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         if (replace) {
           setData([]);
         }
-        setError('Unable to sync from Sanity right now.');
+        setError('Unable to sync data right now.');
       } finally {
         if (!isMountedRef.current || listingType !== type) return;
         if (replace) {
@@ -312,7 +293,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     setError(null);
     setHasMore(false);
     setOffset(0);
-  pendingCardsRef.current = [];
+    pendingCardsRef.current = [];
 
     const loadData = async () => {
       if (isPaginatedType) {
@@ -330,8 +311,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
             break;
           }
           case 'exhibitions': {
-            const exhibitions = await client.fetch<EXHIBITIONS_QUERYResult>(EXHIBITIONS_QUERY);
-            mapped = (exhibitions ?? []).map(mapExhibitionToCard);
+            const exhibitions = await fetchExhibitions(50);
+            mapped = exhibitions.map(mapGraphqlExhibitionToCard);
             break;
           }
           case 'guides': {
@@ -359,7 +340,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
       } catch (err) {
         console.error(`❌ Error fetching ${type}:`, err);
         if (!isMounted) return;
-        setError('Unable to sync from Sanity right now.');
+        setError('Unable to sync data right now.');
         setData([]);
       } finally {
         if (isMounted) {
@@ -403,33 +384,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   }, [isPaginatedType, loadMore]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    if (!isGalleryListing) {
-      setGalleryTotalCount(null);
-      return () => {
-        isMounted = false;
-      };
-    }
-
-    const fetchCount = async () => {
-      try {
-        const count = await client.fetch<GALLERIES_COUNT_QUERYResult>(GALLERIES_COUNT_QUERY);
-        if (!isMounted) return;
-        setGalleryTotalCount(typeof count === 'number' ? count : 0);
-      } catch (err) {
-        console.error('❌ Error fetching gallery count:', err);
-        if (!isMounted) return;
-        setGalleryTotalCount(null);
-      }
-    };
-
-    fetchCount();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isGalleryListing]);
+    galleryCursorRef.current = null;
+  }, [type]);
 
   const cardType: Parameters<typeof EntityCard>[0]['type'] = CARD_TYPE_MAP[type];
 
@@ -441,11 +397,6 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-6 mb-8">
             <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter flex flex-wrap items-baseline gap-4">
               <span>{title}</span>
-              {isGalleryListing && (
-                <span className="text-xl md:text-3xl font-black text-gray-600">
-                  ({galleryTotalCount === null ? ' … ' : galleryTotalCount.toLocaleString('en-US')})
-                </span>
-              )}
             </h1>
           </div>
 

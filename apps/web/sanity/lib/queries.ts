@@ -249,7 +249,6 @@ export const GALLERIES_QUERY = defineQuery(`*[
   address,
   "location": coalesce(location, geopoint),
   description,
-  directusImageFile,
   "mainImage": coalesce(mainImage, image) {
     asset->{
       url
@@ -269,7 +268,6 @@ export const PAGINATED_GALLERIES_QUERY = defineQuery(`*[
   address,
   "location": coalesce(location, geopoint),
   description,
-  directusImageFile,
   "mainImage": coalesce(mainImage, image) {
     asset->{
       url
@@ -298,7 +296,6 @@ export const GALLERY_QUERY = defineQuery(`*[
   workingHours,
   social,
   contact,
-  directusImageFile,
   "mainImage": coalesce(mainImage, image) {
     asset->{
       url

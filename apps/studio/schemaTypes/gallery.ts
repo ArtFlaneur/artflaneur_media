@@ -9,20 +9,6 @@ export const gallery = defineType({
   icon: PinIcon,
   fields: [
     defineField({
-      name: 'directusId',
-      title: 'Directus ID',
-      type: 'string',
-      description: 'Gallery ID from Directus',
-      readOnly: true,
-    }),
-    defineField({
-      name: 'directusImageFile',
-      title: 'Gallery Image File',
-      type: 'string',
-      description: 'Directus file identifier (gallery_img_file)',
-      readOnly: true,
-    }),
-    defineField({
       name: 'name',
       title: 'Gallery Name',
       type: 'string',
@@ -143,13 +129,6 @@ export const gallery = defineType({
       title: 'Editorial Overview',
       type: 'blockContent',
       description: 'Long-form story mixing Portable Text, fact tables, and key insights',
-    }),
-    defineField({
-      name: 'syncedAt',
-      title: 'Last Synced At',
-      type: 'datetime',
-      description: 'Timestamp of the most recent Directus sync',
-      readOnly: true,
     }),
     appCtaField(),
     seoField(),

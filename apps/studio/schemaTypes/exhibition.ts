@@ -7,13 +7,6 @@ export const exhibition = defineType({
   icon: CalendarIcon,
   fields: [
     defineField({
-      name: 'directusId',
-      title: 'Directus Exhibition ID',
-      type: 'number',
-      description: 'Exhibition ID from Directus',
-      readOnly: true,
-    }),
-    defineField({
       name: 'title',
       title: 'Title',
       type: 'string',
@@ -35,13 +28,6 @@ export const exhibition = defineType({
       type: 'reference',
       to: [{type: 'gallery'}],
       validation: (Rule) => [Rule.required().error('Gallery is required to publish an exhibition')],
-    }),
-    defineField({
-      name: 'directusGalleryId',
-      title: 'Directus Gallery ID',
-      type: 'number',
-      description: 'Gallery ID from Directus for sync',
-      readOnly: true,
     }),
     defineField({
       name: 'image',

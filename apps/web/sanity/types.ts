@@ -572,7 +572,6 @@ export type Artist = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  directusId?: string;
   name?: string;
   slug?: Slug;
   photo?: {
@@ -626,7 +625,6 @@ export type Artist = {
     facebook?: string;
     twitter?: string;
   };
-  syncedAt?: string;
   appCta?: {
     text?: string;
     deeplink?: string;
@@ -852,7 +850,6 @@ export type Exhibition = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  directusId?: number;
   title?: string;
   slug?: Slug;
   gallery?: {
@@ -861,7 +858,6 @@ export type Exhibition = {
     _weak?: boolean;
     [internalGroqTypeReferenceTo]?: "gallery";
   };
-  directusGalleryId?: number;
   image?: {
     asset?: {
       _ref: string;
@@ -906,8 +902,6 @@ export type Gallery = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  directusId?: string;
-  directusImageFile?: string;
   name?: string;
   slug?: Slug;
   image?: {
@@ -959,7 +953,6 @@ export type Gallery = {
     details?: string;
   };
   body?: BlockContent;
-  syncedAt?: string;
   appCta?: {
     text?: string;
     deeplink?: string;
@@ -1465,7 +1458,7 @@ export type EXHIBITION_QUERYResult = {
   } | null;
 } | null;
 // Variable: GALLERIES_QUERY
-// Query: *[  _type == "gallery"] | order(name asc) {  _id,  name,  slug,  city,  country,  address,  "location": coalesce(location, geopoint),  description,  directusImageFile,  "mainImage": coalesce(mainImage, image) {    asset->{      url    },    alt  }}
+// Query: *[  _type == "gallery"] | order(name asc) {  _id,  name,  slug,  city,  country,  address,  "location": coalesce(location, geopoint),  description,  "mainImage": coalesce(mainImage, image) {    asset->{      url    },    alt  }}
 export type GALLERIES_QUERYResult = Array<{
   _id: string;
   name: string | null;
@@ -1475,7 +1468,6 @@ export type GALLERIES_QUERYResult = Array<{
   address: string | null;
   location: Geopoint | null;
   description: string | null;
-  directusImageFile: string | null;
   mainImage: {
     asset: {
       url: string | null;
@@ -1484,7 +1476,7 @@ export type GALLERIES_QUERYResult = Array<{
   } | null;
 }>;
 // Variable: PAGINATED_GALLERIES_QUERY
-// Query: *[  _type == "gallery"] | order(name asc) [$offset...$end] {  _id,  name,  slug,  city,  country,  address,  "location": coalesce(location, geopoint),  description,  directusImageFile,  "mainImage": coalesce(mainImage, image) {    asset->{      url    },    alt  }}
+// Query: *[  _type == "gallery"] | order(name asc) [$offset...$end] {  _id,  name,  slug,  city,  country,  address,  "location": coalesce(location, geopoint),  description,  "mainImage": coalesce(mainImage, image) {    asset->{      url    },    alt  }}
 export type PAGINATED_GALLERIES_QUERYResult = Array<{
   _id: string;
   name: string | null;
@@ -1494,7 +1486,6 @@ export type PAGINATED_GALLERIES_QUERYResult = Array<{
   address: string | null;
   location: Geopoint | null;
   description: string | null;
-  directusImageFile: string | null;
   mainImage: {
     asset: {
       url: string | null;
@@ -1506,7 +1497,7 @@ export type PAGINATED_GALLERIES_QUERYResult = Array<{
 // Query: count(*[  _type == "gallery"])
 export type GALLERIES_COUNT_QUERYResult = number;
 // Variable: GALLERY_QUERY
-// Query: *[  _type == "gallery"  && slug.current == $slug][0] {  _id,  name,  slug,  city,  country,  address,  "location": coalesce(location, geopoint),  description,  website,  workingHours,  social,  contact,  directusImageFile,  "mainImage": coalesce(mainImage, image) {    asset->{      url    },    alt  },  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {    _id,    title,    slug,    startDate,    endDate,    description,    gallery->{      _id,      name,      city    },    "image": image{      asset->{        url      },      alt    }  },  "reviews": *[    _type == "review"    && publishStatus == "published"    && (      gallery._ref == ^._id      || exhibition->gallery._ref == ^._id    )  ] | order(publishedAt desc) [0...8] {    _id,    title,    slug,    excerpt,    publishedAt,    mainImage {      asset->{        url      },      alt    },    author->{      _id,      name,      slug,      photo {        asset->{          url        }      }    }  }}
+// Query: *[  _type == "gallery"  && slug.current == $slug][0] {  _id,  name,  slug,  city,  country,  address,  "location": coalesce(location, geopoint),  description,  website,  workingHours,  social,  contact,  "mainImage": coalesce(mainImage, image) {    asset->{      url    },    alt  },  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {    _id,    title,    slug,    startDate,    endDate,    description,    gallery->{      _id,      name,      city    },    "image": image{      asset->{        url      },      alt    }  },  "reviews": *[    _type == "review"    && publishStatus == "published"    && (      gallery._ref == ^._id      || exhibition->gallery._ref == ^._id    )  ] | order(publishedAt desc) [0...8] {    _id,    title,    slug,    excerpt,    publishedAt,    mainImage {      asset->{        url      },      alt    },    author->{      _id,      name,      slug,      photo {        asset->{          url        }      }    }  }}
 export type GALLERY_QUERYResult = {
   _id: string;
   name: string | null;
@@ -1527,7 +1518,6 @@ export type GALLERY_QUERYResult = {
     phone?: string;
     email?: string;
   } | null;
-  directusImageFile: string | null;
   mainImage: {
     asset: {
       url: string | null;
@@ -1964,10 +1954,10 @@ declare module "@sanity/client" {
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...$limit] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": LATEST_REVIEWS_QUERYResult;
     "*[\n  _type == \"exhibition\"\n  && defined(startDate)\n] | order(startDate desc) [0...20] {\n  _id,\n  title,\n  slug,\n  description,\n  startDate,\n  endDate,\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    \"location\": coalesce(location, geopoint)\n  },\n  artists[]->{\n    _id,\n    name,\n    slug\n  },\n  \"mainImage\": image{\n    asset->{\n      url\n    },\n    alt\n  },\n  ticketing{\n    access,\n    ticketPrice,\n    bookingUrl,\n    ctaLabel\n  }\n}": EXHIBITIONS_QUERYResult;
     "*[\n  _type == \"exhibition\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  description,\n  startDate,\n  endDate,\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    \"location\": coalesce(location, geopoint),\n    website,\n    \"openingHours\": coalesce(openingHours, workingHours)\n  },\n  artists[]->{\n    _id,\n    name,\n    slug,\n    bio,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  \"mainImage\": image{\n    asset->{\n      url\n    },\n    alt\n  },\n  ticketing{\n    access,\n    ticketPrice,\n    bookingUrl,\n    ctaLabel\n  }\n}": EXHIBITION_QUERYResult;
-    "*[\n  _type == \"gallery\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  \"location\": coalesce(location, geopoint),\n  description,\n  directusImageFile,\n  \"mainImage\": coalesce(mainImage, image) {\n    asset->{\n      url\n    },\n    alt\n  }\n}": GALLERIES_QUERYResult;
-    "*[\n  _type == \"gallery\"\n] | order(name asc) [$offset...$end] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  \"location\": coalesce(location, geopoint),\n  description,\n  directusImageFile,\n  \"mainImage\": coalesce(mainImage, image) {\n    asset->{\n      url\n    },\n    alt\n  }\n}": PAGINATED_GALLERIES_QUERYResult;
+    "*[\n  _type == \"gallery\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  \"location\": coalesce(location, geopoint),\n  description,\n  \"mainImage\": coalesce(mainImage, image) {\n    asset->{\n      url\n    },\n    alt\n  }\n}": GALLERIES_QUERYResult;
+    "*[\n  _type == \"gallery\"\n] | order(name asc) [$offset...$end] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  \"location\": coalesce(location, geopoint),\n  description,\n  \"mainImage\": coalesce(mainImage, image) {\n    asset->{\n      url\n    },\n    alt\n  }\n}": PAGINATED_GALLERIES_QUERYResult;
     "count(*[\n  _type == \"gallery\"\n])": GALLERIES_COUNT_QUERYResult;
-    "*[\n  _type == \"gallery\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  \"location\": coalesce(location, geopoint),\n  description,\n  website,\n  workingHours,\n  social,\n  contact,\n  directusImageFile,\n  \"mainImage\": coalesce(mainImage, image) {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{\n      _id,\n      name,\n      city\n    },\n    \"image\": image{\n      asset->{\n        url\n      },\n      alt\n    }\n  },\n  \"reviews\": *[\n    _type == \"review\"\n    && publishStatus == \"published\"\n    && (\n      gallery._ref == ^._id\n      || exhibition->gallery._ref == ^._id\n    )\n  ] | order(publishedAt desc) [0...8] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      slug,\n      photo {\n        asset->{\n          url\n        }\n      }\n    }\n  }\n}": GALLERY_QUERYResult;
+    "*[\n  _type == \"gallery\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  \"location\": coalesce(location, geopoint),\n  description,\n  website,\n  workingHours,\n  social,\n  contact,\n  \"mainImage\": coalesce(mainImage, image) {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{\n      _id,\n      name,\n      city\n    },\n    \"image\": image{\n      asset->{\n        url\n      },\n      alt\n    }\n  },\n  \"reviews\": *[\n    _type == \"review\"\n    && publishStatus == \"published\"\n    && (\n      gallery._ref == ^._id\n      || exhibition->gallery._ref == ^._id\n    )\n  ] | order(publishedAt desc) [0...8] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      slug,\n      photo {\n        asset->{\n          url\n        }\n      }\n    }\n  }\n}": GALLERY_QUERYResult;
     "*[\n  _type == \"artist\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  }\n}": ARTISTS_QUERYResult;
     "*[\n  _type == \"artist\"\n] | order(name asc) [$offset...$end] {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  }\n}": PAGINATED_ARTISTS_QUERYResult;
     "*[\n  _type == \"artist\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  bio,\n  birthYear,\n  country,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  website,\n  social,\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...10] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    gallery->{\n      name,\n      city\n    }\n  }\n}": ARTIST_QUERYResult;

@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MapPin, Navigation, Clock, Globe, X, Locate } from 'lucide-react';
-import { directusClient } from '../lib/directus';
+import { fetchNearbyGalleries, GraphqlGallery, searchGalleries as searchGalleriesApi } from '../lib/graphql';
 import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
 
 interface MapPoint {
-    id: number;
+    id: number | string;
     name: string;
     lat: number;
     lng: number;
@@ -18,6 +18,41 @@ interface MapPoint {
     opening_hours?: string;
     image?: string;
 }
+
+const parseCoordinate = (value?: number | string | null): number | null => {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value === 'string') {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+};
+
+const galleryToMapPoint = (gallery: GraphqlGallery): MapPoint | null => {
+    const lat = parseCoordinate(gallery.lat);
+    const lng = parseCoordinate(gallery.lon);
+
+    if (lat == null || lng == null) {
+        console.warn(`Invalid coords for gallery ${gallery.id}: lat=${gallery.lat}, lon=${gallery.lon}`);
+        return null;
+    }
+
+    return {
+        id: gallery.id,
+        name: gallery.galleryname ?? 'Gallery',
+        lat,
+        lng,
+        type: 'Gallery',
+        address: gallery.fulladdress ?? undefined,
+        city: gallery.city ?? undefined,
+        country: gallery.country ?? undefined,
+        website: gallery.placeurl ?? undefined,
+        opening_hours: gallery.openinghours ?? undefined,
+        image: gallery.gallery_img_url ?? gallery.logo_img_url ?? undefined,
+    };
+};
 
 const MapPage: React.FC = () => {
     const mapContainer = useRef<HTMLDivElement>(null);
@@ -32,7 +67,6 @@ const MapPage: React.FC = () => {
     const [filterType, setFilterType] = useState<'all' | 'Gallery' | 'Museum' | 'Event'>('all');
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
     const [mapReady, setMapReady] = useState(false);
-    const [currentRadius, setCurrentRadius] = useState(10); // км
     const loadedAreas = useRef<Set<string>>(new Set()); // Отслеживаем загруженные области
 
     // Инициализация карты
@@ -152,55 +186,15 @@ const MapPage: React.FC = () => {
             setError(null);
             console.log(`🔍 Loading galleries in ${radiusKm}km radius from (${lat}, ${lng})...`);
             
-            const galleriesData = await directusClient.getGalleriesInRadius(lat, lng, radiusKm);
+            const galleriesData = await fetchNearbyGalleries({ latitude: lat, longitude: lng, radiusInKm: radiusKm, limit: 200 });
             console.log('📦 Galleries found:', galleriesData.length);
-            
-            if (galleriesData && galleriesData.length > 0) {
-                // Фильтруем галереи с валидными координатами
-                const mappedGalleries: MapPoint[] = galleriesData
-                    .filter(gallery => {
-                        const gLat = gallery.lat || 0;
-                        const gLng = gallery.lon || 0;
-                        const isValidLat = gLat >= -90 && gLat <= 90;
-                        const isValidLng = gLng >= -180 && gLng <= 180;
-                        const hasCoords = gLat !== 0 && gLng !== 0;
-                        
-                        if (!isValidLat || !isValidLng) {
-                            console.warn(`Invalid coords for gallery ${gallery.id}: lat=${gLat}, lng=${gLng}`);
-                        }
-                        
-                        return isValidLat && isValidLng && hasCoords;
-                    })
-                    .map((gallery) => ({
-                        id: gallery.id,
-                        name: gallery.galleryname,
-                        lat: gallery.lat || 0,
-                        lng: gallery.lon || 0,
-                        type: 'Gallery' as const,
-                        address: gallery.fulladdress,
-                        city: gallery.city,
-                        country: gallery.country,
-                        website: gallery.placeurl,
-                        opening_hours: gallery.openinghours,
-                        image: gallery.gallery_img_file 
-                            ? directusClient.getImageUrl(gallery.gallery_img_file, { width: 400, quality: 80 })
-                            : gallery.gallery_img, // Fallback to CloudFront if no file UUID
-                    }));
-                
-                console.log('✅ Mapped galleries:', mappedGalleries.length);
-                if (mappedGalleries.length > 0) {
-                    console.log('📸 Sample gallery with image:', {
-                        id: mappedGalleries[0].id,
-                        name: mappedGalleries[0].name,
-                        hasFileUuid: !!galleriesData[0].gallery_img_file,
-                        fileUuid: galleriesData[0].gallery_img_file,
-                        image: mappedGalleries[0].image
-                    });
-                }
-                setGalleries(mappedGalleries);
-            } else {
-                setGalleries([]);
-            }
+
+            const mappedGalleries = galleriesData
+                .map(galleryToMapPoint)
+                .filter((value): value is MapPoint => value !== null);
+
+            console.log('✅ Mapped galleries:', mappedGalleries.length);
+            setGalleries(mappedGalleries);
             setLoading(false);
         } catch (err) {
             console.error('❌ Error loading galleries:', err);
@@ -232,40 +226,18 @@ const MapPage: React.FC = () => {
         loadedAreas.current.add(areaKey);
 
         try {
-            const galleriesData = await directusClient.getGalleriesInRadius(center.lat, center.lng, radius);
-            
-            if (galleriesData && galleriesData.length > 0) {
-                const newGalleries: MapPoint[] = galleriesData
-                    .filter(gallery => {
-                        const gLat = gallery.lat || 0;
-                        const gLng = gallery.lon || 0;
-                        const isValidLat = gLat >= -90 && gLat <= 90;
-                        const isValidLng = gLng >= -180 && gLng <= 180;
-                        const hasCoords = gLat !== 0 && gLng !== 0;
-                        
-                        if (!isValidLat || !isValidLng) {
-                            console.warn(`Invalid coords for gallery ${gallery.id}: lat=${gLat}, lng=${gLng}`);
-                        }
-                        
-                        return isValidLat && isValidLng && hasCoords;
-                    })
-                    .map((gallery) => ({
-                        id: gallery.id,
-                        name: gallery.galleryname,
-                        lat: gallery.lat || 0,
-                        lng: gallery.lon || 0,
-                        type: 'Gallery' as const,
-                        address: gallery.fulladdress,
-                        city: gallery.city,
-                        country: gallery.country,
-                        website: gallery.placeurl,
-                        opening_hours: gallery.openinghours,
-                        image: gallery.gallery_img_file 
-                            ? directusClient.getImageUrl(gallery.gallery_img_file, { width: 400, quality: 80 })
-                            : gallery.gallery_img,
-                    }));
+            const galleriesData = await fetchNearbyGalleries({
+                latitude: center.lat,
+                longitude: center.lng,
+                radiusInKm: radius,
+                limit: 200,
+            });
 
-                // Объединяем с существующими галереями (избегаем дубликатов)
+            const newGalleries = galleriesData
+                .map(galleryToMapPoint)
+                .filter((value): value is MapPoint => value !== null);
+
+            if (newGalleries.length) {
                 setGalleries(prev => {
                     const existingIds = new Set(prev.map(g => g.id));
                     const uniqueNew = newGalleries.filter(g => !existingIds.has(g.id));
@@ -361,34 +333,10 @@ const MapPage: React.FC = () => {
 
         try {
             setLoading(true);
-            const results = await directusClient.searchGalleries(searchQuery);
+            const results = await searchGalleriesApi(searchQuery, 100);
             const mappedResults: MapPoint[] = results
-                .filter(gallery => {
-                    const lat = gallery.lat || 0;
-                    const lng = gallery.lon || 0;
-                    const isValidLat = lat >= -90 && lat <= 90;
-                    const isValidLng = lng >= -180 && lng <= 180;
-                    const hasCoords = lat !== 0 && lng !== 0;
-                    if (!isValidLat || !isValidLng) {
-                        console.warn(`Invalid coords for gallery ${gallery.id}: lat=${lat}, lng=${lng}`);
-                    }
-                    return isValidLat && isValidLng && hasCoords;
-                })
-                .map((gallery) => ({
-                    id: gallery.id,
-                    name: gallery.galleryname,
-                    lat: gallery.lat || 0,
-                    lng: gallery.lon || 0,
-                    type: 'Gallery' as const,
-                    address: gallery.fulladdress,
-                    city: gallery.city,
-                    country: gallery.country,
-                    website: gallery.placeurl,
-                    opening_hours: gallery.openinghours,
-                    image: gallery.gallery_img_file 
-                        ? directusClient.getImageUrl(gallery.gallery_img_file, { width: 400, quality: 80 })
-                        : gallery.gallery_img,
-                }));
+                .map(galleryToMapPoint)
+                .filter((value): value is MapPoint => value !== null);
             setGalleries(mappedResults);
             console.log('✅ Search: Found galleries with valid coords:', mappedResults.length);
             setLoading(false);

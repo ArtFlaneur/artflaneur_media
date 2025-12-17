@@ -283,6 +283,11 @@ export const Footer: React.FC = () => {
                     <ul className="space-y-2">
                         <li><Link to="/partners/galleries" className="hover:text-art-yellow">Galleries</Link></li>
                         <li><Link to="/partners/events" className="hover:text-art-yellow">Events</Link></li>
+                        <li className="pt-2 border-t border-gray-800">
+                            <Link to="/gallery-login" className="hover:text-art-blue font-bold">
+                                Gallery Login →
+                            </Link>
+                        </li>
                     </ul>
                 </div>
                 <div className="col-span-2 md:col-span-1">

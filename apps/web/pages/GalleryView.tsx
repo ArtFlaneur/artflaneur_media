@@ -16,7 +16,6 @@ import { client } from '../sanity/lib/client';
 import { GALLERY_QUERY } from '../sanity/lib/queries';
 import { GALLERY_QUERYResult } from '../sanity/types';
 import { Article, ContentType } from '../types';
-import { directusClient } from '../lib/directus';
 import { formatWorkingHoursSchedule, getDisplayDomain } from '../lib/formatters';
 
 const FALLBACK_IMAGE =
@@ -35,13 +34,6 @@ const buildGoogleMapsLink = (gallery: GALLERY_QUERYResult | null) => {
 
 const buildHeroImage = (gallery: GALLERY_QUERYResult | null) => {
   if (!gallery) return FALLBACK_IMAGE;
-  if (gallery.directusImageFile) {
-    try {
-      return directusClient.getImageUrl(gallery.directusImageFile, { width: 1600, quality: 85 });
-    } catch (error) {
-      console.warn('Failed to build Directus gallery image URL', error);
-    }
-  }
   return gallery.mainImage?.asset?.url ?? FALLBACK_IMAGE;
 };
 

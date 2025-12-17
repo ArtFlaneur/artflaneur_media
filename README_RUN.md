@@ -30,6 +30,36 @@ npm run dev:web
 
 ---
 
+## 🏗️ Архитектура проекта
+
+### Dual Database Architecture
+
+Проект использует две базы данных:
+
+1. **Sanity CMS** - для редакционного контента:
+   - Reviews (обзоры выставок)
+   - Authors (авторы, амбассадоры)
+   - Sponsors (спонсоры, партнеры)
+   - Guides (гайды по городам)
+
+2. **Directus/PostgreSQL** - для больших объемов данных:
+   - Galleries (10000+ галерей)
+   - Exhibitions (выставки)
+   - Artists (художники)
+
+3. **Supabase** - для Gallery Dashboard:
+   - User authentication
+   - Exhibition submissions (черновики, модерация)
+   - Image storage
+
+### Data Flow
+
+```
+Gallery Owner → Supabase (draft) → Admin Moderation → Directus (published) → Website
+```
+
+---
+
 ## 📦 Что было сделано
 
 ### ✅ 1. Sanity Client Configuration
@@ -198,7 +228,7 @@ artflaneur_media/
 │
 ├── package.json                   # Корневой package.json
 ├── pnpm-workspace.yaml            # Workspace конфигурация
-├── INTEGRATION_COMPLETE.md        # Детальная документация
+├── DIRECTUS_MIGRATION.md          # Миграция на Directus для exhibitions
 └── README_RUN.md                  # Этот файл
 ```
 
@@ -310,9 +340,11 @@ npm run typecheck
 
 ## 📚 Документация
 
-- [INTEGRATION_COMPLETE.md](./INTEGRATION_COMPLETE.md) - Полная документация по интеграции
-- [SETUP.md](./SETUP.md) - Детальная инструкция по настройке
-- [Sanity Docs](https://www.sanity.io/docs)
+- [DIRECTUS_MIGRATION.md](./DIRECTUS_MIGRATION.md) - Миграция exhibitions/galleries на Directus
+- [DIRECTUS_ADD_FIELDS_UI.md](./DIRECTUS_ADD_FIELDS_UI.md) - Добавление полей через Directus Admin UI
+- [SUPABASE_STORAGE_SETUP.md](./SUPABASE_STORAGE_SETUP.md) - Настройка Supabase Storage для изображений
+- [Sanity Docs](https://www.sanity.io/docs) - Для работы с reviews и sponsors
+- [Directus Docs](https://docs.directus.io/) - Для работы с galleries и exhibitions
 - [GROQ Tutorial](https://www.sanity.io/docs/groq)
 
 ---

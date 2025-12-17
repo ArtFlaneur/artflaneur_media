@@ -16,6 +16,13 @@ import SearchResults from './pages/SearchResults';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsConditions } from './pages/TermsConditions';
 import { CookiesPolicy } from './pages/CookiesPolicy';
+import GalleryLogin from './pages/GalleryLogin';
+import GalleryDashboardLayout from './pages/GalleryDashboardLayout';
+import GalleryDashboard from './pages/GalleryDashboard';
+import GalleryExhibitions from './pages/GalleryExhibitions';
+import GalleryExhibitionForm from './pages/GalleryExhibitionForm';
+import GallerySettings from './pages/GallerySettings';
+import AdminModeration from './pages/AdminModeration';
 
 // ScrollToTop component - прокручивает страницу наверх при смене маршрута
 const ScrollToTop = () => {
@@ -68,6 +75,19 @@ const App: React.FC = () => {
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsConditions />} />
                 <Route path="/cookies" element={<CookiesPolicy />} />
+                
+                {/* Gallery Dashboard */}
+                <Route path="/gallery-login" element={<GalleryLogin />} />
+                <Route path="/gallery-dashboard" element={<GalleryDashboardLayout />}>
+                  <Route index element={<GalleryDashboard />} />
+                  <Route path="exhibitions" element={<GalleryExhibitions />} />
+                  <Route path="exhibitions/new" element={<GalleryExhibitionForm />} />
+                  <Route path="exhibitions/:id/edit" element={<GalleryExhibitionForm />} />
+                  <Route path="settings" element={<GallerySettings />} />
+                </Route>
+                
+                {/* Admin Panel */}
+                <Route path="/admin/moderation" element={<AdminModeration />} />
                 
                 <Route path="*" element={<Home />} />
             </Routes>
