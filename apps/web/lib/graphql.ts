@@ -506,20 +506,132 @@ const EXHIBITIONS_FOR_ARTIST_QUERY = `#graphql
   }
 `;
 
+// ============ ARTISTS CACHE ============
+// Load all artists once and cache for instant filtering/pagination
+
+let artistsCache: GraphqlArtist[] | null = null;
+let artistsCachePromise: Promise<GraphqlArtist[]> | null = null;
+
+/**
+ * Load ALL artists into cache. Called once, then reused.
+ */
+async function loadAllArtists(): Promise<GraphqlArtist[]> {
+  if (artistsCache) {
+    return artistsCache;
+  }
+  
+  if (artistsCachePromise) {
+    return artistsCachePromise;
+  }
+  
+  artistsCachePromise = (async () => {
+    const allArtists: GraphqlArtist[] = [];
+    let nextToken: string | null = null;
+    
+    do {
+      const data = await executeGraphQL<{ listAllArtists: GraphqlListResult<GraphqlArtist> }>(
+        LIST_ARTISTS_QUERY,
+        { limit: 100, nextToken }
+      );
+      
+      const items = data.listAllArtists?.items ?? [];
+      allArtists.push(...items);
+      nextToken = data.listAllArtists?.nextToken ?? null;
+    } while (nextToken);
+    
+    artistsCache = allArtists;
+    console.log(`✅ Loaded ${allArtists.length} artists into cache`);
+    return allArtists;
+  })();
+  
+  return artistsCachePromise;
+}
+
 export interface FetchArtistsParams {
   limit?: number;
+  offset?: number;
+  countryFilter?: string[];
+}
+
+/**
+ * Get artists from cache with pagination and optional country filter.
+ * First call loads all artists, subsequent calls are instant.
+ */
+export async function fetchArtistsCached(
+  params: FetchArtistsParams = {}
+): Promise<{ items: GraphqlArtist[]; hasMore: boolean; total: number }> {
+  const allArtists = await loadAllArtists();
+  
+  let filtered = allArtists;
+  
+  // Filter by country if specified
+  if (params.countryFilter && params.countryFilter.length > 0) {
+    const countrySet = new Set(params.countryFilter.map(c => c.toLowerCase()));
+    filtered = allArtists.filter(artist => 
+      artist.country && countrySet.has(artist.country.toLowerCase())
+    );
+  }
+  
+  const offset = params.offset ?? 0;
+  const limit = params.limit ?? 20;
+  const items = filtered.slice(offset, offset + limit);
+  const hasMore = offset + limit < filtered.length;
+  
+  return { items, hasMore, total: filtered.length };
+}
+
+/**
+ * Count artists by country - instant from cache.
+ */
+export async function countArtistsByCountryCached(countryAliases: string[]): Promise<number> {
+  if (!countryAliases.length) {
+    return 0;
+  }
+  
+  const allArtists = await loadAllArtists();
+  const countrySet = new Set(countryAliases.map(c => c.toLowerCase()));
+  
+  return allArtists.filter(artist => 
+    artist.country && countrySet.has(artist.country.toLowerCase())
+  ).length;
+}
+
+// Legacy functions for backwards compatibility
+export interface FetchArtistsParamsLegacy {
+  limit?: number;
   nextToken?: string | null;
+  countryFilter?: string[];
 }
 
 export async function fetchArtists(
-  params: FetchArtistsParams = {}
+  params: FetchArtistsParamsLegacy = {}
 ): Promise<GraphqlListResult<GraphqlArtist>> {
   const data = await executeGraphQL<{ listAllArtists: GraphqlListResult<GraphqlArtist> }>(
     LIST_ARTISTS_QUERY,
     { limit: params.limit, nextToken: params.nextToken }
   );
 
-  return data.listAllArtists ?? { items: [], nextToken: null };
+  let items = data.listAllArtists?.items ?? [];
+  
+  // Filter by country client-side (API doesn't support filter param for artists)
+  if (params.countryFilter && params.countryFilter.length > 0) {
+    const countrySet = new Set(params.countryFilter.map(c => c.toLowerCase()));
+    items = items.filter(artist => 
+      artist.country && countrySet.has(artist.country.toLowerCase())
+    );
+  }
+
+  return {
+    items,
+    nextToken: data.listAllArtists?.nextToken ?? null,
+  };
+}
+
+/**
+ * Count artists by country - uses cache for instant results.
+ */
+export async function countArtistsByCountry(countryAliases: string[]): Promise<number> {
+  return countArtistsByCountryCached(countryAliases);
 }
 
 export async function fetchArtistById(id: string): Promise<GraphqlArtist | null> {
@@ -530,11 +642,20 @@ export async function fetchArtistById(id: string): Promise<GraphqlArtist | null>
 export async function fetchExhibitionsForArtist(
   artistId: string
 ): Promise<GraphqlExhibition[]> {
-  const data = await executeGraphQL<{
-    exhibitionsForArtist: { items: GraphqlExhibition[] };
-  }>(EXHIBITIONS_FOR_ARTIST_QUERY, { artistId });
+  try {
+    const data = await executeGraphQL<{
+      exhibitionsForArtist: { items: (GraphqlExhibition | null)[] };
+    }>(EXHIBITIONS_FOR_ARTIST_QUERY, { artistId });
 
-  return data.exhibitionsForArtist?.items ?? [];
+    // Filter out null items (API sometimes returns null for exhibitions with missing data)
+    return (data.exhibitionsForArtist?.items ?? []).filter(
+      (item): item is GraphqlExhibition => item !== null && item.id !== null
+    );
+  } catch (err) {
+    // API can return errors for exhibitions with null IDs - gracefully return empty
+    console.warn('Failed to fetch exhibitions for artist:', artistId, err);
+    return [];
+  }
 }
 
 // ============ SEARCH FUNCTIONS ============
@@ -547,16 +668,41 @@ export async function searchArtists(
     return [];
   }
 
-  // Fetch all artists and filter client-side since API doesn't support text search
-  const result = await fetchArtists({ limit: 500 });
   const searchLower = query.toLowerCase();
-  
-  return (result.items ?? []).filter(
-    (artist) =>
-      artist.name?.toLowerCase().includes(searchLower) ||
-      artist.country?.toLowerCase().includes(searchLower) ||
-      artist.description?.toLowerCase().includes(searchLower)
-  ).slice(0, limit);
+  const results: GraphqlArtist[] = [];
+  let nextToken: string | null = null;
+  let iterations = 0;
+  const MAX_ITERATIONS = 100; // Safety limit - covers 10,000 artists at 100/page
+
+  // Iterate through pages until we find enough results or exhaust all data
+  do {
+    iterations++;
+    const data = await executeGraphQL<{ listAllArtists: GraphqlListResult<GraphqlArtist> }>(
+      LIST_ARTISTS_QUERY,
+      { limit: 100, nextToken }
+    );
+
+    const connection = data.listAllArtists ?? { items: [], nextToken: null };
+    const items = connection.items ?? [];
+    
+    // Filter matching artists
+    const matching = items.filter(
+      (artist) =>
+        artist.name?.toLowerCase().includes(searchLower) ||
+        artist.country?.toLowerCase().includes(searchLower) ||
+        artist.description?.toLowerCase().includes(searchLower)
+    );
+    
+    results.push(...matching);
+    nextToken = connection.nextToken ?? null;
+
+    // Stop early if we have enough results
+    if (results.length >= limit) {
+      break;
+    }
+  } while (nextToken && iterations < MAX_ITERATIONS);
+
+  return results.slice(0, limit);
 }
 
 export async function searchExhibitions(

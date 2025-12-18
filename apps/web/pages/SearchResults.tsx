@@ -428,18 +428,20 @@ const SearchResults: React.FC = () => {
                         ? `${artist.birth_year}–${artist.death_year}`
                         : `b. ${artist.birth_year}`
                       : null;
+                    // Create URL slug from artist name
+                    const nameSlug = artist.name
+                      ? artist.name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '')
+                      : '';
+                    const artistSlug = nameSlug ? `${nameSlug}-${artist.id}` : artist.id;
                     return (
                       <Link
                         key={artist.id}
-                        to={`/artists/${artist.id}`}
+                        to={`/artists/${artistSlug}`}
                         className="border-2 border-black p-4 bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group"
                       >
-                        <div className="aspect-square mb-3 overflow-hidden bg-gray-100 flex items-center justify-center">
-                          <span className="font-mono text-xs uppercase text-gray-400">Portrait TBD</span>
-                        </div>
-                        <h3 className="font-bold uppercase text-sm">{artist.name}</h3>
+                        <h3 className="font-bold uppercase text-lg mb-1">{artist.name}</h3>
                         {(artist.country || lifespan) && (
-                          <p className="font-mono text-xs text-gray-500 mt-1">
+                          <p className="font-mono text-xs text-gray-500">
                             {[artist.country, lifespan].filter(Boolean).join(' • ')}
                           </p>
                         )}

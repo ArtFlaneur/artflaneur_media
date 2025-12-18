@@ -2,8 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { fetchArtistById, fetchExhibitionsForArtist, GraphqlArtist, GraphqlExhibition } from '../lib/graphql';
 
+/**
+ * Extract artist ID from URL slug.
+ * Slug format: "artist-name-uuid" where UUID is 36 chars at the end.
+ */
+const extractArtistIdFromSlug = (slug: string): string => {
+  // UUID format: 8-4-4-4-12 = 36 characters
+  const uuidLength = 36;
+  if (slug.length > uuidLength) {
+    // Extract the last 36 characters as the ID
+    return slug.slice(-uuidLength);
+  }
+  // Fallback: assume the entire slug is the ID
+  return slug;
+};
+
 const ArtistView: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: slugParam } = useParams<{ id: string }>();
   const [artist, setArtist] = useState<GraphqlArtist | null>(null);
   const [exhibitions, setExhibitions] = useState<GraphqlExhibition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -11,11 +26,14 @@ const ArtistView: React.FC = () => {
 
   useEffect(() => {
     const fetchArtist = async () => {
-      if (!id) {
+      if (!slugParam) {
         setError('Missing artist identifier.');
         setLoading(false);
         return;
       }
+      
+      // Extract actual ID from slug (e.g., "yayoi-kusama-0ef8ae4d-..." -> "0ef8ae4d-...")
+      const id = extractArtistIdFromSlug(slugParam);
       
       try {
         const [artistData, exhibitionsData] = await Promise.all([
@@ -34,7 +52,7 @@ const ArtistView: React.FC = () => {
     };
     
     fetchArtist();
-  }, [id]);
+  }, [slugParam]);
 
   if (loading) {
     return (
@@ -60,32 +78,28 @@ const ArtistView: React.FC = () => {
 
   return (
     <div className="bg-white">
-        {/* Split Screen Hero */}
-        <div className="grid grid-cols-1 md:grid-cols-2 min-h-[80vh] border-b-2 border-black">
-            <div className="relative border-b-2 md:border-b-0 md:border-r-2 border-black h-[50vh] md:h-auto">
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center font-mono text-xs uppercase">Portrait coming soon</div>
-                <div className="absolute bottom-0 left-0 bg-white border-t-2 border-r-2 border-black px-6 py-4">
-                     <h1 className="text-4xl md:text-6xl font-black uppercase leading-none">{artist.name || 'Untitled Artist'}</h1>
-                </div>
-            </div>
-            <div className="p-12 md:p-24 flex flex-col justify-center bg-art-paper">
-                <p className="font-serif text-2xl md:text-3xl italic leading-relaxed mb-8">
-                    {artist.description ? `"${artist.description}"` : 'Biography coming soon.'}
-                </p>
-                <div className="font-mono text-sm text-gray-600 space-y-2">
+        {/* Hero Header */}
+        <div className="border-b-2 border-black bg-art-paper">
+            <div className="container mx-auto px-4 md:px-6 py-24">
+                <h1 className="text-5xl md:text-8xl font-black uppercase leading-none mb-6">{artist.name || 'Untitled Artist'}</h1>
+                <div className="font-mono text-sm text-gray-600 flex flex-wrap gap-4 mb-8">
                     {artist.country && (
-                      <p><strong className="text-black">Country:</strong> {artist.country}</p>
+                      <span className="border-2 border-black px-3 py-1 bg-white">{artist.country}</span>
                     )}
                     {lifespan && (
-                      <p><strong className="text-black">Life:</strong> {lifespan}</p>
+                      <span className="border-2 border-black px-3 py-1 bg-white">{lifespan}</span>
                     )}
                     {artist.wikipedia_url && (
-                      <p>
-                        <strong className="text-black">Wikipedia:</strong>{' '}
-                        <a href={artist.wikipedia_url} target="_blank" rel="noreferrer" className="underline hover:text-art-blue">View page</a>
-                      </p>
+                      <a href={artist.wikipedia_url} target="_blank" rel="noreferrer" className="border-2 border-black px-3 py-1 bg-white hover:bg-black hover:text-white transition-colors">
+                        Wikipedia →
+                      </a>
                     )}
                 </div>
+                {artist.description && (
+                  <p className="text-lg md:text-xl leading-relaxed max-w-3xl text-gray-700">
+                    {artist.description}
+                  </p>
+                )}
             </div>
         </div>
 

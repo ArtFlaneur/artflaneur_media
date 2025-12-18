@@ -18,6 +18,46 @@ export const SectionHeader: React.FC<{ title: string; linkText?: string; linkTo?
   </div>
 );
 
+// Skeleton card for loading states
+export const SkeletonCard: React.FC<{ type: 'artist' | 'gallery' | 'article' | 'exhibition' | 'guide' | 'author' }> = ({ type }) => {
+    if (type === 'artist') {
+        return (
+            <div className="border-2 border-black bg-white animate-pulse">
+                <div className="p-4">
+                    <div className="h-7 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-100 rounded w-1/3 mb-1"></div>
+                    <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                </div>
+            </div>
+        );
+    }
+    
+    if (type === 'gallery') {
+        return (
+            <div className="border-2 border-black bg-white animate-pulse h-full flex flex-col">
+                <div className="aspect-square bg-gray-200 border-b-2 border-black"></div>
+                <div className="p-4 flex flex-col gap-3">
+                    <div className="h-7 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-100 rounded w-2/3 mt-auto"></div>
+                </div>
+            </div>
+        );
+    }
+    
+    // Default skeleton for other types
+    return (
+        <div className="border-2 border-black bg-white animate-pulse">
+            <div className="aspect-video bg-gray-200 border-b-2 border-black"></div>
+            <div className="p-4">
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-100 rounded w-full mb-1"></div>
+                <div className="h-4 bg-gray-100 rounded w-2/3"></div>
+            </div>
+        </div>
+    );
+};
+
 // Generic Entity Card covering different content types
 export const EntityCard: React.FC<{ 
     data: Article | Artist | Exhibition | Guide | Author | Gallery; 
@@ -32,11 +72,11 @@ export const EntityCard: React.FC<{
         const artistSlug = artist.slug || artist.id;
         return (
             <Link to={`/artists/${artistSlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(255,215,0,1)] transition-all duration-200">
-                <div className="relative aspect-square overflow-hidden border-b-2 border-black">
-                    <SecureImage src={artist.image} alt={artist.name} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" />
-                </div>
                 <div className="p-4">
                     <h3 className="text-2xl font-black uppercase mb-1">{artist.name}</h3>
+                    {artist.lifespan && (
+                        <p className="font-mono text-xs text-gray-500 mb-1">{artist.lifespan}</p>
+                    )}
                     <p className="font-mono text-xs text-gray-500 uppercase">{artist.location}</p>
                 </div>
             </Link>
