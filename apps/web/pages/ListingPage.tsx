@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { EntityCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import {
@@ -12,8 +13,9 @@ import {
   AUTHORS_QUERYResult,
 } from '../sanity/types';
 import { Article, Artist, Exhibition, Guide, Author, ContentType, Gallery } from '../types';
-import { fetchExhibitions, fetchGalleries, fetchArtists, GraphqlExhibition, GraphqlGallery, GraphqlArtist } from '../lib/graphql';
+import { fetchExhibitions, fetchGalleries, fetchArtists, countGalleriesByCountry, APPROXIMATE_GALLERY_COUNT, GraphqlExhibition, GraphqlGallery, GraphqlArtist } from '../lib/graphql';
 import { mapGraphqlGalleryToEntity } from '../lib/galleryMapping';
+import { getAllCountries, getCountryAliases, type Country } from '../lib/countries';
 
 interface ListingPageProps {
   title: string;
@@ -128,16 +130,91 @@ const CARD_TYPE_MAP = {
 const getCardKey = (item: ListingEntity) => ('slug' in item && item.slug ? item.slug : item.id);
 
 const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<ListingEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [countryGalleryCount, setCountryGalleryCount] = useState<number | null>(null);
+  const [countingGalleries, setCountingGalleries] = useState(false);
+  
+  // Static list of all countries (must be before selectedCountry)
+  const countries = useMemo(() => getAllCountries(), []);
+  
+  // Get country from URL params, persist across navigation
+  const selectedCountryCode = searchParams.get('country') || '';
+  const setSelectedCountryCode = useCallback((code: string) => {
+    if (code) {
+      setSearchParams({ country: code }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [setSearchParams]);
+  
+  // Find selected country name for display
+  const selectedCountry = useMemo(() => 
+    countries.find(c => c.code === selectedCountryCode), 
+    [countries, selectedCountryCode]
+  );
+  
+  // Count galleries when country changes
+  useEffect(() => {
+    if (type !== 'galleries' || !selectedCountryCode) {
+      setCountryGalleryCount(null);
+      return;
+    }
+    
+    const aliases = getCountryAliases(selectedCountryCode);
+    if (!aliases.length) {
+      setCountryGalleryCount(null);
+      return;
+    }
+    
+    let cancelled = false;
+    setCountingGalleries(true);
+    
+    countGalleriesByCountry(aliases)
+      .then((count) => {
+        if (!cancelled) {
+          setCountryGalleryCount(count);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to count galleries:', err);
+        if (!cancelled) {
+          setCountryGalleryCount(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCountingGalleries(false);
+        }
+      });
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [type, selectedCountryCode]);
+  
   const isPaginatedType = PAGINATED_TYPES.has(type);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isMountedRef = useRef(true);
   const pendingCardsRef = useRef<ListingEntity[]>([]);
   const cursorRef = useRef<string | null>(null);
+
+  // Anti-scraping: disable right-click on galleries page
+  useEffect(() => {
+    if (type !== 'galleries') return;
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    return () => document.removeEventListener('contextmenu', handleContextMenu);
+  }, [type]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -199,9 +276,22 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
                 reachedEnd = true;
               }
             } else {
+              // Build filter for galleries by country (using all aliases)
+              let filter = undefined;
+              if (selectedCountryCode) {
+                const aliases = getCountryAliases(selectedCountryCode);
+                if (aliases.length === 1) {
+                  filter = { country: { eq: aliases[0] } };
+                } else if (aliases.length > 1) {
+                  // Use OR filter for multiple aliases (UK, United Kingdom, etc.)
+                  filter = { or: aliases.map(alias => ({ country: { eq: alias } })) };
+                }
+              }
+
               const connection = await fetchGalleries({
                 limit: PAGE_SIZE + 1,
                 nextToken: cursorRef.current ?? undefined,
+                filter,
               });
 
               const rows = Array.isArray(connection.items) ? connection.items : [];
@@ -251,7 +341,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         }
       }
     },
-    [type]
+    [type, selectedCountryCode]
   );
 
   useEffect(() => {
@@ -352,28 +442,66 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
 
   useEffect(() => {
     cursorRef.current = null;
-  }, [type]);
+  }, [type, selectedCountryCode]);
 
   const cardType: Parameters<typeof EntityCard>[0]['type'] = CARD_TYPE_MAP[type];
 
   return (
-    <div className="min-h-screen bg-art-paper">
+    <div className="min-h-screen bg-art-paper select-none">
       {/* Header */}
       <div className="bg-white border-b-2 border-black pt-20 pb-12">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-6 mb-8">
             <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter flex flex-wrap items-baseline gap-4">
               <span>{title}</span>
+              {type === 'galleries' && !selectedCountryCode && (
+                <span className="text-2xl md:text-4xl text-gray-400 font-mono">
+                  {APPROXIMATE_GALLERY_COUNT.toLocaleString()}+
+                </span>
+              )}
+              {type === 'galleries' && selectedCountry && (
+                <>
+                  <span className="text-2xl md:text-4xl text-gray-400 font-mono">
+                    {countingGalleries ? '...' : countryGalleryCount !== null ? countryGalleryCount.toLocaleString() : ''}
+                  </span>
+                  <span className="text-2xl md:text-4xl text-gray-400 font-mono">
+                    {selectedCountry.name}
+                  </span>
+                </>
+              )}
             </h1>
           </div>
 
-          {/* Simulated Filters */}
-          <div className="flex flex-wrap gap-4 font-mono text-xs uppercase font-bold">
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4 font-mono text-xs uppercase font-bold items-center">
             <button className="bg-black text-white px-4 py-2 border-2 border-black">All</button>
             <button className="bg-white text-black px-4 py-2 border-2 border-black hover:bg-gray-100">Featured</button>
             <button className="bg-white text-black px-4 py-2 border-2 border-black hover:bg-gray-100">Latest</button>
             {type === 'exhibitions' && (
               <button className="bg-white text-black px-4 py-2 border-2 border-black hover:bg-gray-100">Opening Soon</button>
+            )}
+            {type === 'galleries' && (
+              <div className="relative">
+                <select
+                  value={selectedCountryCode}
+                  onChange={(e) => setSelectedCountryCode(e.target.value)}
+                  className="bg-white text-black px-4 py-2 pr-10 border-2 border-black hover:bg-gray-100 cursor-pointer appearance-none font-mono text-xs uppercase font-bold focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 text-center"
+                >
+                  <option value="">Country ▾</option>
+                  {countries.map((country) => (
+                    <option key={country.code} value={country.code}>{country.name}</option>
+                  ))}
+                </select>
+                {selectedCountryCode && (
+                  <button
+                    onClick={() => setSelectedCountryCode('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-black hover:text-red-600 font-bold text-lg leading-none"
+                    title="Clear filter"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

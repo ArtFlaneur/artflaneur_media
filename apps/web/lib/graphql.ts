@@ -22,6 +22,7 @@ export interface GraphqlGallery {
   openinghours?: string | null;
   specialevent?: string | null;
   eventtype?: string | null;
+  allowed?: string | null;
   country?: string | null;
   fulladdress?: string | null;
   gallery_img_url?: string | null;
@@ -113,6 +114,7 @@ const LIST_GALLERIES_QUERY = `#graphql
         openinghours
         specialevent
         eventtype
+        allowed
         gallery_img_url
         logo_img_url
       }
@@ -136,6 +138,7 @@ const NEARBY_GALLERIES_QUERY = `#graphql
         openinghours
         specialevent
         eventtype
+        allowed
         gallery_img_url
       }
       nextToken
@@ -156,12 +159,17 @@ const GET_GALLERY_QUERY = `#graphql
       openinghours
       specialevent
       eventtype
+      allowed
       gallery_img_url
       logo_img_url
     }
   }
 `;
 
+/**
+ * Derive city name from full address by extracting the last segment before country.
+ * Example: "123 Main St, New York, NY, USA" -> "New York"
+ */
 const deriveCityFromAddress = (address?: string | null, country?: string | null): string | undefined => {
   if (!address?.trim()) {
     return undefined;
@@ -177,6 +185,7 @@ const deriveCityFromAddress = (address?: string | null, country?: string | null)
     return undefined;
   }
 
+  // Remove country from end if it matches
   if (normalizedCountry && segments.length > 1) {
     const last = segments[segments.length - 1];
     if (last?.toLowerCase() === normalizedCountry) {
@@ -184,12 +193,14 @@ const deriveCityFromAddress = (address?: string | null, country?: string | null)
     }
   }
 
+  // Get the last remaining segment as city candidate
   const candidate = segments[segments.length - 1] ?? '';
   const tokens = candidate.split(/\s+/).filter(Boolean);
   if (!tokens.length) {
     return undefined;
   }
 
+  // Filter out postal codes and state abbreviations
   const letterPattern = /\p{L}/u;
   const regionPattern = /^[A-Z]{1,3}$/;
   const cityTokens: string[] = [];
@@ -208,6 +219,9 @@ const deriveCityFromAddress = (address?: string | null, country?: string | null)
   return derived || candidate || undefined;
 };
 
+/**
+ * Enrich gallery with derived city if not provided by API.
+ */
 const enrichGallery = <T extends GraphqlGallery>(gallery: T): T => {
   if (gallery.city) {
     return gallery;
@@ -276,6 +290,22 @@ export interface FetchGalleriesParams {
   filter?: GalleryFilterInput;
 }
 
+/**
+ * Check if a gallery should be excluded from display.
+ * Excludes galleries with allowed="No" or specialevent="yes" (temporary venues).
+ */
+export const isGalleryExcluded = (gallery: GraphqlGallery): boolean => {
+  // Exclude if allowed is explicitly "No"
+  if (gallery.allowed?.toLowerCase() === 'no') {
+    return true;
+  }
+  // Exclude temporary event venues
+  if (gallery.specialevent?.toLowerCase() === 'yes') {
+    return true;
+  }
+  return false;
+};
+
 export async function fetchGalleries(params: FetchGalleriesParams = {}): Promise<GraphqlListResult<GraphqlGallery>> {
   const variables = {
     limit: params.limit,
@@ -289,10 +319,62 @@ export async function fetchGalleries(params: FetchGalleriesParams = {}): Promise
   );
 
   const connection = data.listGalleriesById ?? { items: [], nextToken: null };
+  // Enrich with derived city and filter out excluded galleries
+  const enrichedItems = (connection.items ?? []).map(enrichGallery);
+  const filteredItems = enrichedItems.filter((g) => !isGalleryExcluded(g));
+  
   return {
     ...connection,
-    items: connection.items?.map(enrichGallery) ?? [],
+    items: filteredItems,
   };
+}
+
+/**
+ * Approximate total number of galleries in the database.
+ * This is a cached value that should be updated periodically.
+ * Last updated: December 2025
+ */
+export const APPROXIMATE_GALLERY_COUNT = 13000;
+
+/**
+ * Count galleries by country using pagination.
+ * Iterates through all pages to get exact count.
+ */
+export async function countGalleriesByCountry(countryAliases: string[]): Promise<number> {
+  if (!countryAliases.length) {
+    return 0;
+  }
+
+  let filter: GalleryFilterInput;
+  if (countryAliases.length === 1) {
+    filter = { country: { eq: countryAliases[0] } };
+  } else {
+    filter = { or: countryAliases.map(alias => ({ country: { eq: alias } })) };
+  }
+
+  let count = 0;
+  let nextToken: string | null = null;
+  const BATCH_SIZE = 100;
+
+  do {
+    const variables = {
+      limit: BATCH_SIZE,
+      nextToken,
+      filter,
+    };
+
+    const data = await executeGraphQL<{ listGalleriesById: GraphqlListResult<GraphqlGallery> }>(
+      LIST_GALLERIES_QUERY,
+      variables
+    );
+
+    const connection = data.listGalleriesById ?? { items: [], nextToken: null };
+    const filteredItems = (connection.items ?? []).filter((g) => !isGalleryExcluded(g));
+    count += filteredItems.length;
+    nextToken = connection.nextToken ?? null;
+  } while (nextToken);
+
+  return count;
 }
 
 export async function searchGalleries(query: string, limit = 50): Promise<GraphqlGallery[]> {
@@ -303,7 +385,6 @@ export async function searchGalleries(query: string, limit = 50): Promise<Graphq
   const filter: GalleryFilterInput = {
     or: [
       { galleryname: { contains: query } },
-      { city: { contains: query } },
       { country: { contains: query } },
       { fulladdress: { contains: query } },
     ],

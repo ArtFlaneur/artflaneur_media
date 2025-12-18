@@ -4,6 +4,7 @@ import { MapPin, Globe, ExternalLink } from 'lucide-react';
 import {
   fetchExhibitionsByGallery,
   fetchGalleryById,
+  isGalleryExcluded,
   GraphqlExhibition,
   GraphqlGallery,
 } from '../lib/graphql';
@@ -60,16 +61,30 @@ const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleDateString('en-US', DATE_FORMAT) : 'TBA';
 
 const GalleryView: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: slugParam } = useParams<{ id: string }>();
   const [gallery, setGallery] = useState<GraphqlGallery | null>(null);
   const [exhibitions, setExhibitions] = useState<GraphqlExhibition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Extract the gallery ID from slug (format: "gallery-name-id" or just "id")
+  const galleryId = useMemo(() => {
+    if (!slugParam) return null;
+    // If slug contains dashes, the ID is the last segment
+    const parts = slugParam.split('-');
+    const lastPart = parts[parts.length - 1];
+    // Check if lastPart is numeric (the ID)
+    if (/^\d+$/.test(lastPart)) {
+      return lastPart;
+    }
+    // If no numeric suffix, assume the whole slug is the ID (for backwards compatibility)
+    return slugParam;
+  }, [slugParam]);
+
   useEffect(() => {
     let isMounted = true;
     const fetchGallery = async () => {
-      if (!id) {
+      if (!galleryId) {
         setError('Missing gallery identifier.');
         setGallery(null);
         setExhibitions([]);
@@ -80,8 +95,8 @@ const GalleryView: React.FC = () => {
       try {
         setLoading(true);
         const [galleryData, exhibitionsData] = await Promise.all([
-          fetchGalleryById(id),
-          fetchExhibitionsByGallery(id, 12),
+          fetchGalleryById(galleryId),
+          fetchExhibitionsByGallery(galleryId, 12),
         ]);
 
         if (!isMounted) return;
@@ -90,6 +105,11 @@ const GalleryView: React.FC = () => {
           setGallery(null);
           setExhibitions([]);
           setError('Gallery not found.');
+        } else if (isGalleryExcluded(galleryData)) {
+          // Don't show excluded galleries (not allowed or temporary venues)
+          setGallery(null);
+          setExhibitions([]);
+          setError('This gallery is not available.');
         } else {
           setGallery(galleryData);
           setExhibitions(exhibitionsData ?? []);
@@ -112,11 +132,17 @@ const GalleryView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [galleryId]);
 
   const workingHours = useMemo(() => formatWorkingHoursSchedule(gallery?.openinghours), [gallery?.openinghours]);
   const mapsLink = useMemo(() => buildGoogleMapsLink(gallery), [gallery]);
-  const galleryDescription = gallery?.specialevent?.trim() ?? null;
+  
+  // Only use specialevent as description if it's not just "yes"/"no" flags
+  const rawDescription = gallery?.specialevent?.trim() ?? null;
+  const galleryDescription = rawDescription && 
+    !['yes', 'no'].includes(rawDescription.toLowerCase()) 
+    ? rawDescription 
+    : null;
 
   if (loading) {
     return (
@@ -167,14 +193,18 @@ const GalleryView: React.FC = () => {
   }>;
 
   return (
-    <div className="bg-art-paper min-h-screen">
-      <section className="relative h-[60vh] border-b-2 border-black">
+    <div className="bg-art-paper min-h-screen select-none" onContextMenu={(e) => e.preventDefault()}>
+      <section className="relative h-[60vh] border-b-2 border-black overflow-hidden">
+        {/* Main image with cover fit */}
         <SecureImage
           src={heroImage}
           alt={gallery.galleryname ?? 'Gallery'}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        {/* Blur overlay to soften low-quality images */}
+        <div className="absolute inset-0 backdrop-blur-[2px]" />
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
         <div className="relative z-10 h-full flex flex-col justify-end p-6 md:p-12 text-white">
           {locationLabel && (
             <p className="font-mono text-xs uppercase tracking-[0.4em] mb-4">{locationLabel}</p>
