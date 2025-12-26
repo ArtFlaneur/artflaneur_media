@@ -116,6 +116,18 @@ const formatDayValue = (label: string, raw?: string) => {
   return closedLabel;
 };
 
+const TIME_RANGE_PATTERN = /\b\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s*(?:-|–|—|to)\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\b/i;
+const SINGLE_TIME_PATTERN = /\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s*(?:am|pm)\b/i;
+
+const isFreeFormHoursNote = (entry: string) => {
+  const normalized = entry.trim();
+  if (!normalized) return false;
+  if (DAY_TOKEN_PATTERN.test(normalized)) return false;
+  if (TIME_RANGE_PATTERN.test(normalized)) return false;
+  if (SINGLE_TIME_PATTERN.test(normalized)) return false;
+  return true;
+};
+
 export const formatWorkingHoursSchedule = (value?: string | null): string[] => {
   const entries = splitEntries(value);
   const dayMap = new Map<string, string>();
@@ -176,6 +188,9 @@ export const formatWorkingHoursSchedule = (value?: string | null): string[] => {
   }
 
   if (!dayMap.size) {
+    if (entries.every(isFreeFormHoursNote)) {
+      return entries;
+    }
     assignEntryToKeys(ALL_DAY_KEYS, entries[0]);
   }
 
@@ -194,4 +209,26 @@ export const getDisplayDomain = (value?: string | null) => {
       .replace(/^www\./i, '')
       .split('/')[0];
   }
+};
+
+export const getAppDownloadLink = () => {
+  // Prefer a safe default (App Store) when UA is unavailable.
+  const IOS_URL = 'https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783';
+  const ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.artflaneur';
+
+  if (typeof navigator === 'undefined') {
+    return IOS_URL;
+  }
+
+  const userAgent = navigator.userAgent || (navigator as any).vendor || (window as any).opera;
+
+  if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
+    return IOS_URL;
+  }
+
+  if (/android/i.test(userAgent)) {
+    return ANDROID_URL;
+  }
+
+  return IOS_URL;
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signIn, signUp, createGalleryForUser } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus, MapPin } from 'lucide-react';
 import { searchGalleries, GraphqlGallery } from '../lib/graphql';
 
@@ -19,6 +19,7 @@ interface NewGalleryForm {
 type GallerySource = 'existing' | 'new' | null;
 
 const GalleryLogin: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>('auth');
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -42,6 +43,14 @@ const GalleryLogin: React.FC = () => {
   };
   const [galleryDetails, setGalleryDetails] = useState<NewGalleryForm>(initialGalleryState);
   const [gallerySource, setGallerySource] = useState<GallerySource>(null);
+
+  React.useEffect(() => {
+    const requestedMode = searchParams.get('mode')?.toLowerCase();
+    if (requestedMode === 'signup' || requestedMode === 'register') {
+      setMode('signup');
+      setStep('gallery-select');
+    }
+  }, [searchParams]);
 
   const updateGalleryField = (field: keyof NewGalleryForm, value: string) => {
     setGalleryDetails((prev) => ({ ...prev, [field]: value }));

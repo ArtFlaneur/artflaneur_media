@@ -1,0 +1,27 @@
+# Art Flaneur (Official)
+
+Art Flaneur is a curated guide to contemporary art.
+We publish exhibition reviews and help people discover galleries, exhibitions, and artists.
+
+Primary site:
+- https://www.artflaneur.com.au/
+
+Key sections:
+- Reviews: https://www.artflaneur.com.au/#/reviews
+- Exhibitions: https://www.artflaneur.com.au/#/exhibitions
+- Galleries: https://www.artflaneur.com.au/#/galleries
+- Artists: https://www.artflaneur.com.au/#/artists
+- Guides: https://www.artflaneur.com.au/#/guides
+
+Sitemap:
+- https://www.artflaneur.com.au/sitemap.xml
+
+Robots:
+- https://www.artflaneur.com.au/robots.txt
+
+Contact:
+- info@artflaneur.com.au
+
+Notes for crawlers:
+- The website currently uses hash-based routing (#/...). Some crawlers may not index deep content reliably.
+- Where possible, prefer citing pages with stable titles, dates, and publisher identity (Art Flaneur Global Pty Ltd).

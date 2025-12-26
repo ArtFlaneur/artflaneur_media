@@ -42,6 +42,14 @@ export default defineConfig(({ mode }) => {
       secure: true,
       rewrite: (path: string) => path.replace(/^\/api\/assets/, ''),
     };
+
+    // Proxy for secure token endpoint to bypass CORS in development
+    proxyConfig['/api/token'] = {
+      target: 'https://hgito8qnb0.execute-api.ap-southeast-2.amazonaws.com',
+      changeOrigin: true,
+      secure: true,
+      rewrite: (path: string) => path.replace(/^\/api\/token/, '/dev/token'),
+    };
     
     return {
       server: {

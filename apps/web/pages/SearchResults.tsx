@@ -320,40 +320,15 @@ const SearchResults: React.FC = () => {
         {/* Results */}
         {!loading && results && totalResults > 0 && (
           <div className="space-y-16">
-            {/* Reviews */}
-            {results.reviews.length > 0 && (
+            {/* Galleries */}
+            {results.galleries.length > 0 && (
               <section>
-                <h2 className="text-3xl font-black uppercase mb-6 border-l-4 border-art-red pl-4">
-                  Reviews ({results.reviews.length})
+                <h2 className="text-3xl font-black uppercase mb-6 border-l-4 border-black pl-4">
+                  Galleries ({results.galleries.length})
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {results.reviews.map((review) => (
-                    <ArticleCard
-                      key={review._id}
-                      article={{
-                        id: review._id,
-                        slug: review.slug?.current ?? review._id,
-                        title: review.title ?? 'Untitled story',
-                        subtitle: review.excerpt || '',
-                        image: review.mainImage?.asset?.url || squarePlaceholder(`review-${review._id}`),
-                        date: review.publishedAt
-                          ? new Date(review.publishedAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })
-                          : undefined,
-                        type: ContentType.REVIEW,
-                        author: review.author
-                          ? {
-                              id: review.author._id,
-                              name: review.author.name ?? 'Contributor',
-                              role: 'Critic',
-                              image: review.author.photo?.asset?.url ?? '',
-                            }
-                          : undefined,
-                      }}
-                    />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {results.galleries.map((gallery) => (
+                    <EntityCard key={gallery.slug ?? gallery.id} data={gallery} type="gallery" />
                   ))}
                 </div>
               </section>
@@ -396,25 +371,6 @@ const SearchResults: React.FC = () => {
               </section>
             )}
 
-            {/* Guides */}
-            {results.guides.length > 0 && (
-              <section>
-                <h2 className="text-3xl font-black uppercase mb-6 border-l-4 border-art-blue pl-4">
-                  Guides ({results.guides.length})
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {results.guides.map((guide) => (
-                    <EntityCard
-                      key={guide.slug ?? guide.id}
-                      data={guide}
-                      type="guide"
-                      imageAspect="square"
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* Artists */}
             {results.artists.length > 0 && (
               <section>
@@ -452,6 +408,64 @@ const SearchResults: React.FC = () => {
               </section>
             )}
 
+            {/* Reviews */}
+            {results.reviews.length > 0 && (
+              <section>
+                <h2 className="text-3xl font-black uppercase mb-6 border-l-4 border-art-red pl-4">
+                  Reviews ({results.reviews.length})
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {results.reviews.map((review) => (
+                    <ArticleCard
+                      key={review._id}
+                      article={{
+                        id: review._id,
+                        slug: review.slug?.current ?? review._id,
+                        title: review.title ?? 'Untitled story',
+                        subtitle: review.excerpt || '',
+                        image: review.mainImage?.asset?.url || squarePlaceholder(`review-${review._id}`),
+                        date: review.publishedAt
+                          ? new Date(review.publishedAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                          : undefined,
+                        type: ContentType.REVIEW,
+                        author: review.author
+                          ? {
+                              id: review.author._id,
+                              name: review.author.name ?? 'Contributor',
+                              role: 'Critic',
+                              image: review.author.photo?.asset?.url ?? '',
+                            }
+                          : undefined,
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Guides */}
+            {results.guides.length > 0 && (
+              <section>
+                <h2 className="text-3xl font-black uppercase mb-6 border-l-4 border-art-blue pl-4">
+                  Guides ({results.guides.length})
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {results.guides.map((guide) => (
+                    <EntityCard
+                      key={guide.slug ?? guide.id}
+                      data={guide}
+                      type="guide"
+                      imageAspect="square"
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Ambassadors */}
             {results.ambassadors.length > 0 && (
               <section>
@@ -466,19 +480,6 @@ const SearchResults: React.FC = () => {
               </section>
             )}
 
-            {/* Galleries */}
-            {results.galleries.length > 0 && (
-              <section>
-                <h2 className="text-3xl font-black uppercase mb-6 border-l-4 border-black pl-4">
-                  Galleries ({results.galleries.length})
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {results.galleries.map((gallery) => (
-                    <EntityCard key={gallery.slug ?? gallery.id} data={gallery} type="gallery" />
-                  ))}
-                </div>
-              </section>
-            )}
           </div>
         )}
       </div>

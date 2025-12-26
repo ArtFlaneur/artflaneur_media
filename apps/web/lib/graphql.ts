@@ -8,6 +8,46 @@ if (!GRAPHQL_ENDPOINT || !GRAPHQL_API_KEY) {
   );
 }
 
+const LIST_HISTORICAL_EXHIBITIONS_QUERY = `#graphql
+  query ListHistoricalExhibitions($limit: Int, $nextToken: String) {
+    listAllHistoricalExhibitions(limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        title
+        artist
+        galleryname
+        datefrom_epoch
+        dateto_epoch
+        eventtype
+        exhibition_img_url
+      }
+      nextToken
+    }
+  }
+`;
+
+const GET_EXHIBITION_BY_ID_QUERY = `#graphql
+  query GetExhibitionById($id: ID!) {
+    getExhibitionById(id: $id) {
+      id
+      gallery_id
+      galleryname
+      city
+      title
+      description
+      artist
+      eventtype
+      exhibition_type
+      exhibition_img_url
+      logo_img_url
+      datefrom
+      dateto
+      datefrom_epoch
+      dateto_epoch
+    }
+  }
+`;
+
 interface GraphqlResponse<T> {
   data: T;
   errors?: Array<{
@@ -42,7 +82,7 @@ export interface GraphqlExhibition {
   artist?: string | null;
   city?: string | null;
   eventtype?: string | null;
-  exhibition_type?: string[] | null;
+  exhibition_type?: string[] | string | null;
   exhibition_img_url?: string | null;
   logo_img_url?: string | null;
   datefrom?: string | null;
@@ -284,6 +324,31 @@ const LIST_EXHIBITIONS_BY_GALLERY_QUERY = `#graphql
   }
 `;
 
+const LIST_HISTORICAL_EXHIBITIONS_BY_GALLERY_ID_QUERY = `#graphql
+  query ListHistoricalExhibitionsByGalleryId($galleryId: ID!, $limit: Int, $nextToken: String) {
+    listHistoricalExhibitionsByGalleryId(galleryId: $galleryId, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        gallery_id
+        galleryname
+        city
+        title
+        description
+        artist
+        eventtype
+        exhibition_type
+        exhibition_img_url
+        logo_img_url
+        datefrom
+        dateto
+        datefrom_epoch
+        dateto_epoch
+      }
+      nextToken
+    }
+  }
+`;
+
 export interface FetchGalleriesParams {
   limit?: number;
   nextToken?: string | null;
@@ -385,6 +450,7 @@ export async function searchGalleries(query: string, limit = 50): Promise<Graphq
   const filter: GalleryFilterInput = {
     or: [
       { galleryname: { contains: query } },
+      { city: { contains: query } },
       { country: { contains: query } },
       { fulladdress: { contains: query } },
     ],
@@ -424,6 +490,153 @@ export async function fetchExhibitions(limit = 50): Promise<GraphqlExhibition[]>
   return data.listAllExhibitions?.items ?? [];
 }
 
+export async function fetchExhibitionsPage(
+  params: { limit?: number; nextToken?: string | null } = {},
+): Promise<GraphqlListResult<GraphqlExhibition>> {
+  const data = await executeGraphQL<{ listAllExhibitions: GraphqlListResult<GraphqlExhibition> }>(
+    LIST_EXHIBITIONS_QUERY,
+    {
+      limit: params.limit,
+      nextToken: params.nextToken,
+    },
+  );
+
+  return data.listAllExhibitions ?? { items: [], nextToken: null };
+}
+
+export async function fetchHistoricalExhibitionsPage(
+  params: { limit?: number; nextToken?: string | null } = {},
+): Promise<GraphqlListResult<GraphqlExhibition>> {
+  const data = await executeGraphQL<{
+    listAllHistoricalExhibitions: GraphqlListResult<GraphqlExhibition>;
+  }>(LIST_HISTORICAL_EXHIBITIONS_QUERY, {
+    limit: params.limit,
+    nextToken: params.nextToken,
+  });
+
+  return data.listAllHistoricalExhibitions ?? { items: [], nextToken: null };
+}
+
+export async function fetchHistoricalExhibitionsByGalleryNameAll(
+  galleryName: string,
+  options: { pageSize?: number; maxPages?: number } = {},
+): Promise<GraphqlExhibition[]> {
+  const normalizedTarget = galleryName?.trim().toLowerCase();
+  if (!normalizedTarget) return [];
+
+  const pageSize = options.pageSize ?? 200;
+  const maxPages = options.maxPages ?? 200;
+
+  const matches: GraphqlExhibition[] = [];
+  let nextToken: string | null | undefined = null;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const connection = await fetchHistoricalExhibitionsPage({ limit: pageSize, nextToken });
+    const items = Array.isArray(connection.items) ? connection.items : [];
+
+    items.forEach((item) => {
+      const itemGallery = item?.galleryname?.trim().toLowerCase();
+      if (itemGallery && itemGallery === normalizedTarget) {
+        matches.push(item);
+      }
+    });
+
+    nextToken = connection.nextToken ?? null;
+    if (!nextToken) break;
+  }
+
+  return matches;
+}
+
+export async function fetchExhibitionByIdDirect(id: string): Promise<GraphqlExhibition | null> {
+  if (!id) return null;
+
+  const data = await executeGraphQL<{ getExhibitionById: GraphqlExhibition | null }>(GET_EXHIBITION_BY_ID_QUERY, {
+    id,
+  });
+
+  return data.getExhibitionById ?? null;
+}
+
+export async function fetchHistoricalExhibitionsByGalleryIdPage(
+  params: { galleryId: string; limit?: number; nextToken?: string | null },
+): Promise<GraphqlListResult<GraphqlExhibition>> {
+  const data = await executeGraphQL<{
+    listHistoricalExhibitionsByGalleryId: GraphqlListResult<GraphqlExhibition>;
+  }>(LIST_HISTORICAL_EXHIBITIONS_BY_GALLERY_ID_QUERY, {
+    galleryId: params.galleryId,
+    limit: params.limit,
+    nextToken: params.nextToken,
+  });
+
+  return data.listHistoricalExhibitionsByGalleryId ?? { items: [], nextToken: null };
+}
+
+export async function fetchHistoricalExhibitionsByGalleryIdAll(
+  galleryId: string,
+  options: { pageSize?: number; maxPages?: number } = {},
+): Promise<GraphqlExhibition[]> {
+  if (!galleryId) return [];
+
+  const pageSize = options.pageSize ?? 200;
+  const maxPages = options.maxPages ?? 100;
+
+  const all: GraphqlExhibition[] = [];
+  let nextToken: string | null | undefined = null;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const connection = await fetchHistoricalExhibitionsByGalleryIdPage({
+      galleryId,
+      limit: pageSize,
+      nextToken,
+    });
+
+    const items = Array.isArray(connection.items) ? connection.items : [];
+    all.push(...items);
+
+    nextToken = connection.nextToken ?? null;
+    if (!nextToken) break;
+  }
+
+  return all;
+}
+
+export async function fetchExhibitionById(id: string): Promise<GraphqlExhibition | null> {
+  if (!id) return null;
+
+  let nextToken: string | null | undefined = null;
+  // Safety guard to avoid infinite loops if API misbehaves.
+  for (let page = 0; page < 200; page += 1) {
+    const connection = await fetchExhibitionsPage({ limit: 200, nextToken });
+    const items = Array.isArray(connection.items) ? connection.items : [];
+    const found = items.find((item) => item?.id === id) ?? null;
+    if (found) return found;
+
+    nextToken = connection.nextToken ?? null;
+    if (!nextToken) break;
+  }
+
+  return null;
+}
+
+export async function fetchHistoricalExhibitionById(id: string): Promise<GraphqlExhibition | null> {
+  if (!id) return null;
+
+  let nextToken: string | null | undefined = null;
+  // Safety guard to avoid infinite loops if API misbehaves.
+  for (let page = 0; page < 400; page += 1) {
+    const connection = await fetchHistoricalExhibitionsPage({ limit: 200, nextToken });
+    const items = Array.isArray(connection.items) ? connection.items : [];
+    const found = items.find((item) => item?.id === id) ?? null;
+    if (found) return found;
+
+    nextToken = connection.nextToken ?? null;
+    if (!nextToken) break;
+  }
+
+  return null;
+}
+
 export async function fetchGalleryById(id: string): Promise<GraphqlGallery | null> {
   const data = await executeGraphQL<{ getGalleryById: GraphqlGallery | null }>(GET_GALLERY_QUERY, { id });
   return data.getGalleryById ? enrichGallery(data.getGalleryById) : null;
@@ -441,6 +654,49 @@ export async function fetchExhibitionsByGallery(
   });
 
   return data.listExhibitionsByGalleryId?.items ?? [];
+}
+
+export async function fetchExhibitionsByGalleryPage(
+  params: { galleryId: string; limit?: number; nextToken?: string | null },
+): Promise<GraphqlListResult<GraphqlExhibition>> {
+  const data = await executeGraphQL<{
+    listExhibitionsByGalleryId: GraphqlListResult<GraphqlExhibition>;
+  }>(LIST_EXHIBITIONS_BY_GALLERY_QUERY, {
+    galleryId: params.galleryId,
+    limit: params.limit,
+    nextToken: params.nextToken,
+  });
+
+  return data.listExhibitionsByGalleryId ?? { items: [], nextToken: null };
+}
+
+export async function fetchExhibitionsByGalleryAll(
+  galleryId: string,
+  options: { pageSize?: number; maxPages?: number } = {},
+): Promise<GraphqlExhibition[]> {
+  if (!galleryId) return [];
+
+  const pageSize = options.pageSize ?? 200;
+  const maxPages = options.maxPages ?? 50;
+
+  const all: GraphqlExhibition[] = [];
+  let nextToken: string | null | undefined = null;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const connection = await fetchExhibitionsByGalleryPage({
+      galleryId,
+      limit: pageSize,
+      nextToken,
+    });
+
+    const items = Array.isArray(connection.items) ? connection.items : [];
+    all.push(...items);
+
+    nextToken = connection.nextToken ?? null;
+    if (!nextToken) break;
+  }
+
+  return all;
 }
 
 // ============ ARTISTS ============
@@ -511,6 +767,7 @@ const EXHIBITIONS_FOR_ARTIST_QUERY = `#graphql
 
 let artistsCache: GraphqlArtist[] | null = null;
 let artistsCachePromise: Promise<GraphqlArtist[]> | null = null;
+const ARTIST_PAGE_SIZE = 250;
 
 /**
  * Load ALL artists into cache. Called once, then reused.
@@ -531,7 +788,7 @@ async function loadAllArtists(): Promise<GraphqlArtist[]> {
     do {
       const data = await executeGraphQL<{ listAllArtists: GraphqlListResult<GraphqlArtist> }>(
         LIST_ARTISTS_QUERY,
-        { limit: 100, nextToken }
+        { limit: ARTIST_PAGE_SIZE, nextToken }
       );
       
       const items = data.listAllArtists?.items ?? [];
@@ -545,6 +802,10 @@ async function loadAllArtists(): Promise<GraphqlArtist[]> {
   })();
   
   return artistsCachePromise;
+}
+
+export function warmArtistsCache(): Promise<GraphqlArtist[]> {
+  return loadAllArtists();
 }
 
 export interface FetchArtistsParams {
@@ -713,16 +974,36 @@ export async function searchExhibitions(
     return [];
   }
 
-  // Fetch exhibitions and filter client-side
-  const exhibitions = await fetchExhibitions(500);
   const searchLower = query.toLowerCase();
-  
-  return exhibitions.filter(
-    (exhibition) =>
-      exhibition.title?.toLowerCase().includes(searchLower) ||
-      exhibition.galleryname?.toLowerCase().includes(searchLower) ||
-      exhibition.city?.toLowerCase().includes(searchLower) ||
-      exhibition.artist?.toLowerCase().includes(searchLower) ||
-      exhibition.description?.toLowerCase().includes(searchLower)
-  ).slice(0, limit);
+  const results: GraphqlExhibition[] = [];
+  let nextToken: string | null | undefined = null;
+
+  const PAGE_SIZE = 100;
+  const MAX_PAGES = 200; // Safety limit
+
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const connection = await fetchExhibitionsPage({ limit: PAGE_SIZE, nextToken });
+    const items = Array.isArray(connection.items) ? connection.items : [];
+
+    const matching = items.filter(
+      (exhibition) =>
+        exhibition.title?.toLowerCase().includes(searchLower) ||
+        exhibition.galleryname?.toLowerCase().includes(searchLower) ||
+        exhibition.city?.toLowerCase().includes(searchLower) ||
+        exhibition.artist?.toLowerCase().includes(searchLower) ||
+        exhibition.description?.toLowerCase().includes(searchLower)
+    );
+
+    results.push(...matching);
+    if (results.length >= limit) {
+      break;
+    }
+
+    nextToken = connection.nextToken ?? null;
+    if (!nextToken) {
+      break;
+    }
+  }
+
+  return results.slice(0, limit);
 }

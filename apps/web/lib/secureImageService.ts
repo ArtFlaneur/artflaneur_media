@@ -1,10 +1,12 @@
 const SECURE_HOST_PATTERN = /assets\.artflaneur\.com\.au/i;
-const TOKEN_ENDPOINT = 'https://hgito8qnb0.execute-api.ap-southeast-2.amazonaws.com/dev/token';
 const TOKEN_REFRESH_BUFFER_MS = 30_000;
 const DEFAULT_TOKEN_TTL_MS = 4 * 60 * 1000;
 
 // In development, use Vite proxy to bypass CORS
 const IS_DEV = import.meta.env.DEV;
+const TOKEN_ENDPOINT = IS_DEV
+  ? '/api/token'
+  : 'https://hgito8qnb0.execute-api.ap-southeast-2.amazonaws.com/dev/token';
 const ASSETS_BASE = IS_DEV ? '/api/assets' : 'https://assets.artflaneur.com.au';
 
 let cachedToken: { value: string; expiresAt: number } | null = null;

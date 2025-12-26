@@ -1,0 +1,19 @@
+# Art Flaneur (Official)
+
+This file mirrors /llms.txt.
+
+Primary site:
+- https://www.artflaneur.com.au/
+
+Key sections:
+- https://www.artflaneur.com.au/#/reviews
+- https://www.artflaneur.com.au/#/exhibitions
+- https://www.artflaneur.com.au/#/galleries
+- https://www.artflaneur.com.au/#/artists
+- https://www.artflaneur.com.au/#/guides
+
+Sitemap:
+- https://www.artflaneur.com.au/sitemap.xml
+
+Contact:
+- info@artflaneur.com.au

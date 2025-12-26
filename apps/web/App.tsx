@@ -1,8 +1,9 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Header, Footer } from './components/Layout';
 import Home from './pages/Home';
 import ArticleView from './pages/ArticleView';
+import ExhibitionView from './pages/ExhibitionView';
 import Partners from './pages/Partners';
 import MapPage from './pages/MapPage';
 import ListingPage from './pages/ListingPage';
@@ -23,6 +24,8 @@ import GalleryExhibitions from './pages/GalleryExhibitions';
 import GalleryExhibitionForm from './pages/GalleryExhibitionForm';
 import GallerySettings from './pages/GallerySettings';
 import AdminModeration from './pages/AdminModeration';
+import SiteSeo from './components/SiteSeo';
+import NewsletterPopup from './components/NewsletterPopup';
 
 // ScrollToTop component - прокручивает страницу наверх при смене маршрута
 const ScrollToTop = () => {
@@ -37,8 +40,10 @@ const ScrollToTop = () => {
 
 const App: React.FC = () => {
   return (
-    <Router>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ScrollToTop />
+      <SiteSeo />
+      <NewsletterPopup />
       <div className="min-h-screen bg-white text-art-black font-sans selection:bg-art-blue selection:text-white flex flex-col">
         <Header />
         <main className="flex-grow">
@@ -58,7 +63,7 @@ const App: React.FC = () => {
                 
                 {/* Details */}
                 <Route path="/reviews/:id" element={<ArticleView />} />
-                <Route path="/exhibitions/:id" element={<ArticleView />} /> {/* Reusing ArticleView for now, could be specific */}
+                <Route path="/exhibitions/:id" element={<ExhibitionView />} />
                 <Route path="/guides/:id" element={<GuideView />} />
                 <Route path="/artists/:id" element={<ArtistView />} />
                 <Route path="/ambassadors/:id" element={<AmbassadorView />} />
@@ -94,7 +99,7 @@ const App: React.FC = () => {
         </main>
         <Footer />
       </div>
-    </Router>
+    </HashRouter>
   );
 };
 

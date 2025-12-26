@@ -71,7 +71,11 @@ export interface Exhibition {
   startDate: string;
   endDate: string;
   description: string;
+  artist?: string;
   city: string;
+  country?: string;
+  startEpochSeconds?: number;
+  endEpochSeconds?: number;
 }
 
 export interface Gallery {

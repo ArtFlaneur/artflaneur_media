@@ -1,0 +1,13 @@
+# Art Flaneur robots.txt
+# Note: This site currently uses hash-based routing for most public pages.
+# Hash fragments (#/...) are not sent to the server, so robots rules cannot target them.
+
+User-agent: *
+Disallow: /admin
+Disallow: /gallery-dashboard
+Disallow: /gallery-dashboard/
+
+# Allow everything else
+Allow: /
+
+Sitemap: https://www.artflaneur.com.au/sitemap.xml

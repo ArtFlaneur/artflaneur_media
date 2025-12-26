@@ -3,7 +3,7 @@ import { PricingTier, GalleryPoint } from './types';
 export const NAV_ITEMS = [
   { label: 'Reviews', path: '/reviews' },
   { label: 'Galleries', path: '/galleries' },
-  { label: 'Ambassadors', path: '/ambassadors' },
+  { label: 'Exhibitions', path: '/exhibitions' },
   { label: 'Artists', path: '/artists' },
   { label: 'Guides', path: '/guides' },
 ];

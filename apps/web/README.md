@@ -79,6 +79,17 @@ VITE_GRAPHQL_TENANT_ID=artflaneur
 # Supabase
 VITE_SUPABASE_URL=https://esavlnghlshbzuytkykj.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon-key>
+
+## Newsletter popup (Mailchimp)
+
+The site shows a newsletter signup popup for new visitors. It uses a standard Mailchimp embedded form POST (opens in a new tab).
+
+Configure these environment variables (Vite):
+
+- `VITE_MAILCHIMP_ACTION_URL` (required)
+	- Example format: `https://YOUR_DC.list-manage.com/subscribe/post?u=YOUR_U&id=YOUR_ID`
+- `VITE_MAILCHIMP_HONEYPOT_NAME` (optional)
+	- This is the hidden field name Mailchimp gives you (often looks like `b_<u>_<id>`). Including it helps reduce bot signups.
 ```
 
 ## Структура

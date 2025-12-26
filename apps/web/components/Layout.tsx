@@ -316,6 +316,12 @@ export const Footer: React.FC = () => {
                   <Link to="/cookies" className="hover:text-white">Cookies</Link>
               </div>
           </div>
+
+          <div className="container mx-auto px-4 md:px-6 pb-6">
+            <p className="text-[11px] md:text-xs text-gray-500 font-sans normal-case tracking-normal">
+              Art Flaneur acknowledges the Traditional Owners of the lands on which we live and work, the people of the Kulin and Eora Nations. We pay respect to Elders past and present. Aboriginal and Torres Strait Islander people should be aware that this website may contain images, voices and names of deceased persons.
+            </p>
+          </div>
       </div>
     </footer>
   );

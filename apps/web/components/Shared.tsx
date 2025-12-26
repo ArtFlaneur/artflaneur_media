@@ -3,6 +3,7 @@ import { ArrowRight, MapPin, Calendar, User } from 'lucide-react';
 import { Article, Artist, Exhibition, Author, Guide, Gallery } from '../types';
 import { Link } from 'react-router-dom';
 import SecureImage from './SecureImage';
+import { getDisplayDomain } from '../lib/formatters';
 
 export const SectionHeader: React.FC<{ title: string; linkText?: string; linkTo?: string }> = ({ title, linkText, linkTo }) => (
   <div className="flex justify-between items-end mb-8 border-b-2 border-black pb-4">
@@ -88,9 +89,7 @@ export const EntityCard: React.FC<{
         const gallery = data as Gallery;
         const gallerySlug = gallery.slug || gallery.id;
         const locationLabel = [gallery.city, gallery.country].filter(Boolean).join(', ');
-        const displayWebsite = gallery.website
-          ? gallery.website.replace(/^https?:\/\//i, '').replace(/\/$/, '')
-          : null;
+        const displayWebsite = getDisplayDomain(gallery.website);
         return (
             <Link to={`/galleries/${gallerySlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden border-b-2 border-black">
@@ -102,16 +101,16 @@ export const EntityCard: React.FC<{
                     )}
                 </div>
                 <div className="p-4 flex flex-col flex-grow gap-3">
-                    <h3 className="text-2xl font-black uppercase leading-tight">{gallery.name}</h3>
+                    <h3 className="text-2xl font-black uppercase leading-tight break-words overflow-hidden">{gallery.name}</h3>
                     {displayWebsite && (
                         <p className="text-sm font-mono text-gray-600 truncate">
                             {displayWebsite}
                         </p>
                     )}
                     {gallery.address && (
-                        <div className="mt-auto flex items-center gap-2 font-mono text-xs text-gray-500">
-                            <MapPin className="w-3 h-3" />
-                            <span className="line-clamp-2">{gallery.address}</span>
+                        <div className="mt-auto flex items-center gap-2 font-mono text-xs text-gray-500 min-w-0">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            <span className="min-w-0 truncate">{gallery.address}</span>
                         </div>
                     )}
                 </div>
@@ -123,19 +122,33 @@ export const EntityCard: React.FC<{
     if (type === 'exhibition') {
         const exhibition = data as Exhibition;
         const exhibitionSlug = exhibition.slug || exhibition.id;
+                const locationLabel = [exhibition.city, exhibition.country].filter(Boolean).join(', ');
+                const badgeLabel = exhibition.country ?? exhibition.city;
         return (
             <Link to={`/exhibitions/${exhibitionSlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,85,212,1)] transition-all duration-200 h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden border-b-2 border-black">
                     <SecureImage src={exhibition.image} alt={exhibition.title} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" />
                     <div className="absolute top-0 right-0 bg-art-yellow px-2 py-1 text-xs font-mono font-bold border-l-2 border-b-2 border-black">
-                        {exhibition.city}
+                        {badgeLabel}
                     </div>
                 </div>
-                <div className="p-4 flex flex-col flex-grow">
-                    <div className="mb-4">
-                        <span className="font-mono text-xs font-bold uppercase block mb-1">{exhibition.gallery}</span>
-                        <h3 className="text-xl font-bold uppercase leading-tight">{exhibition.title}</h3>
-                    </div>
+                                <div className="p-4 flex flex-col flex-grow">
+                                        <div className="mb-4 flex flex-col gap-2 min-h-[130px]">
+                                                <span className="font-mono text-xs font-bold uppercase">{exhibition.gallery}</span>
+                                                {locationLabel && (
+                                                    <div className="flex items-center gap-2 font-mono text-xs text-gray-500 min-w-0">
+                                                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                                                        <span className="min-w-0 truncate">{locationLabel}</span>
+                                                    </div>
+                                                )}
+                                                <h3 className="text-xl font-bold uppercase leading-tight">{exhibition.title}</h3>
+                                                {exhibition.artist && (
+                                                    <div className="mt-auto flex items-center gap-2 font-mono text-xs text-gray-500 min-w-0">
+                                                        <User className="w-3 h-3 flex-shrink-0" />
+                                                        <span className="min-w-0 truncate">{exhibition.artist}</span>
+                                                    </div>
+                                                )}
+                                        </div>
                     <div className="mt-auto pt-4 border-t border-gray-200 flex items-center gap-2 font-mono text-xs text-gray-500">
                         <Calendar className="w-3 h-3" />
                         {exhibition.startDate} — {exhibition.endDate}

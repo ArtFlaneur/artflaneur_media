@@ -7,25 +7,7 @@ import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
 import { BlockContent } from '../sanity/types';
 import { REVIEW_QUERYResult, REVIEWS_QUERYResult } from '../sanity/types';
 import { Article, ContentType } from '../types';
-import { getDisplayDomain } from '../lib/formatters';
-
-// Функция для определения платформы пользователя
-const getAppStoreLink = () => {
-  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-  
-  // Проверка на iOS
-  if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
-    return 'https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783';
-  }
-  
-  // Проверка на Android
-  if (/android/i.test(userAgent)) {
-    return 'https://play.google.com/store/apps/details?id=com.artflaneur';
-  }
-  
-  // По умолчанию для десктопа - App Store
-  return 'https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783';
-};
+import { getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
 
 type ReviewLike = REVIEW_QUERYResult | REVIEWS_QUERYResult[number];
 
@@ -436,7 +418,7 @@ const ArticleView: React.FC = () => {
                      </div>
                      {/* Save to App Button - с автоопределением платформы */}
                      <a 
-                        href={getAppStoreLink()}
+                        href={getAppDownloadLink()}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block w-full mt-8 bg-black text-white py-3 font-bold uppercase tracking-wide text-xs hover:bg-art-blue transition-colors text-center"

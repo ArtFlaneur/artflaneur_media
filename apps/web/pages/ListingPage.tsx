@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { EntityCard, SkeletonCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import {
@@ -13,9 +13,10 @@ import {
   AUTHORS_QUERYResult,
 } from '../sanity/types';
 import { Article, Artist, Exhibition, Guide, Author, ContentType, Gallery } from '../types';
-import { fetchExhibitions, fetchGalleries, fetchArtistsCached, countGalleriesByCountry, countArtistsByCountry, APPROXIMATE_GALLERY_COUNT, GraphqlExhibition, GraphqlGallery, GraphqlArtist } from '../lib/graphql';
+import { fetchExhibitions, fetchExhibitionsPage, fetchGalleryById, fetchGalleries, fetchArtistsCached, countGalleriesByCountry, countArtistsByCountry, APPROXIMATE_GALLERY_COUNT, GraphqlExhibition, GraphqlGallery, GraphqlArtist, GalleryFilterInput, warmArtistsCache } from '../lib/graphql';
 import { mapGraphqlGalleryToEntity } from '../lib/galleryMapping';
-import { getAllCountries, getCountryAliases, type Country } from '../lib/countries';
+import { getAllCountries, getCountryAliases, getCountryDisplayName } from '../lib/countries';
+import { useSeo } from '../lib/useSeo';
 
 interface ListingPageProps {
   title: string;
@@ -25,7 +26,8 @@ interface ListingPageProps {
 type ListingEntity = Article | Artist | Exhibition | Guide | Author | Gallery;
 
 const PAGE_SIZE = 10;
-const PAGINATED_TYPES = new Set<ListingPageProps['type']>(['artists', 'galleries']);
+const PAGINATED_TYPES = new Set<ListingPageProps['type']>(['artists', 'galleries', 'exhibitions']);
+const EXHIBITIONS_INITIAL_LOAD = 50;
 
 /**
  * Convert artist name to URL-friendly slug.
@@ -70,6 +72,38 @@ const mapGraphqlArtistToCard = (artist: GraphqlArtist): Artist => {
   };
 };
 
+const buildCountryFilter = (aliases: string[]): GalleryFilterInput | undefined => {
+  if (!aliases.length) return undefined;
+  if (aliases.length === 1) {
+    return { country: { eq: aliases[0] } };
+  }
+  return {
+    or: aliases.map((alias) => ({ country: { eq: alias } })),
+  };
+};
+
+const fetchAllGalleriesForCountry = async (aliases: string[]): Promise<GraphqlGallery[]> => {
+  if (!aliases.length) return [];
+
+  const filter = buildCountryFilter(aliases);
+  const collected: GraphqlGallery[] = [];
+  let nextToken: string | null = null;
+
+  for (let page = 0; page < 50; page += 1) {
+    const connection = await fetchGalleries({
+      limit: 200,
+      nextToken,
+      filter,
+    });
+
+    collected.push(...connection.items);
+    nextToken = connection.nextToken ?? null;
+    if (!nextToken) break;
+  }
+
+  return collected;
+};
+
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
   month: 'short',
@@ -78,6 +112,21 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
 
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleDateString('en-US', DATE_FORMAT) : undefined;
+
+const normalizeEpochSeconds = (value?: number | string | null): number | undefined => {
+  if (value === null || value === undefined) return undefined;
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return undefined;
+  // Seconds are ~1.7e9 (2025), ms are ~1.7e12.
+  if (numeric > 10_000_000_000) return Math.floor(numeric / 1000);
+  return Math.floor(numeric);
+};
+
+const toEpochSeconds = (value?: string | null): number | undefined => {
+  if (!value) return undefined;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? Math.floor(ms / 1000) : undefined;
+};
 
 const mapReviewToArticle = (review: REVIEWS_QUERYResult[number]): Article => ({
   id: review._id,
@@ -97,16 +146,33 @@ const mapReviewToArticle = (review: REVIEWS_QUERYResult[number]): Article => ({
     : undefined,
 });
 
-const mapGraphqlExhibitionToCard = (exhibition: GraphqlExhibition): Exhibition => ({
+interface ExhibitionGalleryMeta {
+  city?: string | null;
+  country?: string;
+  normalizedCountry?: string;
+}
+
+const mapGraphqlExhibitionToCard = (
+  exhibition: GraphqlExhibition,
+  meta?: Pick<ExhibitionGalleryMeta, 'city' | 'country'>
+): Exhibition => ({
   id: exhibition.id,
   slug: exhibition.id,
   title: exhibition.title ?? 'Untitled Exhibition',
   gallery: exhibition.galleryname ?? 'Gallery',
-  city: exhibition.city ?? 'City',
+  city: meta?.city ?? exhibition.city ?? 'City',
+  country: meta?.country ? getCountryDisplayName(meta.country) : undefined,
+  artist: exhibition.artist?.trim() ? exhibition.artist.trim() : undefined,
   image: exhibition.exhibition_img_url ?? `https://picsum.photos/seed/${exhibition.id}/600/600`,
   startDate: formatDate(exhibition.datefrom ?? undefined) ?? 'TBC',
   endDate: formatDate(exhibition.dateto ?? undefined) ?? 'TBC',
   description: exhibition.description ?? '',
+  startEpochSeconds: normalizeEpochSeconds(exhibition.datefrom_epoch) ?? toEpochSeconds(exhibition.datefrom),
+  endEpochSeconds:
+    normalizeEpochSeconds(exhibition.dateto_epoch) ??
+    toEpochSeconds(exhibition.dateto) ??
+    normalizeEpochSeconds(exhibition.datefrom_epoch) ??
+    toEpochSeconds(exhibition.datefrom),
 });
 
 const mapGuideToCard = (guide: GUIDES_QUERYResult[number]): Guide => ({
@@ -162,15 +228,96 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const [hasMore, setHasMore] = useState(false);
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
   const [countingItems, setCountingItems] = useState(false);
+  const [countryMetaReady, setCountryMetaReady] = useState(true);
+
+  type ExhibitionQuickFilter = 'all' | 'featured' | 'openingSoon';
+  const [exhibitionFilter, setExhibitionFilter] = useState<ExhibitionQuickFilter>('all');
+  const selectedCountryCode = searchParams.get('country') || '';
   
   // Static list of all countries (must be before selectedCountry)
   const countries = useMemo(() => getAllCountries(), []);
+  const countryAliases = useMemo(() => (selectedCountryCode ? getCountryAliases(selectedCountryCode) : []), [selectedCountryCode]);
+  const normalizedCountryAliases = useMemo(
+    () => countryAliases.map((alias) => alias.trim().toLowerCase()),
+    [countryAliases]
+  );
+  const supportsCountryCount = type === 'galleries' || type === 'artists';
+  const showCountryFilter = supportsCountryCount || type === 'exhibitions';
+
+  useSeo({
+    title: `${title} | Art Flaneur`,
+    description:
+      type === 'exhibitions'
+        ? 'Browse current and upcoming exhibitions. Discover what’s on now and opening soon.'
+        : type === 'galleries'
+          ? 'Browse galleries and museums. Discover places to see contemporary art.'
+          : type === 'artists'
+            ? 'Browse artists. Explore biographies and exhibitions.'
+            : type === 'reviews'
+              ? 'Read exhibition reviews and editorial features from Art Flaneur.'
+              : 'Explore Art Flaneur content.',
+  });
+
+  useEffect(() => {
+    setExhibitionFilter('all');
+  }, [type]);
+
+  useEffect(() => {
+    let cancelled = false;
+    warmArtistsCache().catch((error) => {
+      if (!cancelled) {
+        console.warn('Failed to warm artists cache', error);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (type !== 'exhibitions' || !selectedCountryCode || !countryAliases.length) {
+      countryFilteredGalleryIdsRef.current = null;
+      setCountryMetaReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    setCountryMetaReady(false);
+
+    const prefetch = async () => {
+      try {
+        const galleries = await fetchAllGalleriesForCountry(countryAliases);
+        if (cancelled) return;
+
+        const idSet = new Set<string>();
+        galleries.forEach((gallery) => {
+          if (!gallery?.id) return;
+          const normalized = gallery.country ? gallery.country.trim().toLowerCase() : undefined;
+          exhibitionGalleryMetaRef.current.set(gallery.id, {
+            country: gallery.country ? getCountryDisplayName(gallery.country) : undefined,
+            normalizedCountry: normalized,
+            city: gallery.city ?? null,
+          });
+          idSet.add(gallery.id);
+        });
+
+        countryFilteredGalleryIdsRef.current = idSet;
+      } catch (error) {
+        console.error('Failed to prefetch galleries for country filter:', error);
+        countryFilteredGalleryIdsRef.current = new Set();
+      } finally {
+        if (!cancelled) {
+          setCountryMetaReady(true);
+        }
+      }
+    };
+
+    prefetch();
+    return () => {
+      cancelled = true;
+    };
+  }, [type, selectedCountryCode, countryAliases]);
   
-  // Show country filter for galleries and artists
-  const showCountryFilter = type === 'galleries' || type === 'artists';
-  
-  // Get country from URL params, persist across navigation
-  const selectedCountryCode = searchParams.get('country') || '';
   const setSelectedCountryCode = useCallback((code: string) => {
     if (code) {
       setSearchParams({ country: code }, { replace: true });
@@ -187,13 +334,12 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   
   // Count items when country changes (for galleries and artists)
   useEffect(() => {
-    if (!showCountryFilter || !selectedCountryCode) {
+    if (!supportsCountryCount || !selectedCountryCode) {
       setFilteredCount(null);
       return;
     }
-    
-    const aliases = getCountryAliases(selectedCountryCode);
-    if (!aliases.length) {
+
+    if (!countryAliases.length) {
       setFilteredCount(null);
       return;
     }
@@ -202,8 +348,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     setCountingItems(true);
     
     const countPromise = type === 'galleries' 
-      ? countGalleriesByCountry(aliases)
-      : countArtistsByCountry(aliases);
+      ? countGalleriesByCountry(countryAliases)
+      : countArtistsByCountry(countryAliases);
     
     countPromise
       .then((count) => {
@@ -226,7 +372,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     return () => {
       cancelled = true;
     };
-  }, [type, selectedCountryCode, showCountryFilter]);
+  }, [type, selectedCountryCode, supportsCountryCount, countryAliases]);
   
   const isPaginatedType = PAGINATED_TYPES.has(type);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -234,6 +380,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const pendingCardsRef = useRef<ListingEntity[]>([]);
   const cursorRef = useRef<string | null>(null);
   const artistOffsetRef = useRef(0); // For artists: simple offset-based pagination
+  const exhibitionGalleryMetaRef = useRef<Map<string, ExhibitionGalleryMeta>>(new Map());
+  const countryFilteredGalleryIdsRef = useRef<Set<string> | null>(null);
 
   // Anti-scraping: disable right-click on galleries page
   useEffect(() => {
@@ -260,6 +408,12 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
       const listingType = type;
       if (!PAGINATED_TYPES.has(listingType)) return;
 
+      const requiresCountryMeta =
+        listingType === 'exhibitions' && normalizedCountryAliases.length > 0;
+      if (requiresCountryMeta && !countryMetaReady) {
+        return;
+      }
+
       if (replace) {
         pendingCardsRef.current = [];
         setLoading(true);
@@ -274,8 +428,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         // ARTISTS: Use cached data with simple offset pagination
         if (listingType === 'artists') {
           let countryFilter: string[] | undefined = undefined;
-          if (selectedCountryCode) {
-            countryFilter = getCountryAliases(selectedCountryCode);
+          if (selectedCountryCode && countryAliases.length) {
+            countryFilter = countryAliases;
           }
 
           const result = await fetchArtistsCached({
@@ -301,6 +455,101 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           return;
         }
 
+        // EXHIBITIONS: Cursor-based pagination via GraphQL nextToken
+        if (listingType === 'exhibitions') {
+          const aliasSet = normalizedCountryAliases.length
+            ? new Set(normalizedCountryAliases)
+            : null;
+          const targetBatchSize = replace ? EXHIBITIONS_INITIAL_LOAD : PAGE_SIZE;
+          const nextBatch: ListingEntity[] = [];
+          let reachedEnd = false;
+          const allowedGalleryIds = countryFilteredGalleryIdsRef.current;
+
+          if (pendingCardsRef.current.length) {
+            const take = Math.min(targetBatchSize, pendingCardsRef.current.length);
+            nextBatch.push(...pendingCardsRef.current.splice(0, take));
+          }
+
+          while (nextBatch.length < targetBatchSize && !reachedEnd) {
+            const remaining = targetBatchSize - nextBatch.length;
+            const connection = await fetchExhibitionsPage({
+              limit: Math.max(PAGE_SIZE, remaining),
+              nextToken: cursorRef.current ?? undefined,
+            });
+
+            const rows = Array.isArray(connection.items) ? connection.items : [];
+            cursorRef.current = connection.nextToken ?? null;
+
+            if (!rows.length) {
+              reachedEnd = !cursorRef.current;
+              break;
+            }
+
+            const galleryIdsToFetch = Array.from(
+              new Set(
+                rows
+                  .map((exhibition) => exhibition.gallery_id)
+                  .filter((value): value is string => Boolean(value))
+                  .filter((galleryId) => !exhibitionGalleryMetaRef.current.has(galleryId))
+              )
+            );
+
+            if (galleryIdsToFetch.length) {
+              const galleries = await Promise.all(
+                galleryIdsToFetch.map((galleryId) => fetchGalleryById(galleryId).catch(() => null))
+              );
+              galleries.forEach((gallery) => {
+                if (!gallery?.id) return;
+                const normalized = gallery.country ? gallery.country.trim().toLowerCase() : undefined;
+                exhibitionGalleryMetaRef.current.set(gallery.id, {
+                  country: gallery.country ? getCountryDisplayName(gallery.country) : undefined,
+                  normalizedCountry: normalized,
+                  city: gallery.city ?? null,
+                });
+              });
+            }
+
+            const filteredRows = rows.filter((exhibition) => {
+              if (allowedGalleryIds) {
+                return exhibition.gallery_id ? allowedGalleryIds.has(exhibition.gallery_id) : false;
+              }
+              if (!aliasSet) return true;
+              if (!exhibition.gallery_id) return false;
+              const info = exhibitionGalleryMetaRef.current.get(exhibition.gallery_id);
+              if (!info?.normalizedCountry) return false;
+              return aliasSet.has(info.normalizedCountry);
+            });
+
+            const mapped = filteredRows.map((exhibition) => {
+              const info = exhibition.gallery_id
+                ? exhibitionGalleryMetaRef.current.get(exhibition.gallery_id)
+                : undefined;
+              return mapGraphqlExhibitionToCard(exhibition, info);
+            });
+
+            const slots = targetBatchSize - nextBatch.length;
+            nextBatch.push(...mapped.slice(0, slots));
+            const leftover = mapped.slice(slots);
+
+            if (leftover.length) {
+              pendingCardsRef.current = leftover;
+              break;
+            }
+
+            if (!cursorRef.current) {
+              reachedEnd = true;
+            }
+          }
+
+          if (!isMountedRef.current || listingType !== type) return;
+
+          setData((prev) => (replace ? nextBatch : [...prev, ...nextBatch]));
+          const hasPending = pendingCardsRef.current.length > 0;
+          setHasMore(hasPending || !reachedEnd);
+          setError(nextBatch.length === 0 && replace ? 'No published entries yet.' : null);
+          return;
+        }
+
         // GALLERIES: Keep cursor-based pagination
         const nextBatch: ListingEntity[] = [];
         let reachedEnd = false;
@@ -312,15 +561,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
 
         while (nextBatch.length < PAGE_SIZE && !reachedEnd) {
           // Build filter for galleries by country (using all aliases)
-          let filter = undefined;
-          if (selectedCountryCode) {
-            const aliases = getCountryAliases(selectedCountryCode);
-            if (aliases.length === 1) {
-              filter = { country: { eq: aliases[0] } };
-            } else if (aliases.length > 1) {
-              filter = { or: aliases.map(alias => ({ country: { eq: alias } })) };
-            }
-          }
+          const filter = selectedCountryCode && countryAliases.length ? buildCountryFilter(countryAliases) : undefined;
 
           const connection = await fetchGalleries({
             limit: PAGE_SIZE + 1,
@@ -374,7 +615,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         }
       }
     },
-    [type, selectedCountryCode]
+    [type, selectedCountryCode, countryAliases, normalizedCountryAliases, countryMetaReady]
   );
 
   useEffect(() => {
@@ -384,6 +625,13 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     setHasMore(false);
     pendingCardsRef.current = [];
     cursorRef.current = null;
+
+    if (type === 'exhibitions' && normalizedCountryAliases.length > 0 && !countryMetaReady) {
+      setLoading(true);
+      return () => {
+        isMounted = false;
+      };
+    }
 
     const loadData = async () => {
       if (isPaginatedType) {
@@ -402,7 +650,34 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           }
           case 'exhibitions': {
             const exhibitions = await fetchExhibitions(50);
-            mapped = exhibitions.map(mapGraphqlExhibitionToCard);
+            const galleryIds = Array.from(
+              new Set(
+                exhibitions
+                  .map((exhibition) => exhibition.gallery_id)
+                  .filter((value): value is string => Boolean(value))
+              )
+            );
+
+            const galleries = await Promise.all(
+              galleryIds.map((galleryId) => fetchGalleryById(galleryId).catch(() => null))
+            );
+
+            const galleryMetaById = new Map<string, ExhibitionGalleryMeta>();
+            galleries.forEach((gallery) => {
+              if (!gallery?.id) return;
+              galleryMetaById.set(gallery.id, {
+                country: gallery.country ? getCountryDisplayName(gallery.country) : undefined,
+                city: gallery.city ?? null,
+                normalizedCountry: gallery.country ? gallery.country.trim().toLowerCase() : undefined,
+              });
+            });
+
+            mapped = exhibitions.map((exhibition) =>
+              mapGraphqlExhibitionToCard(
+                exhibition,
+                exhibition.gallery_id ? galleryMetaById.get(exhibition.gallery_id) : undefined
+              )
+            );
             break;
           }
           case 'guides': {
@@ -443,7 +718,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     return () => {
       isMounted = false;
     };
-  }, [type, isPaginatedType, fetchPaginatedPage]);
+  }, [type, isPaginatedType, fetchPaginatedPage, countryMetaReady, normalizedCountryAliases]);
 
   const loadMore = useCallback(() => {
     if (!isPaginatedType || loading || loadingMore || !hasMore) {
@@ -480,6 +755,35 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
 
   const cardType: Parameters<typeof EntityCard>[0]['type'] = CARD_TYPE_MAP[type];
 
+  const visibleData = useMemo(() => {
+    if (type !== 'exhibitions') {
+      return data;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const exhibitions = (data as Exhibition[]).slice();
+
+    if (exhibitionFilter === 'featured') {
+      return exhibitions.filter((ex) => {
+        const hasRealImage = Boolean(ex.image) && !ex.image.includes('picsum.photos');
+        const hasDescription = Boolean(ex.description?.trim());
+        return hasRealImage && hasDescription;
+      });
+    }
+
+    if (exhibitionFilter === 'openingSoon') {
+      return exhibitions
+        .filter((ex) => (ex.startEpochSeconds ?? 0) > now)
+        .sort((a, b) => {
+          const aStart = a.startEpochSeconds ?? Number.POSITIVE_INFINITY;
+          const bStart = b.startEpochSeconds ?? Number.POSITIVE_INFINITY;
+          return aStart - bStart;
+        });
+    }
+
+    return exhibitions;
+  }, [data, exhibitionFilter, type]);
+
   return (
     <div className="min-h-screen bg-art-paper select-none">
       {/* Header */}
@@ -488,12 +792,12 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-6 mb-8">
             <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter flex flex-wrap items-baseline gap-4">
               <span>{title}</span>
-              {showCountryFilter && !selectedCountryCode && (
+              {supportsCountryCount && !selectedCountryCode && (
                 <span className="text-2xl md:text-4xl text-gray-400 font-mono tracking-wide">
                   {type === 'galleries' ? `${APPROXIMATE_GALLERY_COUNT.toLocaleString()}+` : ''}
                 </span>
               )}
-              {showCountryFilter && selectedCountry && (
+              {supportsCountryCount && selectedCountry && (
                 <span className="text-2xl md:text-4xl text-gray-400 font-mono tracking-wide">
                   {countingItems ? '...' : filteredCount !== null ? `${filteredCount.toLocaleString()} ${type === 'artists' ? 'names' : 'places'}` : ''}
                 </span>
@@ -503,11 +807,37 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
 
           {/* Filters */}
           <div className="flex flex-wrap gap-4 font-mono text-xs uppercase font-bold items-center">
-            <button className="bg-black text-white px-4 py-2 border-2 border-black">All</button>
-            <button className="bg-white text-black px-4 py-2 border-2 border-black hover:bg-gray-100">Featured</button>
-            <button className="bg-white text-black px-4 py-2 border-2 border-black hover:bg-gray-100">Latest</button>
+            <button
+              onClick={type === 'exhibitions' ? () => setExhibitionFilter('all') : undefined}
+              className={`${
+                type === 'exhibitions' && exhibitionFilter === 'all'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-gray-100'
+              } px-4 py-2 border-2 border-black`}
+            >
+              All
+            </button>
+            <button
+              onClick={type === 'exhibitions' ? () => setExhibitionFilter('featured') : undefined}
+              className={`${
+                type === 'exhibitions' && exhibitionFilter === 'featured'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-gray-100'
+              } px-4 py-2 border-2 border-black`}
+            >
+              Featured
+            </button>
             {type === 'exhibitions' && (
-              <button className="bg-white text-black px-4 py-2 border-2 border-black hover:bg-gray-100">Opening Soon</button>
+              <button
+                onClick={() => setExhibitionFilter('openingSoon')}
+                className={`${
+                  exhibitionFilter === 'openingSoon'
+                    ? 'bg-black text-white'
+                    : 'bg-white text-black hover:bg-gray-100'
+                } px-4 py-2 border-2 border-black`}
+              >
+                Opening Soon
+              </button>
             )}
             {showCountryFilter && (
               <div className="relative">
@@ -532,6 +862,15 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
                 )}
               </div>
             )}
+
+            {type === 'galleries' && (
+              <Link
+                to="/gallery-login?mode=signup"
+                className="bg-black text-white px-4 py-2 border-2 border-black hover:bg-art-blue hover:text-white transition-colors"
+              >
+                Add your gallery
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -544,9 +883,9 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
               <SkeletonCard key={`skeleton-${i}`} type={cardType} />
             ))}
           </div>
-        ) : data.length ? (
+        ) : visibleData.length ? (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            {data.map((item) => (
+            {visibleData.map((item) => (
               <EntityCard key={getCardKey(item)} data={item} type={cardType} />
             ))}
             {/* Show skeleton cards while loading more */}

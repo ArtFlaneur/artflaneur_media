@@ -264,8 +264,8 @@ query GetGalleryById($id: ID!) {
 Retrieve a paginated list of galleries with optional filtering.
 
 ```graphql
-query ListGalleries($limit: Int, $nextToken: String, $filter: GalleryFilterInput) {
-  listGalleriesById(limit: $limit, nextToken: $nextToken, filter: $filter) {
+query ListGalleries($limit: Int, $nextToken: String, $filter: GalleryFilterInput, $includeUnapproved: Boolean) {
+  listGalleriesById(limit: $limit, nextToken: $nextToken, filter: $filter, includeUnapproved: $includeUnapproved) {
     items {
       id
       galleryname
@@ -274,6 +274,7 @@ query ListGalleries($limit: Int, $nextToken: String, $filter: GalleryFilterInput
       gallery_img_url
       lat
       lon
+      allowed
     }
     nextToken
   }
@@ -287,6 +288,21 @@ query ListGalleries($limit: Int, $nextToken: String, $filter: GalleryFilterInput
   "filter": { "country": { "eq": "Japan" } }
 }
 ```
+
+**Variables (Including Unapproved Galleries):**
+```json
+{
+  "limit": 50,
+  "includeUnapproved": true
+}
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | Int | No | Max results per page (default: 50, max: 100) |
+| `nextToken` | String | No | Pagination token for next page |
+| `filter` | GalleryFilterInput | No | Filter criteria |
+| `includeUnapproved` | Boolean | No | When `true`, includes unapproved galleries (where `allowed` = "no"). Defaults to `false` |
 
 #### Find Nearby Galleries
 
@@ -391,6 +407,29 @@ query ListExhibitionsByGallery($galleryId: ID!, $limit: Int, $nextToken: String)
 ```json
 { "galleryId": "1", "limit": 10 }
 ```
+
+#### List Historical Exhibitions by Gallery
+
+Retrieve **all** exhibitions (past, current, upcoming) for a specific gallery.
+
+```graphql
+query ListHistoricalExhibitionsByGallery($galleryId: ID!, $limit: Int, $nextToken: String) {
+  listHistoricalExhibitionsByGalleryId(galleryId: $galleryId, limit: $limit, nextToken: $nextToken) {
+    items {
+      id
+      title
+      artist
+      datefrom_epoch
+      dateto_epoch
+      eventtype
+      exhibition_img_url
+    }
+    nextToken
+  }
+}
+```
+
+**When to use:** Prefer `listExhibitionsByGalleryId` for user-facing lists that should exclude past events. Switch to `listHistoricalExhibitionsByGalleryId` for analytics, archival views, or when you need to show the gallery's full history.
 
 #### List Current and Upcoming Exhibitions
 
@@ -1299,7 +1338,135 @@ console.log(updatedExhibition.message);
 
 ## Assets & Media
 
-Image fields (`gallery_img_url`, `exhibition_img_url`, `logo_img_url`) return fully qualified HTTPS URLs. Serve these directly—no additional signing is required.
+Image fields (`gallery_img_url`, `exhibition_img_url`, `logo_img_url`) return paths relative to the CDN. The full image URL format is:
+
+```
+https://assets.artflaneur.com.au/directus_uploads/<path_from_api>
+```
+
+### Secure Image Loading (Web Applications)
+
+The CDN `assets.artflaneur.com.au` requires a JWT token in the `Authorization` header. Standard HTML `<img>` tags cannot send custom headers, so attempting to load images directly will result in **401 Unauthorized**.
+
+#### Step 1: Obtain a JWT Token
+
+Call this endpoint to get an access token:
+
+```
+GET https://hgito8qnb0.execute-api.ap-southeast-2.amazonaws.com/dev/token
+```
+
+**No authentication required.** This is a public endpoint. Send a simple GET request:
+
+```javascript
+const response = await fetch('https://hgito8qnb0.execute-api.ap-southeast-2.amazonaws.com/dev/token', {
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+});
+const { accessToken } = await response.json();
+```
+
+**Response:**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+The token is valid for approximately **5 minutes** and can be reused for multiple image requests during that window.
+
+#### Step 2: Fetch Images with the Token
+
+Instead of setting `<img src="...">` directly, use JavaScript `fetch()` to download the image with authentication, then convert to a blob URL:
+
+```javascript
+async function loadSecureImage(imagePath, accessToken) {
+  const imageUrl = `https://assets.artflaneur.com.au/directus_uploads/${imagePath}`;
+  
+  const response = await fetch(imageUrl, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Image fetch failed: ${response.status}`);
+  }
+  
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+
+// Usage
+const blobUrl = await loadSecureImage('galleries/12864/photo.jpg', accessToken);
+document.getElementById('myImage').src = blobUrl;
+```
+
+#### Architecture Recommendations
+
+1. **Token Caching**: Store the token in memory and reuse it until it expires. Parse the JWT to extract the `exp` claim and refresh ~30 seconds before expiry.
+
+2. **Image Caching**: Once an image is converted to an Object URL, cache it (in memory or IndexedDB) to avoid re-fetching.
+
+3. **Component Abstraction**: Create a reusable component (React, Vue, etc.) that handles the token + fetch + blob conversion internally.
+
+4. **Error Handling**: If an image fetch returns 401, clear the cached token and retry with a fresh one.
+
+#### Complete Example: React SecureImage Component
+
+```javascript
+// Token management
+let cachedToken = null;
+let tokenExpiry = 0;
+
+async function getToken() {
+  const now = Date.now();
+  if (cachedToken && now < tokenExpiry - 30000) {
+    return cachedToken;
+  }
+  
+  const response = await fetch('https://hgito8qnb0.execute-api.ap-southeast-2.amazonaws.com/dev/token');
+  const { accessToken } = await response.json();
+  
+  // Parse JWT expiry
+  const payload = JSON.parse(atob(accessToken.split('.')[1]));
+  tokenExpiry = payload.exp * 1000;
+  cachedToken = accessToken;
+  
+  return accessToken;
+}
+
+// React component
+function SecureImage({ path, alt, ...props }) {
+  const [src, setSrc] = useState(null);
+  
+  useEffect(() => {
+    let objectUrl = null;
+    
+    async function loadImage() {
+      const token = await getToken();
+      const response = await fetch(
+        `https://assets.artflaneur.com.au/directus_uploads/${path}`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const blob = await response.blob();
+      objectUrl = URL.createObjectURL(blob);
+      setSrc(objectUrl);
+    }
+    
+    loadImage();
+    
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [path]);
+  
+  if (!src) return <div>Loading...</div>;
+  return <img src={src} alt={alt} {...props} />;
+}
+```
 
 ---
 
