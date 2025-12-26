@@ -10,12 +10,15 @@ import {googleMapsInput} from '@sanity/google-maps-input'
 import {schemaTypes} from './schemaTypes'
 import {structure} from './structure'
 
-const projectId = process.env.SANITY_STUDIO_PROJECT_ID
-const dataset = process.env.SANITY_STUDIO_DATASET
+const FALLBACK_PROJECT_ID = 'o1yl0ri9'
+const FALLBACK_DATASET = 'blog'
 
-if (!projectId || !dataset) {
-  throw new Error(
-    'Missing required Sanity Studio env. Set SANITY_STUDIO_PROJECT_ID and SANITY_STUDIO_DATASET in apps/studio/.env (or your shell environment).',
+const projectId = process.env.SANITY_STUDIO_PROJECT_ID || FALLBACK_PROJECT_ID
+const dataset = process.env.SANITY_STUDIO_DATASET || FALLBACK_DATASET
+
+if (!process.env.SANITY_STUDIO_PROJECT_ID || !process.env.SANITY_STUDIO_DATASET) {
+  console.warn(
+    'Using fallback Sanity credentials. Set SANITY_STUDIO_PROJECT_ID and SANITY_STUDIO_DATASET in apps/studio/.env to override.',
   )
 }
 
