@@ -224,6 +224,17 @@ Available options for exhibition form fields.
 | `eventTypes` | [String!]! | Available event type options |
 | `exhibitionTypes` | [String!]! | Available exhibition category options |
 
+### ExhibitionCounts
+
+Counts of exhibitions by temporal status for a specific gallery.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `active` | Int! | Exhibitions currently running (started and not yet ended) |
+| `upcoming` | Int! | Exhibitions that haven't started yet |
+| `past` | Int! | Exhibitions that have already ended |
+| `all` | Int! | Total count of all exhibitions |
+
 ---
 
 ## 5. Available Queries
@@ -235,8 +246,8 @@ Available options for exhibition form fields.
 Retrieve a single gallery by its unique identifier.
 
 ```graphql
-query GetGalleryById($id: ID!) {
-  getGalleryById(id: $id) {
+query GetGalleryById($id: ID!, $includeUnapproved: Boolean) {
+  getGalleryById(id: $id, includeUnapproved: $includeUnapproved) {
     id
     galleryname
     placeurl
@@ -250,6 +261,7 @@ query GetGalleryById($id: ID!) {
     dateto_epoch
     logo_img_url
     eventtype
+    allowed
   }
 }
 ```
@@ -258,6 +270,19 @@ query GetGalleryById($id: ID!) {
 ```json
 { "id": "1" }
 ```
+
+**Variables (Including Unapproved Gallery):**
+```json
+{
+  "id": "13921",
+  "includeUnapproved": true
+}
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | ID | Yes | The unique database ID of the gallery |
+| `includeUnapproved` | Boolean | No | When `true`, returns the gallery even if `allowed` = "no". Defaults to `false` |
 
 #### List Galleries
 
@@ -607,6 +632,118 @@ query GetExhibitionMetadata {
 }
 ```
 
+#### Get Exhibition Counts
+
+Retrieve counts of exhibitions by temporal status (active, upcoming, past) for a specific gallery. Useful for displaying exhibition statistics on gallery profile pages.
+
+```graphql
+query GetExhibitionCounts($galleryId: ID!) {
+  getExhibitionCounts(galleryId: $galleryId) {
+    active
+    upcoming
+    past
+    all
+  }
+}
+```
+
+**Variables:**
+```json
+{ "galleryId": "1" }
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `galleryId` | ID | Yes | The unique database ID of the gallery |
+
+**Example Response:**
+```json
+{
+  "data": {
+    "getExhibitionCounts": {
+      "active": 2,
+      "upcoming": 1,
+      "past": 45,
+      "all": 48
+    }
+  }
+}
+```
+
+**Notes:**
+- `active`: Exhibitions where start date ≤ today AND end date ≥ today
+- `upcoming`: Exhibitions where start date > today
+- `past`: Exhibitions where end date < today
+- `all`: Sum of active + upcoming + past
+- Returns zeros if the gallery has no exhibitions
+
+#### Get All Exhibition Counts
+
+Retrieve aggregate counts of exhibitions across all galleries by temporal status (active, upcoming, past). Useful for displaying platform-wide exhibition statistics.
+
+```graphql
+query GetAllExhibitionCounts {
+  getAllExhibitionCounts {
+    active
+    upcoming
+    past
+    all
+  }
+}
+```
+
+**Variables:** None required
+
+**Example Response:**
+```json
+{
+  "data": {
+    "getAllExhibitionCounts": {
+      "active": 671,
+      "upcoming": 168,
+      "past": 4856,
+      "all": 5710
+    }
+  }
+}
+```
+
+**Notes:**
+- `active`: Exhibitions where start date ≤ today AND end date ≥ today
+- `upcoming`: Exhibitions where start date > today
+- `past`: Exhibitions where end date < today
+- `all`: Total count across all galleries
+- Only includes exhibitions from approved galleries (`allowed = 'yes'`)
+
+#### Get Gallery Count
+
+Retrieve the total number of galleries in the platform. Useful for summary widgets or pagination logic when showing gallery-level listings.
+
+```graphql
+query GetGalleryCount {
+  getGalleryCount {
+    total
+  }
+}
+```
+
+**Variables:** None required
+
+**Example Response:**
+```json
+{
+  "data": {
+    "getGalleryCount": {
+      "total": 11006
+    }
+  }
+}
+```
+
+**Notes:**
+- `total`: Total number of all galleries in the database
+- Helpful for building "All galleries" metrics or list headers
+
 ---
 
 ## 6. Filtering
@@ -829,6 +966,45 @@ POST https://q3eqftm1mg.execute-api.ap-southeast-2.amazonaws.com/prod/management
   }
 }
 ```
+
+#### Duplicate Check Workflow (Required)
+
+Before calling `/management/submit` for a new gallery or while selecting the gallery context for a new exhibition, always run a duplicate search that includes unapproved galleries. This prevents teams from recreating galleries that are still pending review.
+
+1. Call `listGalleriesById` with `includeUnapproved: true` and a name/city filter that matches the submission.
+2. If any gallery records (approved or `allowed = "no"`) are returned, investigate before creating another record.
+3. Only proceed with creation when you have confirmed no duplicates exist.
+
+```graphql
+query CheckGalleryDuplicates($galleryName: String!, $city: String) {
+  listGalleriesById(
+    limit: 5
+    includeUnapproved: true
+    filter: {
+      galleryname: { eq: $galleryName }
+      city: { eq: $city }
+    }
+  ) {
+    items {
+      id
+      galleryname
+      city
+      allowed
+    }
+  }
+}
+```
+
+**Sample Variables:**
+
+```json
+{
+  "galleryName": "Modern Art Gallery",
+  "city": "Tokyo"
+}
+```
+
+The `allowed` field indicates whether an existing record is already approved; seeing `no` means the gallery is pending but still counts as a duplicate and should not be recreated.
 
 ### Create an Exhibition
 

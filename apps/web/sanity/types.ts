@@ -92,31 +92,6 @@ export type SiteSettings = {
   };
 };
 
-export type MapData = {
-  _id: string;
-  _type: "mapData";
-  _createdAt: string;
-  _updatedAt: string;
-  _rev: string;
-  title?: string;
-  galleries?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "gallery";
-  }>;
-  exhibitions?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "exhibition";
-  }>;
-  defaultCenter?: Geopoint;
-  defaultZoom?: number;
-};
-
 export type HomepageContent = {
   _id: string;
   _type: "homepageContent";
@@ -1150,11 +1125,11 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = SiteSettings | MapData | HomepageContent | LandingPage | Curator | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ArtistStory | Artist | Review | Sponsor | Color | Exhibition | Gallery | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = SiteSettings | HomepageContent | LandingPage | Curator | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ArtistStory | Artist | Review | Sponsor | Color | Exhibition | Gallery | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ../web/pages/SearchResults.tsx
 // Variable: SEARCH_QUERY
-// Query: {  "reviews": *[_type == "review"] {    _id,    title,    slug,    excerpt,    publishStatus,    mainImage {      asset->{ url }    },    publishedAt,    author->{ _id, name, photo { asset->{ url } } }  },  "exhibitions": *[_type == "exhibition"] {    _id,    title,    slug,    startDate,    endDate,    description,    gallery->{ name, city }  },  "artists": *[_type == "artist"] {    _id,    name,    slug,    photo {      asset->{ url }    }  },  "galleries": *[_type == "gallery"] {    _id,    name,    slug,    city  },  "guides": *[_type == "guide"] {    _id,    title,    slug,    city,    description,    coverImage {      asset->{ url }    }  },  "ambassadors": *[_type == "author"] {    _id,    name,    slug,    role,    bio,    photo {      asset->{ url }    }  }}
+// Query: {  "reviews": *[_type == "review"] {    _id,    title,    slug,    excerpt,    publishStatus,    mainImage {      asset->{ url }    },    publishedAt,    author->{ _id, name, photo { asset->{ url } } }  },  "guides": *[_type == "guide"] {    _id,    title,    slug,    city,    description,    coverImage {      asset->{ url }    }  },  "ambassadors": *[_type == "author"] {    _id,    name,    slug,    role,    bio,    photo {      asset->{ url }    }  }}
 export type SEARCH_QUERYResult = {
   reviews: Array<{
     _id: string;
@@ -1177,34 +1152,6 @@ export type SEARCH_QUERYResult = {
         } | null;
       } | null;
     } | null;
-  }>;
-  exhibitions: Array<{
-    _id: string;
-    title: string | null;
-    slug: Slug | null;
-    startDate: string | null;
-    endDate: string | null;
-    description: string | null;
-    gallery: {
-      name: string | null;
-      city: string | null;
-    } | null;
-  }>;
-  artists: Array<{
-    _id: string;
-    name: string | null;
-    slug: Slug | null;
-    photo: {
-      asset: {
-        url: string | null;
-      } | null;
-    } | null;
-  }>;
-  galleries: Array<{
-    _id: string;
-    name: string | null;
-    slug: Slug | null;
-    city: string | null;
   }>;
   guides: Array<{
     _id: string;
@@ -1948,7 +1895,7 @@ export type CURATOR_QUERYResult = {
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    "{\n  \"reviews\": *[_type == \"review\"] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishStatus,\n    mainImage {\n      asset->{ url }\n    },\n    publishedAt,\n    author->{ _id, name, photo { asset->{ url } } }\n  },\n  \"exhibitions\": *[_type == \"exhibition\"] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    description,\n    gallery->{ name, city }\n  },\n  \"artists\": *[_type == \"artist\"] {\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{ url }\n    }\n  },\n  \"galleries\": *[_type == \"gallery\"] {\n    _id,\n    name,\n    slug,\n    city\n  },\n  \"guides\": *[_type == \"guide\"] {\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    coverImage {\n      asset->{ url }\n    }\n  },\n  \"ambassadors\": *[_type == \"author\"] {\n    _id,\n    name,\n    slug,\n    role,\n    bio,\n    photo {\n      asset->{ url }\n    }\n  }\n}": SEARCH_QUERYResult;
+    "{\n  \"reviews\": *[_type == \"review\"] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishStatus,\n    mainImage {\n      asset->{ url }\n    },\n    publishedAt,\n    author->{ _id, name, photo { asset->{ url } } }\n  },\n  \"guides\": *[_type == \"guide\"] {\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    coverImage {\n      asset->{ url }\n    }\n  },\n  \"ambassadors\": *[_type == \"author\"] {\n    _id,\n    name,\n    slug,\n    role,\n    bio,\n    photo {\n      asset->{ url }\n    }\n  }\n}": SEARCH_QUERYResult;
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...10] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": REVIEWS_QUERYResult;
     "*[\n  _type == \"review\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  coverImage {\n    asset->{\n      url\n    },\n    alt,\n    caption\n  },\n  body,\n  rating,\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    },\n    bio\n  },\n  artists[]->{\n    _id,\n    name,\n    slug\n  },\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    website\n  },\n  exhibition->{\n    _id,\n    title,\n    slug,\n    gallery->{\n      _id,\n      name,\n      slug,\n      city,\n      address,\n      website\n    },\n    artists[]->{\n      _id,\n      name,\n      slug\n    },\n    curators[]->{\n      _id,\n      name,\n      slug\n    }\n  },\n  sponsorshipEnabled,\n  sponsor->{\n    _id,\n    name,\n    logo {\n      asset->{\n        url\n      },\n      alt\n    },\n    defaultBadgeTemplate,\n    brandColor {\n      hex\n    }\n  },\n  sponsorBadgeSettings{\n    template,\n    customText,\n    placement,\n    style\n  },\n  publishedAt\n}": REVIEW_QUERYResult;
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...$limit] {\n  _id,\n  title,\n  slug,\n  excerpt,\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": LATEST_REVIEWS_QUERYResult;

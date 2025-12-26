@@ -33,6 +33,7 @@ This guide explains the available GraphQL queries for accessing gallery and exhi
      - [List All Artists](#list-all-artists)
    - [Metadata Queries](#metadata-queries)
      - [Get Exhibition Metadata](#get-exhibition-metadata)
+     - [Get Exhibition Counts](#get-exhibition-counts)
    - [User Profile Queries](#user-profile-queries)
      - [Get a User Profile](#get-a-user-profile)
      - [List User Profiles](#list-user-profiles)
@@ -199,17 +200,35 @@ Metadata for exhibition-related dropdown fields. Contains available options for 
 | eventTypes | [String!]! | Available event type options (e.g., Exhibition, Biennale, Festival, Art Fair) |
 | exhibitionTypes | [String!]! | Available exhibition type/category options (e.g., Solo Exhibition, Group Exhibition, Retrospective) |
 
+### ExhibitionCounts
+
+Counts of exhibitions by temporal status for a specific gallery.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| active | Int! | Exhibitions currently running (started and not yet ended) |
+| upcoming | Int! | Exhibitions that haven't started yet |
+| past | Int! | Exhibitions that have already ended |
+| all | Int! | Total count of all exhibitions |
+
 ## Queries
 
 ### Get a Gallery by ID
 
 Get a single gallery by its database ID. This query also returns information from its most relevant exhibition (prioritizing current exhibitions, special events, and then most recent exhibitions).
 
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | ID! | Yes | The database ID of the gallery |
+| `includeUnapproved` | Boolean | No | When `true`, returns the gallery even if `allowed` is set to "no" (unapproved). Defaults to `false` |
+
 **Query:**
 
 ```graphql
-query GetGalleryById($id: ID!) {
-  getGalleryById(id: $id) {
+query GetGalleryById($id: ID!, $includeUnapproved: Boolean) {
+  getGalleryById(id: $id, includeUnapproved: $includeUnapproved) {
     id
     galleryname
     placeurl
@@ -226,6 +245,7 @@ query GetGalleryById($id: ID!) {
     lon
     logo_img_url
     eventtype
+    allowed
   }
 }
 ```
@@ -237,6 +257,17 @@ query GetGalleryById($id: ID!) {
   "id": "1"
 }
 ```
+
+**Variables (Including Unapproved Gallery):**
+
+```json
+{
+  "id": "13921",
+  "includeUnapproved": true
+}
+```
+
+> **Note:** The `includeUnapproved` parameter is intended for gallery management interfaces. When set to `true`, the query returns the gallery regardless of its approval status. By default (when omitted or `false`), only galleries where `allowed` is "yes" or empty are returned.
 
 ### List Galleries by ID
 
@@ -1344,6 +1375,168 @@ query GetExhibitionMetadata {
 - Values are retrieved dynamically from the database (not hardcoded)
 - Event types come from the `eventtype` column in the exhibitions table
 - Exhibition types come from the `exhibition_type` JSON array column in the exhibitions table
+
+#### Get Exhibition Counts
+
+Get counts of exhibitions by temporal status (active, upcoming, past) for a specific gallery. This is useful for displaying exhibition statistics on gallery profile pages or for analytics.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `galleryId` | ID! | Yes | The database ID of the gallery |
+
+**Query:**
+
+```graphql
+query GetExhibitionCounts($galleryId: ID!) {
+  getExhibitionCounts(galleryId: $galleryId) {
+    active
+    upcoming
+    past
+    all
+  }
+}
+```
+
+**Variables:**
+
+```json
+{
+  "galleryId": "1"
+}
+```
+
+**Response:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| active | Int! | Exhibitions currently running (start date ≤ today AND end date ≥ today) |
+| upcoming | Int! | Exhibitions that haven't started yet (start date > today) |
+| past | Int! | Exhibitions that have already ended (end date < today) |
+| all | Int! | Total count of all exhibitions for the gallery |
+
+**Example Response:**
+
+```json
+{
+  "data": {
+    "getExhibitionCounts": {
+      "active": 2,
+      "upcoming": 1,
+      "past": 45,
+      "all": 48
+    }
+  }
+}
+```
+
+**Use Cases:**
+
+- **Gallery profile pages**: Show exhibition statistics (e.g., "45 past exhibitions")
+- **Gallery comparison**: Compare exhibition activity across galleries
+- **Analytics dashboards**: Track gallery exhibition patterns
+- **UI badges**: Display counts next to gallery names
+
+**Notes:**
+- Returns zeros for all counts if the gallery has no exhibitions
+- The `all` field equals `active + upcoming + past`
+- Dates are compared against the current UTC date
+- Only exhibitions linked to the specified gallery are counted
+
+### Get All Exhibition Counts
+
+Retrieve aggregate exhibition counts across all galleries, categorized by temporal status.
+
+```graphql
+query GetAllExhibitionCounts {
+  getAllExhibitionCounts {
+    active
+    upcoming
+    past
+    all
+  }
+}
+```
+
+**Variables:** None required
+
+**Response:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| active | Int! | Exhibitions currently running across all galleries |
+| upcoming | Int! | Exhibitions that haven't started yet |
+| past | Int! | Exhibitions that have already ended |
+| all | Int! | Total count of all exhibitions platform-wide |
+
+**Example Response:**
+
+```json
+{
+  "data": {
+    "getAllExhibitionCounts": {
+      "active": 671,
+      "upcoming": 168,
+      "past": 4856,
+      "all": 5710
+    }
+  }
+}
+```
+
+**Use Cases:**
+
+- **Home page stats**: Display total platform exhibition activity
+- **Analytics dashboards**: Track overall exhibition trends
+- **Marketing**: Show platform scale (e.g., "Over 5000 exhibitions")
+
+**Notes:**
+- Aggregates across all approved galleries (`allowed = 'yes'`)
+- The `all` field equals `active + upcoming + past`
+- Dates are compared against the current UTC date
+
+### Get Gallery Count
+
+Retrieve the total number of galleries in the platform.
+
+```graphql
+query GetGalleryCount {
+  getGalleryCount {
+    total
+  }
+}
+```
+
+**Variables:** None required
+
+**Response:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| total | Int! | Total number of all galleries in the database |
+
+**Example Response:**
+
+```json
+{
+  "data": {
+    "getGalleryCount": {
+      "total": 11006
+    }
+  }
+}
+```
+
+**Use Cases:**
+
+- **Navigation badges**: Display "All galleries (11006)"
+- **Analytics**: Track growth of gallery catalog
+- **Frontend pagination**: Determine size of gallery lists
+
+**Notes:**
+- Counts all galleries regardless of approval status
+- Easy to pair with the `getAllExhibitionCounts` query for dashboard stats
 
 ### User Profile Queries
 

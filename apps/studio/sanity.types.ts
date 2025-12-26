@@ -87,31 +87,6 @@ export type SiteSettings = {
   };
 };
 
-export type MapData = {
-  _id: string;
-  _type: "mapData";
-  _createdAt: string;
-  _updatedAt: string;
-  _rev: string;
-  title?: string;
-  galleries?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "gallery";
-  }>;
-  artEvents?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "artEvent";
-  }>;
-  defaultCenter?: Geopoint;
-  defaultZoom?: number;
-};
-
 export type HomepageContent = {
   _id: string;
   _type: "homepageContent";
@@ -1057,5 +1032,5 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = SiteSettings | MapData | HomepageContent | LandingPage | Curator | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ArtEvent | ArtistStory | PageTemplate | Artist | Review | Sponsor | Color | Exhibition | Gallery | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = SiteSettings | HomepageContent | LandingPage | Curator | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ArtEvent | ArtistStory | PageTemplate | Artist | Review | Sponsor | Color | Exhibition | Gallery | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;

@@ -86,7 +86,6 @@ export const structure = (S: StructureBuilder) =>
             .items([
               S.documentTypeListItem('siteSettings').title('General Settings'),
               S.documentTypeListItem('homepageContent').title('Homepage Content'),
-              S.documentTypeListItem('mapData').title('Map Configuration'),
             ])
         ),
     ])

@@ -44,11 +44,6 @@
 
   <!-- Utility/static pages -->
   <url>
-    <loc>https://www.artflaneur.com.au/#/map</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.artflaneur.com.au/#/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

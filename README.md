@@ -109,7 +109,6 @@ Gallery Owner → Supabase (draft → pending_review → approved)
 | `homepageContent` | Контент главной страницы |
 | `siteSettings` | Глобальные настройки сайта |
 | `landingPage` | Лендинги |
-| `mapData` | Данные для карты |
 
 ---
 
@@ -129,7 +128,6 @@ Gallery Owner → Supabase (draft → pending_review → approved)
 | `/guides/:slug` | Путеводитель | Sanity |
 | `/ambassadors` | Авторы | Sanity |
 | `/ambassadors/:slug` | Профиль автора | Sanity |
-| `/map` | Карта галерей | GraphQL API |
 | `/search` | Поиск | GraphQL API + Sanity |
 | `/gallery-login` | Вход галеристов | Supabase Auth |
 | `/gallery-dashboard/*` | Кабинет галереи | Supabase |

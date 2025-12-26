@@ -37,7 +37,6 @@ npm run dev
 
 - `/galleries` — Каталог галерей
 - `/galleries/:id` — Детали галереи
-- `/map` — Карта галерей
 - `/search` — Поиск (GraphQL + Sanity)
 
 ### Кабинет галерей (Supabase)
@@ -100,7 +99,6 @@ apps/web/
 │   ├── Home.tsx
 │   ├── ListingPage.tsx
 │   ├── GalleryView.tsx
-│   ├── MapPage.tsx
 │   ├── SearchResults.tsx
 │   └── ...
 ├── components/          # Компоненты
@@ -164,6 +162,5 @@ const { data } = await supabase.from('galleries').select('*')
 - `react-router-dom` — Роутинг
 - `@sanity/client` — Sanity API
 - `@supabase/supabase-js` — Supabase
-- `maplibre-gl` — Карты
 - `lucide-react` — Иконки
 - `recharts` — Графики

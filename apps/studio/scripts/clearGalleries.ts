@@ -111,16 +111,6 @@ async function unlinkGalleryReferences() {
     'guide stop gallery references',
   )
 
-  const mapDocs = await client.fetch<string[]>(
-    '*[_type == "mapData" && count(galleries) > 0]._id',
-    {},
-    RAW_PERSPECTIVE,
-  )
-  await applyPatchJobs(
-    mapDocs.map((id) => ({id, unsetPaths: ['galleries']})),
-    'map data gallery arrays',
-  )
-
   const authors = await client.fetch<Array<{_id: string; keys: string[]}>>(
     '*[_type == "author" && count(recommendations[@->._type == "gallery"]) > 0]{_id, "keys": recommendations[@->._type == "gallery"]._key}',
     {},

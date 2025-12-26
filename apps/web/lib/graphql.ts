@@ -165,29 +165,6 @@ const LIST_GALLERIES_QUERY = `#graphql
   }
 `;
 
-const NEARBY_GALLERIES_QUERY = `#graphql
-  query NearbyGalleries($latitude: Float!, $longitude: Float!, $radiusInKm: Float!, $limit: Int) {
-    nearbyGalleriesById(latitude: $latitude, longitude: $longitude, radiusInKm: $radiusInKm, limit: $limit) {
-      items {
-        id
-        galleryname
-        country
-        fulladdress
-        lat
-        lon
-        distanceInKm
-        placeurl
-        openinghours
-        specialevent
-        eventtype
-        allowed
-        gallery_img_url
-      }
-      nextToken
-    }
-  }
-`;
-
 const GET_GALLERY_QUERY = `#graphql
   query GetGalleryById($id: ID!) {
     getGalleryById(id: $id) {
@@ -460,28 +437,6 @@ export async function searchGalleries(query: string, limit = 50): Promise<Graphq
 
   const result = await fetchGalleries({ limit, filter });
   return result.items ?? [];
-}
-
-export interface NearbyGalleriesParams {
-  latitude: number;
-  longitude: number;
-  radiusInKm: number;
-  limit?: number;
-}
-
-export async function fetchNearbyGalleries(
-  params: NearbyGalleriesParams
-): Promise<GraphqlGallery[]> {
-  const data = await executeGraphQL<{
-    nearbyGalleriesById: GraphqlListResult<GraphqlGallery>;
-  }>(NEARBY_GALLERIES_QUERY, {
-    latitude: params.latitude,
-    longitude: params.longitude,
-    radiusInKm: params.radiusInKm,
-    limit: params.limit,
-  });
-
-  return (data.nearbyGalleriesById?.items ?? []).map(enrichGallery);
 }
 
 export async function fetchExhibitions(limit = 50): Promise<GraphqlExhibition[]> {

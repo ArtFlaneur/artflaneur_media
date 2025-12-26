@@ -1,10 +1,9 @@
-import { PricingTier, GalleryPoint } from './types';
+import { PricingTier } from './types';
 
 export const NAV_ITEMS = [
   { label: 'Reviews', path: '/reviews' },
   { label: 'Galleries', path: '/galleries' },
   { label: 'Exhibitions', path: '/exhibitions' },
-  { label: 'Artists', path: '/artists' },
   { label: 'Guides', path: '/guides' },
 ];
 
@@ -50,11 +49,4 @@ export const EVENT_PRICING: PricingTier[] = [
     features: ['Full Coverage', 'Video Content', 'Live Data Heatmap'],
     cta: 'Partner',
   }
-];
-
-export const MAP_POINTS: GalleryPoint[] = [
-  { id: 1, name: "The White Cube", lat: 50, lng: 50, type: 'Gallery' },
-  { id: 2, name: "Modern Art Museum", lat: 30, lng: 60, type: 'Museum' },
-  { id: 3, name: "Project Space X", lat: 70, lng: 40, type: 'Gallery' },
-  { id: 4, name: "Biennale Pavilion", lat: 40, lng: 20, type: 'Event' },
 ];

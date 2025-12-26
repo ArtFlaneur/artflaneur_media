@@ -82,9 +82,6 @@ async function unlinkExhibitionReferences() {
     'artist story exhibition references'
   )
 
-  const mapDocs = await client.fetch<string[]>('*[_type == "mapData" && count(exhibitions) > 0]._id', {}, RAW_PERSPECTIVE)
-  await applyPatchJobs(mapDocs.map((id) => ({id, unsetPaths: ['exhibitions']})), 'map data exhibition references')
-
   const guides = await client.fetch<Array<{_id: string; keys: string[]}>>(
     '*[_type == "guide" && count(stops[defined(exhibition)]) > 0]{_id, "keys": stops[defined(exhibition)]._key}',
     {},

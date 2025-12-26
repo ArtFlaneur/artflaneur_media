@@ -5,7 +5,6 @@ import Home from './pages/Home';
 import ArticleView from './pages/ArticleView';
 import ExhibitionView from './pages/ExhibitionView';
 import Partners from './pages/Partners';
-import MapPage from './pages/MapPage';
 import ListingPage from './pages/ListingPage';
 import GuideView from './pages/GuideView';
 import ArtistView from './pages/ArtistView';
@@ -73,7 +72,6 @@ const App: React.FC = () => {
                 {/* Static & Utility */}
                 <Route path="/partners/galleries" element={<Partners type="gallery" />} />
                 <Route path="/partners/events" element={<Partners type="event" />} />
-                <Route path="/map" element={<MapPage />} />
                 <Route path="/about" element={<About />} />
                 
                 {/* Legal Pages */}

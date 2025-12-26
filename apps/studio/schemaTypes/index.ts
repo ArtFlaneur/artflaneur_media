@@ -12,7 +12,6 @@ import {artistStory} from './artistStory'
 import {guide} from './guide'
 import {landingPage} from './landingPage'
 import {homepageContent} from './homepageContent'
-import {mapData} from './mapData'
 import {siteSettings} from './siteSettings'
 import {sponsor} from './sponsor'
 
@@ -35,6 +34,5 @@ export const schemaTypes = [
   guide,
   landingPage,
   homepageContent,
-  mapData,
   siteSettings,
 ]

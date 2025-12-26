@@ -26,7 +26,6 @@ Studio откроется на http://localhost:3333
 | `homepageContent` | Контент главной страницы |
 | `siteSettings` | Глобальные настройки |
 | `landingPage` | Лендинги |
-| `mapData` | Данные для карты |
 
 ## Скрипты
 

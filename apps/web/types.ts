@@ -1,5 +1,3 @@
-import { LucideIcon } from 'lucide-react';
-
 export enum ContentType {
   REVIEW = 'Review',
   GUIDE = 'Guide',
@@ -101,12 +99,4 @@ export interface PricingTier {
 export interface NavItem {
   label: string;
   path: string;
-}
-
-export interface GalleryPoint {
-  id: number;
-  name: string;
-  lat: number;
-  lng: number;
-  type: 'Gallery' | 'Museum' | 'Event';
 }
