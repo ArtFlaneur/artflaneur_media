@@ -559,21 +559,8 @@ export async function fetchHistoricalExhibitionsByGalleryIdAll(
 }
 
 export async function fetchExhibitionById(id: string): Promise<GraphqlExhibition | null> {
-  if (!id) return null;
-
-  let nextToken: string | null | undefined = null;
-  // Safety guard to avoid infinite loops if API misbehaves.
-  for (let page = 0; page < 200; page += 1) {
-    const connection = await fetchExhibitionsPage({ limit: 200, nextToken });
-    const items = Array.isArray(connection.items) ? connection.items : [];
-    const found = items.find((item) => item?.id === id) ?? null;
-    if (found) return found;
-
-    nextToken = connection.nextToken ?? null;
-    if (!nextToken) break;
-  }
-
-  return null;
+  const data = await executeGraphQL<{ getExhibitionById: GraphqlExhibition | null }>(GET_EXHIBITION_BY_ID_QUERY, { id });
+  return data.getExhibitionById ?? null;
 }
 
 export async function fetchHistoricalExhibitionById(id: string): Promise<GraphqlExhibition | null> {

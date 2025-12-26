@@ -130,6 +130,26 @@ export const gallery = defineType({
       type: 'blockContent',
       description: 'Long-form story mixing Portable Text, fact tables, and key insights',
     }),
+    defineField({
+      name: 'supabaseId',
+      title: 'Supabase Gallery ID',
+      type: 'string',
+      readOnly: true,
+      description: 'Auto-filled when a gallery profile is synced from the dashboard',
+      validation: (Rule) => [
+        Rule.regex(/^[A-Za-z0-9-]+$/).warning('Supabase IDs typically look like UUIDs'),
+      ],
+    }),
+    defineField({
+      name: 'graphqlId',
+      title: 'GraphQL Catalogue ID',
+      type: 'string',
+      readOnly: true,
+      description: 'Identifier from the AWS AppSync dataset for references inside guides',
+      validation: (Rule) => [
+        Rule.regex(/^[A-Za-z0-9_-]+$/).warning('GraphQL IDs should remain URL-safe'),
+      ],
+    }),
     appCtaField(),
     seoField(),
     schemaMarkupField(),

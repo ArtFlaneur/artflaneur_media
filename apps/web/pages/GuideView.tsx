@@ -1,73 +1,63 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { MapPin, ArrowDown, Plus } from 'lucide-react';
+import { fetchGalleryById, type GraphqlGallery } from '../lib/graphql';
 import { client } from '../sanity/lib/client';
 import { GUIDE_QUERY } from '../sanity/lib/queries';
-
-type GuideQueryResponse = {
-    _id: string;
-    title?: string | null;
-    city?: string | null;
-    description?: string | null;
-    ctaText?: string | null;
-    sponsorshipStatus?: 'notSponsored' | 'sponsored' | null;
-    sponsor?: {
-        _id: string;
-        name?: string | null;
-        logo?: {
-            asset?: {
-                url?: string | null;
-            } | null;
-        } | null;
-    } | null;
-    sponsorBadgeSettings?: {
-        template?: string | null;
-        placement?: string | null;
-    } | null;
-    coverImage?: {
-        asset?: {
-            url?: string | null;
-        } | null;
-        alt?: string | null;
-    } | null;
-    stops?: Array<{
-        _key?: string;
-        title?: string | null;
-        summary?: string | null;
-        address?: string | null;
-        notes?: string | null;
-        location?: {
-            lat?: number | null;
-            lng?: number | null;
-        } | null;
-        gallery?: {
-            _id: string;
-            name?: string | null;
-            address?: string | null;
-        } | null;
-        exhibition?: {
-            _id: string;
-            title?: string | null;
-            slug?: string | null;
-        } | null;
-        image?: {
-            asset?: {
-                url?: string | null;
-            } | null;
-            alt?: string | null;
-        } | null;
-    }> | null;
+import type { GUIDE_QUERYResult, ExternalGalleryReference } from '../sanity/types';
+ 
+type SanityGuideStop = NonNullable<NonNullable<GUIDE_QUERYResult['stops']>[number]>;
+type RawGuideStop = Omit<SanityGuideStop, 'externalGallery'> & {
+    externalGallery: ExternalGalleryReference | null;
 };
-
-type GuideStop = NonNullable<GuideQueryResponse['stops']>[number];
+type GuideStop = RawGuideStop & { resolvedExternalGallery?: GraphqlGallery | null };
+type GuideDocument = Omit<GUIDE_QUERYResult, 'stops'> & { stops?: GuideStop[] | null };
 
 const GuideView: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const [guide, setGuide] = useState<GuideQueryResponse | null>(null);
+        const [guide, setGuide] = useState<GuideDocument | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const hydrateStops = React.useCallback(async (stops: RawGuideStop[] = []): Promise<GuideStop[]> => {
+        const graphqlIds = stops
+            .map((stop) => stop?.externalGallery?.id)
+            .filter((value): value is string => Boolean(value));
+        const uniqueIds = Array.from(new Set(graphqlIds));
+
+        if (!uniqueIds.length) {
+            return stops as GuideStop[];
+        }
+
+        const pairs = await Promise.all(
+            uniqueIds.map(async (galleryId) => {
+                try {
+                    const gallery = await fetchGalleryById(galleryId);
+                    return gallery ? ([galleryId, gallery] as const) : null;
+                } catch (err) {
+                    console.error('Failed to fetch gallery for guide stop', galleryId, err);
+                    return null;
+                }
+            }),
+        );
+
+        const galleryMap = new Map<string, GraphqlGallery>();
+        pairs.forEach((pair) => {
+            if (pair) {
+                galleryMap.set(pair[0], pair[1]);
+            }
+        });
+
+        return stops.map((stop) => ({
+            ...stop,
+            resolvedExternalGallery: stop?.externalGallery?.id
+                ? galleryMap.get(stop.externalGallery.id) ?? null
+                : null,
+        }));
+    }, []);
+
   useEffect(() => {
+        let isMounted = true;
     const fetchGuide = async () => {
             if (!id) {
                 setError('Missing guide identifier.');
@@ -76,10 +66,23 @@ const GuideView: React.FC = () => {
             }
       
       try {
-                const guideData = await client.fetch<GuideQueryResponse>(GUIDE_QUERY, {slug: id});
-                setGuide(guideData ?? null);
-                setError(guideData ? null : 'Guide not found.');
-                setLoading(false);
+                                const guideData = await client.fetch<GUIDE_QUERYResult | null>(GUIDE_QUERY, {slug: id});
+                                if (!isMounted) return;
+
+                                if (!guideData) {
+                                    setGuide(null);
+                                    setError('Guide not found.');
+                                    setLoading(false);
+                                    return;
+                                }
+
+                                const stops = Array.isArray(guideData.stops) ? guideData.stops.filter(Boolean) : [];
+                                const enrichedStops = await hydrateStops(stops as RawGuideStop[]);
+                                if (!isMounted) return;
+
+                                setGuide({...guideData, stops: enrichedStops});
+                                setError(null);
+                                setLoading(false);
       } catch (error) {
         console.error('❌ Error fetching guide:', error);
                 setError('Unable to load this guide right now.');
@@ -88,7 +91,10 @@ const GuideView: React.FC = () => {
     };
     
     fetchGuide();
-  }, [id]);
+        return () => {
+            isMounted = false;
+        };
+    }, [hydrateStops, id]);
 
     if (loading) {
         return (
@@ -155,8 +161,20 @@ const GuideView: React.FC = () => {
                                             </div>
                                         )}
                                         {stops.map((step, index) => {
-                                            const stopImage = step.image?.asset?.url ?? coverImageUrl;
-                                            const stopImageAlt = step.image?.alt ?? step.title ?? 'Guide stop visual';
+                                                                                        const stopImage = step.image?.asset?.url ?? coverImageUrl;
+                                                                                        const stopImageAlt = step.image?.alt ?? step.title ?? 'Guide stop visual';
+                                                                                        const galleryName =
+                                                                                            step.gallery?.name ??
+                                                                                            step.externalGallery?.name ??
+                                                                                            step.resolvedExternalGallery?.galleryname ??
+                                                                                            null;
+                                                                                        const galleryAddress =
+                                                                                            step.address ??
+                                                                                            step.gallery?.address ??
+                                                                                            step.externalGallery?.address ??
+                                                                                            step.resolvedExternalGallery?.fulladdress ??
+                                                                                            guide.city ??
+                                                                                            'Location TBD';
                                             return (
                                             <div key={step._key || `stop-${index}`} className="relative pl-12">
                             {/* Number Bubble */}
@@ -177,12 +195,12 @@ const GuideView: React.FC = () => {
                                 <div className="p-6">
                                                                         <h3 className="text-2xl font-black uppercase mb-2">{step.title || `Stop ${index + 1}`}</h3>
                                     <p className="text-sm font-mono text-gray-500 mb-4 flex items-center gap-2">
-                                                                            <MapPin className="w-3 h-3" /> {step.address || step.gallery?.address || guide.city || 'Location TBD'}
+                                                                            <MapPin className="w-3 h-3" /> {galleryAddress}
                                     </p>
                                                                         <p className="text-gray-800 leading-relaxed">{step.summary || step.notes || 'Details coming soon.'}</p>
-                                                                        {(step.exhibition?.title || step.gallery?.name) && (
+                                                                        {(step.exhibition?.title || galleryName) && (
                                                                             <p className="mt-4 text-xs font-mono uppercase tracking-wide text-gray-500">
-                                                                                {[step.exhibition?.title, step.gallery?.name].filter(Boolean).join(' • ')}
+                                                                                {[step.exhibition?.title, galleryName].filter(Boolean).join(' • ')}
                                                                             </p>
                                                                         )}
                                 </div>

@@ -1,10 +1,18 @@
 import { createClient } from '@sanity/client';
 
+const token = process.env.SANITY_API_TOKEN || process.env.SANITY_AUTH_TOKEN;
+
+if (!token) {
+  throw new Error(
+    'Missing Sanity token. Set SANITY_API_TOKEN (preferred) or SANITY_AUTH_TOKEN in your environment.'
+  );
+}
+
 const client = createClient({
   projectId: 'o1yl0ri9',
   dataset: 'blog',
   apiVersion: '2024-01-01',
-  token: process.env.SANITY_AUTH_TOKEN || 'skXR9oPmmbyVcDhJNTlrj04cII6UDvupNzgucv5o0QhFWQOT8pMAopMd4ngoSYTIQGithoZFUVsYQR368',
+  token,
   useCdn: false,
 });
 

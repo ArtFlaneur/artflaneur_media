@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../lib/supabase';
+import { syncExhibitionToSanity } from '../lib/sanitySync';
 import { CheckCircle, XCircle, Eye, Clock, AlertCircle } from 'lucide-react';
 import type { ExhibitionSubmission, Gallery } from '../lib/database.types';
 
@@ -49,15 +50,18 @@ const AdminModeration: React.FC = () => {
     setError(null);
 
     try {
+      const { sanityExhibitionId } = await syncExhibitionToSanity(exhibition);
       const supabase = getSupabaseClient();
+      const timestamp = new Date().toISOString();
 
       // Update status in Supabase
       const { error: updateError } = await supabase
         .from('exhibition_submissions')
         .update({
           status: 'published',
-          approved_at: new Date().toISOString(),
-          published_at: new Date().toISOString(),
+          approved_at: timestamp,
+          published_at: timestamp,
+          sanity_exhibition_id: sanityExhibitionId,
         })
         .eq('id', exhibition.id);
 
@@ -66,7 +70,8 @@ const AdminModeration: React.FC = () => {
       // Reload exhibitions
       await loadExhibitions();
     } catch (err: any) {
-      setError(err.message);
+      const message = err instanceof Error ? err.message : 'Failed to approve the submission';
+      setError(message);
     } finally {
       setProcessing(null);
     }

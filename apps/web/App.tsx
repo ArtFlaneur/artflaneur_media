@@ -12,6 +12,7 @@ import AmbassadorView from './pages/AmbassadorView';
 import CuratorView from './pages/CuratorView';
 import GalleryView from './pages/GalleryView';
 import About from './pages/About';
+import Mission from './pages/Mission';
 import SearchResults from './pages/SearchResults';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsConditions } from './pages/TermsConditions';
@@ -73,6 +74,7 @@ const App: React.FC = () => {
                 <Route path="/partners/galleries" element={<Partners type="gallery" />} />
                 <Route path="/partners/events" element={<Partners type="event" />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/mission" element={<Mission />} />
                 
                 {/* Legal Pages */}
                 <Route path="/privacy" element={<PrivacyPolicy />} />

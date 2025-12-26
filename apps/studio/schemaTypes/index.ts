@@ -14,6 +14,8 @@ import {landingPage} from './landingPage'
 import {homepageContent} from './homepageContent'
 import {siteSettings} from './siteSettings'
 import {sponsor} from './sponsor'
+import {externalGalleryReference} from './externalGalleryReference'
+import {externalExhibitionReference} from './externalExhibitionReference'
 
 // Old schemas (if needed)
 // import category from './category'
@@ -35,4 +37,6 @@ export const schemaTypes = [
   landingPage,
   homepageContent,
   siteSettings,
+  externalGalleryReference,
+  externalExhibitionReference,
 ]

@@ -1,6 +1,7 @@
 import {defineType, defineField, defineArrayMember} from 'sanity'
 import {DocumentTextIcon, StarIcon} from '@sanity/icons'
 import {appCtaField, publishDateField, schemaMarkupField, seoField, slugField, summaryField} from './fields/commonFields'
+import GraphqlExhibitionInput from './review/GraphqlExhibitionInput'
 
 export const review = defineType({
   name: 'review',
@@ -132,13 +133,31 @@ export const review = defineType({
       type: 'reference',
       to: [{type: 'exhibition'}],
       group: 'metadata',
+      description: 'Reference an editorially managed exhibition from Sanity',
       options: {
         filter: 'defined(title)',
       },
       validation: (Rule) => [Rule.custom((exhibition, context) => {
+        const externalExhibition = (context.document as any)?.externalExhibition
         const gallery = (context.document as any)?.gallery
-        if (!exhibition && !gallery) {
-          return 'Select either an Exhibition or a Gallery'
+        if (!exhibition && !externalExhibition && !gallery) {
+          return 'Select an Exhibition (Sanity or GraphQL) or a Gallery'
+        }
+        return true
+      })],
+    }),
+    defineField({
+      name: 'externalExhibition',
+      title: 'GraphQL Exhibition',
+      type: 'externalExhibitionReference',
+      group: 'metadata',
+      description: 'Search and select an exhibition from the global GraphQL catalogue',
+      components: {input: GraphqlExhibitionInput},
+      validation: (Rule) => [Rule.custom((externalExhibition, context) => {
+        const exhibition = (context.document as any)?.exhibition
+        const gallery = (context.document as any)?.gallery
+        if (!externalExhibition && !exhibition && !gallery) {
+          return 'Select an Exhibition (Sanity or GraphQL) or a Gallery'
         }
         return true
       })],

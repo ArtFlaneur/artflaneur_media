@@ -47,7 +47,7 @@ To access the API, you will need:
 | Header | Value | Purpose |
 |--------|-------|----------|
 | `Content-Type` | `application/json` | GraphQL requests are JSON-encoded |
-| `x-api-key` | `da2-qola7vmdgbaqbkks6lje5bkta4` | API key for GraphQL access |
+| `x-api-key` | `<your-graphql-api-key>` | API key for GraphQL access |
 | `x-tenant-id` | `artflaneur` | Tenant identifier |
 
 ### REST API (Write Operations)
@@ -1366,9 +1366,9 @@ REST responses use the `status` field:
 
 ```bash
 curl -X POST \
-  https://hv2h5zqj65hwvjq7ylemx3ayaa.appsync-api.ap-southeast-2.amazonaws.com/graphql \
+  https://your-appsync-endpoint.appsync-api.region.amazonaws.com/graphql \
   -H "Content-Type: application/json" \
-  -H "x-api-key: da2-qola7vmdgbaqbkks6lje5bkta4" \
+  -H "x-api-key: <your-graphql-api-key>" \
   -H "x-tenant-id: artflaneur" \
   -d '{
     "query": "query { listGalleriesById(limit: 10) { items { id galleryname country } nextToken } }"
@@ -1381,8 +1381,8 @@ curl -X POST \
 
 ```javascript
 // GraphQL Client (for reading data)
-const GRAPHQL_ENDPOINT = 'https://hv2h5zqj65hwvjq7ylemx3ayaa.appsync-api.ap-southeast-2.amazonaws.com/graphql';
-const API_KEY = 'da2-qola7vmdgbaqbkks6lje5bkta4';
+const GRAPHQL_ENDPOINT = 'https://your-appsync-endpoint.appsync-api.region.amazonaws.com/graphql';
+const API_KEY = '<your-graphql-api-key>';
 const TENANT_ID = 'artflaneur';
 
 async function executeGraphQL(query, variables = {}) {

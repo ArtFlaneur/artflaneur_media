@@ -1,7 +1,10 @@
 {
   "path": [
     "./**/*.{ts,tsx,js,jsx}",
-    "../web/**/*.{ts,tsx,js,jsx}"
+    "!./node_modules/**/*",
+    "../web/**/*.{ts,tsx,js,jsx}",
+    "!../web/node_modules/**/*",
+    "!../web/dist/**/*"
   ],
   "schema": "../web/sanity-schema.json",
   "generates": "../web/sanity/types.ts"

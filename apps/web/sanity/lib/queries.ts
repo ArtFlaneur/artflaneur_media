@@ -76,19 +76,25 @@ export const REVIEW_QUERY = defineQuery(`*[
     slug,
     city,
     address,
-    website
+    website,
+    supabaseId,
+    graphqlId
   },
   exhibition->{
     _id,
     title,
     slug,
+    supabaseId,
+    graphqlId,
     gallery->{
       _id,
       name,
       slug,
       city,
       address,
-      website
+      website,
+      supabaseId,
+      graphqlId
     },
     artists[]->{
       _id,
@@ -99,6 +105,18 @@ export const REVIEW_QUERY = defineQuery(`*[
       _id,
       name,
       slug
+    }
+  },
+  externalExhibition {
+    _type,
+    id,
+    title,
+    startDate,
+    endDate,
+    gallery {
+      id,
+      name,
+      city
     }
   },
   sponsorshipEnabled,
@@ -618,6 +636,14 @@ export const GUIDES_QUERY = defineQuery(`*[
       name,
       address
     },
+    externalGallery {
+      _type,
+      id,
+      name,
+      city,
+      address,
+      website
+    },
     exhibition->{
       _id,
       title,
@@ -680,6 +706,14 @@ export const GUIDE_QUERY = defineQuery(`*[
       _id,
       name,
       address
+    },
+    externalGallery {
+      _type,
+      id,
+      name,
+      city,
+      address,
+      website
     },
     exhibition->{
       _id,

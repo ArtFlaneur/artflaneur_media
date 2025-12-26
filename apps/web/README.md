@@ -64,32 +64,7 @@ npm run typecheck    # Проверить типы
 Создайте `.env.local`:
 
 ```env
-# Sanity
-VITE_SANITY_PROJECT_ID=o1yl0ri9
-VITE_SANITY_DATASET=blog
-VITE_SANITY_API_VERSION=2024-01-01
-VITE_SANITY_STUDIO_URL=http://localhost:3333
 
-# GraphQL API
-VITE_GRAPHQL_ENDPOINT=https://hv2h5zqj65hwvjq7ylemx3ayaa.appsync-api.ap-southeast-2.amazonaws.com/graphql
-VITE_GRAPHQL_API_KEY=da2-qola7vmdgbaqbkks6lje5bkta4
-VITE_GRAPHQL_TENANT_ID=artflaneur
-
-# Supabase
-VITE_SUPABASE_URL=https://esavlnghlshbzuytkykj.supabase.co
-VITE_SUPABASE_ANON_KEY=<anon-key>
-
-## Newsletter popup (Mailchimp)
-
-The site shows a newsletter signup popup for new visitors. It uses a standard Mailchimp embedded form POST (opens in a new tab).
-
-Configure these environment variables (Vite):
-
-- `VITE_MAILCHIMP_ACTION_URL` (required)
-	- Example format: `https://YOUR_DC.list-manage.com/subscribe/post?u=YOUR_U&id=YOUR_ID`
-- `VITE_MAILCHIMP_HONEYPOT_NAME` (optional)
-	- This is the hidden field name Mailchimp gives you (often looks like `b_<u>_<id>`). Including it helps reduce bot signups.
-```
 
 ## Структура
 

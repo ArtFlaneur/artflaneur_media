@@ -5,9 +5,10 @@ import { ArticleCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
 import { BlockContent } from '../sanity/types';
-import { REVIEW_QUERYResult, REVIEWS_QUERYResult } from '../sanity/types';
+import { REVIEW_QUERYResult, REVIEWS_QUERYResult, ExternalExhibitionReference } from '../sanity/types';
 import { Article, ContentType } from '../types';
 import { getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
+import { fetchExhibitionById, type GraphqlExhibition } from '../lib/graphql';
 
 type ReviewLike = REVIEW_QUERYResult | REVIEWS_QUERYResult[number];
 
@@ -75,15 +76,25 @@ const portableTextToPlain = (body?: BlockContent | null) => {
     .join('\n\n');
 };
 
-const getLocationLabel = (review: REVIEW_QUERYResult | null) => {
+const getLocationLabel = (review: REVIEW_QUERYResult | null, resolvedExternalExhibition?: GraphqlExhibition | null) => {
+  // External exhibition (from GraphQL)
+  if (resolvedExternalExhibition) {
+    const parts = [resolvedExternalExhibition.galleryname, resolvedExternalExhibition.city].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : 'Gallery Location';
+  }
+  
+  // Sanity exhibition
   if (review?.exhibition?.gallery?.name) {
     const gallery = review.exhibition.gallery;
     return `${gallery.name}${gallery.city ? `, ${gallery.city}` : ''}`;
   }
+  
+  // Direct gallery reference
   if (review?.gallery?.name) {
     const gallery = review.gallery;
     return `${gallery.name}${gallery.city ? `, ${gallery.city}` : ''}`;
   }
+  
   return 'Gallery Location';
 };
 
@@ -117,9 +128,13 @@ const getSponsorBadge = (review: REVIEW_QUERYResult | null) => {
 
 type SharePlatform = 'facebook' | 'twitter' | 'linkedin';
 
+type EnrichedReview = REVIEW_QUERYResult & {
+  resolvedExternalExhibition?: GraphqlExhibition | null;
+};
+
 const ArticleView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [review, setReview] = useState<REVIEW_QUERYResult | null>(null);
+  const [review, setReview] = useState<EnrichedReview | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +159,18 @@ const ArticleView: React.FC = () => {
           return;
         }
 
-        setReview(reviewData);
+        // Hydrate external exhibition if present
+        let resolvedExternalExhibition: GraphqlExhibition | null = null;
+        if (reviewData.externalExhibition?.id) {
+          try {
+            resolvedExternalExhibition = await fetchExhibitionById(reviewData.externalExhibition.id);
+          } catch (err) {
+            console.error('Failed to fetch external exhibition:', err);
+          }
+        }
+
+        setReview({ ...reviewData, resolvedExternalExhibition });
+        
         const relatedData = await client.fetch<REVIEWS_QUERYResult>(REVIEWS_QUERY);
         if (!isMounted) return;
         const related = (relatedData ?? [])
@@ -175,8 +201,13 @@ const ArticleView: React.FC = () => {
   const sponsorBadge = useMemo(() => getSponsorBadge(review), [review]);
   const article = useMemo(() => (review ? mapReviewToArticle(review) : null), [review]);
   const articleBody = review ? portableTextToPlain(review.body) : '';
-  const location = getLocationLabel(review);
-  const galleryAddress = review?.gallery?.address ?? review?.exhibition?.gallery?.address;
+  const location = getLocationLabel(review, review?.resolvedExternalExhibition);
+  
+  const galleryAddress = 
+    review?.resolvedExternalExhibition?.city ??
+    review?.gallery?.address ?? 
+    review?.exhibition?.gallery?.address;
+    
   const galleryWebsite = review?.gallery?.website ?? review?.exhibition?.gallery?.website;
   const galleryDoc = review?.exhibition?.gallery ?? review?.gallery;
   const galleryWebsiteLabel = galleryWebsite

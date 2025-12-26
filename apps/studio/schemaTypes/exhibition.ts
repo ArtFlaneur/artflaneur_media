@@ -109,6 +109,26 @@ export const exhibition = defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'supabaseId',
+      title: 'Supabase Submission ID',
+      type: 'string',
+      description: 'Links this exhibition to the gallery dashboard submission that created it',
+      readOnly: true,
+      validation: (Rule) => [
+        Rule.regex(/^[A-Za-z0-9-]+$/).warning('Supabase IDs should only use letters, numbers, and dashes'),
+      ],
+    }),
+    defineField({
+      name: 'graphqlId',
+      title: 'GraphQL Catalogue ID',
+      type: 'string',
+      description: 'Optional ID for referencing this exhibition inside the AppSync catalogue',
+      readOnly: true,
+      validation: (Rule) => [
+        Rule.regex(/^[A-Za-z0-9_-]+$/).warning('GraphQL IDs should stay URL-safe'),
+      ],
+    }),
   ],
   preview: {
     select: {
