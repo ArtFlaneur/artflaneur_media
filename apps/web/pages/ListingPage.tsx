@@ -59,6 +59,7 @@ const mapGraphqlArtistToCard = (artist: GraphqlArtist): Artist => {
       ? `${artist.birth_year}–${artist.death_year}`
       : `b. ${artist.birth_year}`
     : '';
+  const normalizedCountry = artist.country ? getCountryDisplayName(artist.country) : '';
   return {
     id: artist.id,
     slug: createArtistSlug(artist),
@@ -66,7 +67,7 @@ const mapGraphqlArtistToCard = (artist: GraphqlArtist): Artist => {
     image: '', // GraphQL API does not provide image URL
     bio: artist.description ?? '',
     discipline: [],
-    location: artist.country ?? '',
+    location: normalizedCountry,
     featuredWork: '',
     lifespan,
   };
@@ -427,15 +428,10 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
       try {
         // ARTISTS: Use cached data with simple offset pagination
         if (listingType === 'artists') {
-          let countryFilter: string[] | undefined = undefined;
-          if (selectedCountryCode && countryAliases.length) {
-            countryFilter = countryAliases;
-          }
-
           const result = await fetchArtistsCached({
             limit: PAGE_SIZE,
             offset: artistOffsetRef.current,
-            countryFilter,
+            countryCode: selectedCountryCode || undefined,
           });
 
           const mapped = result.items.map(mapGraphqlArtistToCard);

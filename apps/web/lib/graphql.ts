@@ -1,3 +1,5 @@
+import { normalizeCountry } from './countries';
+
 const GRAPHQL_ENDPOINT = import.meta.env.VITE_GRAPHQL_ENDPOINT;
 const GRAPHQL_API_KEY = import.meta.env.VITE_GRAPHQL_API_KEY;
 const GRAPHQL_TENANT_ID = import.meta.env.VITE_GRAPHQL_TENANT_ID || 'artflaneur';
@@ -811,6 +813,7 @@ export function warmArtistsCache(): Promise<GraphqlArtist[]> {
 export interface FetchArtistsParams {
   limit?: number;
   offset?: number;
+  countryCode?: string;
   countryFilter?: string[];
 }
 
@@ -825,11 +828,17 @@ export async function fetchArtistsCached(
   
   let filtered = allArtists;
   
-  // Filter by country if specified
-  if (params.countryFilter && params.countryFilter.length > 0) {
-    const countrySet = new Set(params.countryFilter.map(c => c.toLowerCase()));
-    filtered = allArtists.filter(artist => 
-      artist.country && countrySet.has(artist.country.toLowerCase())
+  const normalizedCode = params.countryCode?.toUpperCase();
+
+  if (normalizedCode) {
+    filtered = filtered.filter((artist) => {
+      const normalized = normalizeCountry(artist.country ?? undefined);
+      return normalized?.code === normalizedCode;
+    });
+  } else if (params.countryFilter && params.countryFilter.length > 0) {
+    const countrySet = new Set(params.countryFilter.map((c) => c.toLowerCase()));
+    filtered = filtered.filter(
+      (artist) => artist.country && countrySet.has(artist.country.toLowerCase())
     );
   }
   
