@@ -16,26 +16,26 @@ npm install
 
 **apps/studio/.env** (уже существует):
 ```env
-SANITY_STUDIO_PROJECT_ID=o1yl0ri9
-SANITY_STUDIO_DATASET=blog
-SANITY_API_TOKEN=<write-token-for-scripts>
+SANITY_STUDIO_PROJECT_ID=
+SANITY_STUDIO_DATASET=
+SANITY_API_TOKEN=
 ```
 
 **apps/web/.env.local**:
 ```env
-VITE_SANITY_PROJECT_ID=o1yl0ri9
-VITE_SANITY_DATASET=blog
-VITE_SANITY_API_VERSION=2024-01-01
-VITE_SANITY_STUDIO_URL=http://localhost:3333
+VITE_SANITY_PROJECT_ID=
+VITE_SANITY_DATASET=
+VITE_SANITY_API_VERSION=
+VITE_SANITY_STUDIO_URL=
 
 # GraphQL API (каталог галерей/выставок)
-VITE_GRAPHQL_ENDPOINT=https://hv2h5zqj65hwvjq7ylemx3ayaa.appsync-api.ap-southeast-2.amazonaws.com/graphql
-VITE_GRAPHQL_API_KEY=da2-qola7vmdgbaqbkks6lje5bkta4
-VITE_GRAPHQL_TENANT_ID=artflaneur
+VITE_GRAPHQL_ENDPOINT=
+VITE_GRAPHQL_API_KEY=
+VITE_GRAPHQL_TENANT_ID=
 
 # Supabase (кабинет галерей)
-VITE_SUPABASE_URL=https://esavlnghlshbzuytkykj.supabase.co
-VITE_SUPABASE_ANON_KEY=<anon-key>
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
 ```
 
 ### 3. Запуск проекта
@@ -45,8 +45,8 @@ npm run dev
 ```
 
 Откроются:
-- **Sanity Studio**: http://localhost:3333
-- **Веб-приложение**: http://localhost:3000
+- **Sanity Studio**: 
+- **Веб-приложение**:
 
 ---
 
@@ -254,11 +254,11 @@ npx sanity dataset import sample-data.ndjson blog --replace
 
 | Параметр | Значение |
 |----------|----------|
-| **Sanity Project ID** | `o1yl0ri9` |
-| **Sanity Dataset** | `blog` |
-| **Studio URL (local)** | http://localhost:3333 |
-| **Web App URL (local)** | http://localhost:3000 |
-| **GraphQL Region** | `ap-southeast-2` (Sydney) |
+| **Sanity Project ID** 
+| **Sanity Dataset** 
+| **Studio URL (local)** 
+| **Web App URL (local)** 
+| **GraphQL Region** 
 
 ---
 
