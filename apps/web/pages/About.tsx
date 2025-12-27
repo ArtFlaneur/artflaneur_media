@@ -11,7 +11,7 @@ const About: React.FC = () => {
             We Are Art Flaneur
           </h1>
           
-          <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-gray-700">
+          <p className="mt-4 font-mono text-[14px] text-gray-700">
             Art Flaneur Global Pty Ltd began the way many good cultural stories begin: not with a pitch deck, but with walking. Walking through unfamiliar streets, noticing small "gallery" signs in windows, following curiosity into laneways, and learning that art is often hiding in plain sight — waiting for someone to slow down long enough to find it.
           </p>
         </div>
@@ -25,7 +25,7 @@ const About: React.FC = () => {
               Who we are (and why it matters)
             </h2>
             
-            <div className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-gray-700">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 We're Eva and Tim — a "big corporation" of two humans based in Melbourne, Australia. Art Flaneur is our love story and our family story, built with our own hands, our own time, and our own family budget. It's also our long-term cultural project: a platform designed to make art discovery feel more alive, more playful, and more accessible — for locals and cultural travellers, in Australia and around the world.
               </p>
@@ -54,7 +54,7 @@ const About: React.FC = () => {
               What Art Flaneur is
             </h2>
             
-            <div className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-gray-700">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 Art Flaneur is a mobile-first platform for discovering galleries, exhibitions, and cultural events, with interactive maps, personal planning tools, and recommendations. We use technology like geofencing, gamification and immersive, smartphone-first formats to turn cultural exploration into a journey rather than a to-do list.
               </p>
@@ -83,7 +83,7 @@ const About: React.FC = () => {
               Who it's for
             </h2>
             
-            <div className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-gray-700">
+            <div className="space-y-2 font-mono text-[14px]text-gray-700">
               <p>
                 Art Flaneur is for cultural tourists, local explorers, students, collectors, artists, and anyone who wants to feel more connected to where they are. It's for the person who lands in a new city and doesn't want an itinerary that feels like homework. It's also for the local who has lived somewhere for years and suddenly realises there are entire creative worlds within a 15‑minute walk.
               </p>
@@ -106,7 +106,7 @@ const About: React.FC = () => {
                   Our approach: open discovery, not gated culture
                 </h3>
                 
-                <div className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-gray-700">
+                <div className="space-y-2 font-mono text-[14px] text-gray-700">
                   <p>
                     Art Flaneur is not "invitation-only." We don't believe cultural visibility should belong only to the biggest budgets. Any independent gallery or artist studio can appear on the map, because that's how cultural ecosystems stay diverse and alive.
                   </p>
@@ -122,7 +122,7 @@ const About: React.FC = () => {
                   Building without "growth at any cost"
                 </h3>
                 
-                <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+                <div className="space-y-2 font-mono text-[14px] text-gray-700">
                   <p>
                     Art Flaneur is self-funded. That's not a marketing slogan — it's a philosophy about pace and care. We are building in real time, continuously adding features and expanding what the platform can do.
                   </p>
@@ -145,7 +145,7 @@ const About: React.FC = () => {
               Why we care about "paperless" and sustainable culture
             </h3>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 The arts sector is full of passionate people working with limited resources. Traditional promotion often depends on printing and distribution that can be expensive, wasteful, and uneven — especially for smaller organisations. Our mission includes paperless cultural marketing: helping cultural institutions reach audiences through digital tools and interactive experiences that fit how people actually move through cities today.
               </p>
@@ -162,7 +162,7 @@ const About: React.FC = () => {
               The Invitation
             </h3>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 Art Flaneur is still growing — and what you see now is only a small part of what we're building. If you're a gallery, festival, institution, or cultural organisation, partnering with us means joining a movement toward more accessible, more interactive, more human cultural discovery.
               </p>
@@ -181,23 +181,12 @@ const About: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div>
-                <h3 className="text-[26px] text-art-red font-bold mb-6">Contact</h3>
-                <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
-                  <p><strong>Art Flaneur Global Pty Ltd</strong></p>
-                  <p>ABN 27 672 710 520</p>
-                  <p>Email: <a href="mailto:tim@artflaneur.com.au" className="text-black hover:underline">tim@artflaneur.com.au</a></p>
-                  <p>Web: <a href="https://www.artflaneur.com.au" target="_blank" rel="noopener noreferrer" className="text-black hover:underline">www.artflaneur.com.au</a></p>
-                </div>
-              </div>
-              <div>
                 <h3 className="text-[26px] text-art-red font-bold mb-6">Legal</h3>
                 <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
                   <p>Registered in Australia</p>
                   <p>ABN: 27 672 710 520</p>
-                  <p className="pt-4">
-                    <strong>Company Name:</strong><br/>
-                    Art Flaneur Global Pty Ltd
-                  </p>
+                  <p>Art Flaneur Global Pty Ltd</p>
+                  <p>Email: <a href="mailto:tim@artflaneur.com.au" className="text-black hover:underline">tim@artflaneur.com.au</a></p>
                 </div>
               </div>
             </div>

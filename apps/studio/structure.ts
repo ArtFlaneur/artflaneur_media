@@ -15,21 +15,24 @@ export const structure = (S: StructureBuilder) =>
                 .child(
                   S.documentList()
                     .title('Reviews in Review')
-                    .filter('_type == "review" && editorialStatus == "inReview"')
+                    .filter('_type == "review" && publishStatus == "inReview"')
+                    .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
               S.listItem()
                 .title('Needs Revision')
                 .child(
                   S.documentList()
                     .title('Reviews Needing Revision')
-                    .filter('_type == "review" && editorialStatus == "needsRevision"')
+                    .filter('_type == "review" && publishStatus == "needsRevision"')
+                    .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
               S.listItem()
                 .title('Approved')
                 .child(
                   S.documentList()
                     .title('Approved Reviews')
-                    .filter('_type == "review" && editorialStatus == "approved"')
+                    .filter('_type == "review" && publishStatus == "approved"')
+                    .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
               S.divider(),
               S.listItem()
@@ -37,8 +40,10 @@ export const structure = (S: StructureBuilder) =>
                 .child(
                   S.documentList()
                     .title('Scheduled for Publication')
-                    .filter('_type in ["review", "artistStory", "guide"] && defined(scheduledPublishAt) && scheduledPublishAt > now()')
-                    .params({now: new Date().toISOString()})
+                    .filter(
+                      '_type in ["review", "artistStory", "guide"] && publishStatus == "scheduled" && defined(scheduledPublishAt)'
+                    )
+                    .defaultOrdering([{field: 'scheduledPublishAt', direction: 'asc'}])
                 ),
               S.listItem()
                 .title('Sponsored Content')
@@ -46,15 +51,40 @@ export const structure = (S: StructureBuilder) =>
                   S.documentList()
                     .title('All Sponsored Content')
                     .filter('defined(sponsorship.enabled) && sponsorship.enabled == true')
+                    .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
                 ),
             ])
         ),
       S.divider(),
       
       // Content
-      S.documentTypeListItem('review').title('Reviews'),
-      S.documentTypeListItem('artistStory').title('Artist Stories'),
-      S.documentTypeListItem('guide').title('Guides'),
+      S.listItem()
+        .title('Reviews')
+        .schemaType('review')
+        .child(
+          S.documentList()
+            .title('Reviews')
+            .filter('_type == "review"')
+            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
+        ),
+      S.listItem()
+        .title('Artist Stories')
+        .schemaType('artistStory')
+        .child(
+          S.documentList()
+            .title('Artist Stories')
+            .filter('_type == "artistStory"')
+            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
+        ),
+      S.listItem()
+        .title('Guides')
+        .schemaType('guide')
+        .child(
+          S.documentList()
+            .title('Guides')
+            .filter('_type == "guide"')
+            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
+        ),
       
       S.divider(),
       
@@ -76,8 +106,20 @@ export const structure = (S: StructureBuilder) =>
           S.list()
             .title('Site Settings')
             .items([
-              S.documentTypeListItem('siteSettings').title('General Settings'),
-              S.documentTypeListItem('homepageContent').title('Homepage Content'),
+              S.listItem()
+                .title('General Settings')
+                .child(
+                  S.document()
+                    .schemaType('siteSettings')
+                    .documentId('siteSettings')
+                ),
+              S.listItem()
+                .title('Homepage Content')
+                .child(
+                  S.document()
+                    .schemaType('homepageContent')
+                    .documentId('homepageContent')
+                ),
             ])
         ),
     ])

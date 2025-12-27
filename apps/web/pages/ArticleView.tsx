@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Facebook, Twitter, Linkedin, MapPin, Clock, Ticket, CalendarDays } from 'lucide-react';
+import { Facebook, Twitter, Linkedin, MapPin, Clock, Ticket, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
@@ -255,12 +255,20 @@ type EnrichedReview = REVIEW_QUERYResult & {
   resolvedExternalGallery?: GraphqlGallery | null;
 };
 
+type GallerySlide = {
+  url: string;
+  alt: string;
+  caption?: string | null;
+  credit?: string | null;
+};
+
 const ArticleView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [review, setReview] = useState<EnrichedReview | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -334,8 +342,51 @@ const ArticleView: React.FC = () => {
     };
   }, [id]);
 
+  const reviewId = review?._id;
+
+  useEffect(() => {
+    setActiveSlide(0);
+  }, [reviewId]);
+
   const sponsorBadge = useMemo(() => getSponsorBadge(review), [review]);
   const article = useMemo(() => (review ? mapReviewToArticle(review) : null), [review]);
+  const gallerySlides = useMemo<GallerySlide[]>(() => {
+    const slides = (review?.galleryImages ?? [])
+      .map((image) => ({
+        url: image?.asset?.url ?? '',
+        alt: image?.alt ?? review?.title ?? 'Exhibition view',
+        caption: image?.caption,
+        credit: image?.credit,
+      }))
+      .filter((slide) => Boolean(slide.url));
+
+    if (slides.length) {
+      return slides;
+    }
+
+    if (article?.image) {
+      return [
+        {
+          url: article.image,
+          alt: article.title ?? 'Exhibition view',
+        },
+      ];
+    }
+
+    return [];
+  }, [article?.image, article?.title, review?.galleryImages, review?.title]);
+  const slideCount = gallerySlides.length;
+  const currentSlide = gallerySlides[activeSlide] ?? gallerySlides[0];
+
+  const handleNextSlide = useCallback(() => {
+    if (!slideCount) return;
+    setActiveSlide((prev) => (prev + 1) % slideCount);
+  }, [slideCount]);
+
+  const handlePrevSlide = useCallback(() => {
+    if (!slideCount) return;
+    setActiveSlide((prev) => (prev - 1 + slideCount) % slideCount);
+  }, [slideCount]);
   const articleBody = review ? portableTextToPlain(review.body) : '';
   const galleryMeta = useMemo(() => extractGalleryMeta(review), [review]);
   const location = galleryMeta.name ? `${galleryMeta.name}${galleryMeta.city ? `, ${galleryMeta.city}` : ''}` : 'Gallery Location';
@@ -557,9 +608,55 @@ const ArticleView: React.FC = () => {
           </div>
       </div>
 
-      {/* Main Image */}
-      <div className="w-full h-[50vh] md:h-[70vh] relative border-b-2 border-black overflow-hidden">
-          <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
+      {/* Hero Gallery */}
+      <div className="border-b-2 border-black">
+        <div className="w-full h-[50vh] md:h-[70vh] relative overflow-hidden bg-black">
+          {gallerySlides.map((slide, index) => (
+            <img
+              key={`${slide.url}-${index}`}
+              src={slide.url}
+              alt={slide.alt}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
+            />
+          ))}
+          {slideCount > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrevSlide}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black border-2 border-black rounded-full p-3"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNextSlide}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black border-2 border-black rounded-full p-3"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                {gallerySlides.map((_, idx) => (
+                  <button
+                    key={`dot-${idx}`}
+                    type="button"
+                    className={`w-3 h-3 border border-white rounded-full ${idx === activeSlide ? 'bg-white' : 'bg-transparent opacity-70'}`}
+                    onClick={() => setActiveSlide(idx)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        {currentSlide && (currentSlide.caption || currentSlide.credit) && (
+          <div className="border-t-2 border-black bg-white px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs font-mono uppercase tracking-[0.3em]">
+            <span>{currentSlide.caption ?? 'Installation view'}</span>
+            {currentSlide.credit && <span className="text-gray-500 normal-case tracking-normal">Photo: {currentSlide.credit}</span>}
+          </div>
+        )}
       </div>
 
       {exhibitionOverview && (

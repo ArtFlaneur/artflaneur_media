@@ -16,6 +16,11 @@ type ReviewWithSlug = ReviewSource & { slug: { current: string } };
 type FeaturedArtistStory = NonNullable<HomepageData['featuredArtistStory']>;
 type WeekendGuide = NonNullable<HomepageData['weekendGuide']>;
 type SpotlightExhibition = NonNullable<HomepageData['spotlightExhibitions']>[number];
+type FeaturedGallery = NonNullable<HomepageData['featuredGalleries']>[number];
+type CityPick = NonNullable<HomepageData['cityPicks']>[number];
+type CityPickEntry = NonNullable<CityPick['picks']>[number];
+type DisplayAd = NonNullable<HomepageData['displayAds']>[number];
+type ComingSoonItem = NonNullable<HomepageData['comingSoon']>[number];
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -77,12 +82,31 @@ const mapReviewToArticle = (review: ReviewWithSlug): Article => ({
     : undefined,
 });
 
+const buildContentPath = (doc?: { _type?: string | null; slug?: { current?: string | null } | null }) => {
+  if (!doc?._type || !doc.slug?.current) return null;
+  if (doc._type === 'review') return `/reviews/${doc.slug.current}`;
+  if (doc._type === 'guide') return `/guides/${doc.slug.current}`;
+  if (doc._type === 'artistStory') return `/stories/${doc.slug.current}`;
+  return null;
+};
+
+const getPickImage = (doc?: {
+  mainImage?: { asset?: { url?: string | null } | null } | null;
+  coverImage?: { asset?: { url?: string | null } | null } | null;
+}) => doc?.mainImage?.asset?.url ?? doc?.coverImage?.asset?.url ?? '';
+
+const isExternalUrl = (value?: string | null) => (value ? /^https?:/i.test(value) : false);
+
 const Home: React.FC = () => {
   const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null);
   const [latestReviews, setLatestReviews] = useState<Article[]>([]);
   const [featuredStory, setFeaturedStory] = useState<FeaturedArtistStory | null>(null);
   const [weekendGuide, setWeekendGuide] = useState<WeekendGuide | null>(null);
   const [spotlightExhibitions, setSpotlightExhibitions] = useState<SpotlightExhibition[]>([]);
+  const [featuredGalleries, setFeaturedGalleries] = useState<FeaturedGallery[]>([]);
+  const [cityPicks, setCityPicks] = useState<CityPick[]>([]);
+  const [comingSoonEvents, setComingSoonEvents] = useState<ComingSoonItem[]>([]);
+  const [displayAds, setDisplayAds] = useState<DisplayAd[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,21 +133,29 @@ const Home: React.FC = () => {
           ? heroCandidate
           : filteredLatest[0];
 
-      setFeaturedArticle(heroReview ? mapReviewToArticle(heroReview) : null);
-      setLatestReviews(filteredLatest.length ? filteredLatest.map(mapReviewToArticle) : []);
-      setFeaturedStory(homepageData?.featuredArtistStory ?? null);
-      setWeekendGuide(homepageData?.weekendGuide ?? null);
-      setSpotlightExhibitions(homepageData?.spotlightExhibitions ?? []);
+        setFeaturedArticle(heroReview ? mapReviewToArticle(heroReview) : null);
+        setLatestReviews(filteredLatest.length ? filteredLatest.map(mapReviewToArticle) : []);
+        setFeaturedStory(homepageData?.featuredArtistStory ?? null);
+        setWeekendGuide(homepageData?.weekendGuide ?? null);
+        setSpotlightExhibitions(homepageData?.spotlightExhibitions ?? []);
+        setFeaturedGalleries(homepageData?.featuredGalleries ?? []);
+        setCityPicks(homepageData?.cityPicks ?? []);
+        setComingSoonEvents(homepageData?.comingSoon ?? []);
+        setDisplayAds(homepageData?.displayAds ?? []);
         setError(null);
       } catch (err) {
         console.error('❌ Error fetching Sanity data:', err);
         if (!isMounted) return;
         setError('Unable to load the latest editor picks right now.');
-      setFeaturedArticle(null);
-      setLatestReviews([]);
-      setFeaturedStory(null);
-      setWeekendGuide(null);
-      setSpotlightExhibitions([]);
+        setFeaturedArticle(null);
+        setLatestReviews([]);
+        setFeaturedStory(null);
+        setWeekendGuide(null);
+        setSpotlightExhibitions([]);
+        setFeaturedGalleries([]);
+        setCityPicks([]);
+        setComingSoonEvents([]);
+        setDisplayAds([]);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -140,6 +172,64 @@ const Home: React.FC = () => {
 
   const heroArticle = featuredArticle;
   const featuredArtistSlug = buildArtistSlug(featuredStory?.externalArtist);
+
+  const renderDisplayAds = (placement: DisplayAd['placement']) => {
+    const banners = displayAds.filter((ad) => ad?.placement === placement);
+    if (!banners.length) return null;
+
+    return banners.map((ad) => {
+      if (!ad) return null;
+      const key = ad._key ?? `${placement}-${ad.headline ?? 'banner'}`;
+      const backgroundColor = ad.backgroundColor || '#fff8ef';
+      const isExternal = isExternalUrl(ad.ctaUrl);
+      const imageUrl = ad.image?.asset?.url;
+      const BannerContent = (
+        <div className="flex flex-col md:flex-row items-center gap-8">
+          {imageUrl && (
+            <img
+              src={imageUrl}
+              alt={ad.image?.alt ?? ad.headline ?? 'Display creative'}
+              className="w-full md:w-1/3 h-48 md:h-56 object-cover border-2 border-black"
+            />
+          )}
+          <div className="flex-1">
+            {ad.label && (
+              <p className="font-mono text-xs uppercase tracking-widest text-gray-700">{ad.label}</p>
+            )}
+            <h3 className="text-3xl font-black uppercase mt-2">{ad.headline}</h3>
+            <p className="mt-4 text-sm leading-relaxed text-gray-800">{ad.body}</p>
+            {ad.ctaUrl && ad.ctaText && (
+              isExternal ? (
+                <a
+                  href={ad.ctaUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-6 inline-flex items-center gap-3 border-2 border-black px-5 py-3 font-bold uppercase text-sm bg-white hover:bg-black hover:text-white transition-colors"
+                >
+                  {ad.ctaText} <ArrowRight className="w-4 h-4" />
+                </a>
+              ) : (
+                <Link
+                  to={ad.ctaUrl}
+                  className="mt-6 inline-flex items-center gap-3 border-2 border-black px-5 py-3 font-bold uppercase text-sm bg-white hover:bg-black hover:text-white transition-colors"
+                >
+                  {ad.ctaText} <ArrowRight className="w-4 h-4" />
+                </Link>
+              )
+            )}
+          </div>
+        </div>
+      );
+
+      return (
+        <section key={key} className="border-y-2 border-black" style={{backgroundColor}}>
+          <div className="container mx-auto px-4 md:px-6 py-16">
+            {BannerContent}
+          </div>
+        </section>
+      );
+    });
+  };
 
   return (
     <div className="min-h-screen">
@@ -203,6 +293,106 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+
+      {cityPicks.length > 0 && (
+        <section className="py-24 border-y-2 border-black bg-black text-white">
+          <div className="container mx-auto px-4 md:px-6">
+            <SectionHeader title="Editor's Picks by City" linkText="All City Guides" linkTo="/guides" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {cityPicks.map((city) => {
+                const picks = city?.picks ?? [];
+                const heroUrl = city?.heroImage?.asset?.url ?? '';
+                const hasHero = Boolean(heroUrl);
+                const fallbackPick = picks.find((pick) => buildContentPath(pick?.document));
+                const fallbackPickHref = fallbackPick?.document ? buildContentPath(fallbackPick.document) : null;
+                const cityCtaHref = city?.ctaUrl ?? fallbackPickHref;
+                const cityCtaText = city?.ctaText ?? 'Open city digest';
+                return (
+                  <article
+                    key={city._key ?? city.city}
+                    className="relative border-2 border-white overflow-hidden min-h-[420px]"
+                  >
+                    {hasHero ? (
+                      <img
+                        src={heroUrl}
+                        alt={city.heroImage?.alt ?? `${city.city} skyline`}
+                        className="absolute inset-0 w-full h-full object-cover opacity-70"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black opacity-70" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent" />
+                    <div className="relative z-10 h-full flex flex-col justify-between p-8">
+                      <div>
+                        <p className="font-mono text-xs uppercase tracking-[0.3em] text-art-yellow">{city.tagline ?? 'Curated city brief'}</p>
+                        <h3 className="text-4xl font-black uppercase mt-3">{city.city ?? 'City'}</h3>
+                        {city.sponsor?.logo?.asset?.url && (
+                          <div className="mt-4 flex items-center gap-3 text-xs font-mono uppercase tracking-widest text-gray-300">
+                            <span>Presented by</span>
+                            <img src={city.sponsor.logo.asset.url} alt={city.sponsor.logo.alt ?? city.sponsor.name ?? 'Sponsor'} className="h-6 object-contain" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-4 mt-8">
+                        {picks.map((pick) => {
+                          if (!pick?.document) return null;
+                          const href = buildContentPath(pick.document);
+                          if (!href) return null;
+                          const thumb = getPickImage(pick.document);
+                          return (
+                            <Link
+                              key={pick._key ?? pick.document._id}
+                              to={href}
+                              className="flex items-center gap-4 border-2 border-white/30 bg-white/10 hover:bg-white/20 transition-colors p-3"
+                            >
+                              {thumb ? (
+                                <img src={thumb} alt={pick.document.title ?? 'City pick'} className="w-16 h-16 object-cover border border-white" />
+                              ) : (
+                                <div className="w-16 h-16 border border-dashed border-white flex items-center justify-center text-[10px] font-mono uppercase text-white/70">
+                                  No image
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-xs font-mono uppercase tracking-widest text-gray-300">{pick.document._type === 'guide' ? 'Guide' : 'Review'}</p>
+                                <p className="font-serif text-xl">{pick.document.title ?? 'Untitled'}</p>
+                                {pick.document.excerpt && (
+                                  <p className="text-xs text-gray-300 line-clamp-2">{pick.document.excerpt}</p>
+                                )}
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                      {cityCtaHref ? (
+                        isExternalUrl(cityCtaHref) ? (
+                          <a
+                            href={cityCtaHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-6 inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.4em]"
+                          >
+                            {cityCtaText} <ArrowRight className="w-4 h-4" />
+                          </a>
+                        ) : (
+                          <Link
+                            to={cityCtaHref}
+                            className="mt-6 inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.4em]"
+                          >
+                            {cityCtaText} <ArrowRight className="w-4 h-4" />
+                          </Link>
+                        )
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {renderDisplayAds('afterHero')}
+
       {/* Latest Reviews Grid */}
       <section className="py-24 container mx-auto px-4 md:px-6">
         <SectionHeader title="Latest Critical Reviews" linkText="Archive" linkTo="/reviews" />
@@ -221,6 +411,96 @@ const Home: React.FC = () => {
           <p className="font-mono text-gray-500">No reviews published yet.</p>
         )}
       </section>
+
+      {featuredGalleries.length > 0 && (
+        <section className="py-24 border-y-2 border-black bg-white">
+          <div className="container mx-auto px-4 md:px-6">
+            <SectionHeader title="Gallery Partners" linkText="Promote your gallery" linkTo="/advertise" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredGalleries.map((partner) => {
+                if (!partner?.gallery?.id) return null;
+                const gallerySlug = buildGallerySlug(partner.gallery);
+                const exhibitions = partner.highlightedExhibitions ?? [];
+                const fallbackCta = gallerySlug ? `/galleries/${gallerySlug}` : partner.gallery.website ?? null;
+                const ctaHref = partner.ctaUrl ?? fallbackCta;
+                const isExternalCta = isExternalUrl(ctaHref);
+
+                const ctaButton = ctaHref ? (
+                  isExternalCta ? (
+                    <a
+                      href={ctaHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-6 inline-flex items-center justify-between border-2 border-black px-4 py-3 font-bold uppercase text-sm bg-black text-white hover:bg-white hover:text-black transition-colors"
+                    >
+                      {partner.ctaText ?? 'Plan visit'} <ArrowRight className="w-4 h-4" />
+                    </a>
+                  ) : (
+                    <Link
+                      to={ctaHref}
+                      className="mt-6 inline-flex items-center justify-between border-2 border-black px-4 py-3 font-bold uppercase text-sm bg-black text-white hover:bg-white hover:text-black transition-colors"
+                    >
+                      {partner.ctaText ?? 'Plan visit'} <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )
+                ) : null;
+
+                return (
+                  <article
+                    key={partner._key ?? partner.gallery.id}
+                    className="border-2 border-black bg-art-paper p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-4 mb-4">
+                        <div>
+                          <p className="font-mono text-xs uppercase tracking-widest text-gray-600">Paid Partner</p>
+                          <h3 className="text-2xl font-black uppercase leading-tight">{partner.gallery.name}</h3>
+                          {partner.gallery.city && (
+                            <p className="font-mono text-xs text-gray-500">{partner.gallery.city}</p>
+                          )}
+                        </div>
+                        {partner.sponsor?.logo?.asset?.url && (
+                          <img
+                            src={partner.sponsor.logo.asset.url}
+                            alt={partner.sponsor.logo.alt ?? partner.sponsor.name ?? 'Sponsor logo'}
+                            className="h-12 object-contain"
+                          />
+                        )}
+                      </div>
+                      <p className="text-sm leading-relaxed text-gray-700">
+                        {partner.featureCopy ?? 'Partner programming selected by Art Flaneur editors.'}
+                      </p>
+                      <div className="mt-6 space-y-4">
+                        {exhibitions.map((exhibition, index) => {
+                          if (!exhibition?.id) return null;
+                          const dateLabel = formatExhibitionRange(exhibition);
+                          return (
+                            <div
+                              key={`${partner._key ?? partner.gallery.id}-${exhibition.id}-${index}`}
+                              className="border-2 border-black/30 bg-white px-4 py-3"
+                            >
+                              <p className="text-sm font-bold uppercase">{exhibition.title ?? 'Exhibition'}</p>
+                              {exhibition.gallery?.city && (
+                                <p className="font-mono text-[11px] text-gray-500">{exhibition.gallery.city}</p>
+                              )}
+                              {dateLabel && (
+                                <p className="font-mono text-[11px] text-gray-400">{dateLabel}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    {ctaButton}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {renderDisplayAds('midPage')}
 
       {spotlightExhibitions.length > 0 && (
         <section className="py-24 border-y-2 border-black bg-art-paper">
@@ -328,6 +608,86 @@ const Home: React.FC = () => {
 
       <AiTeaser />
 
+      {comingSoonEvents.length > 0 && (
+        <section className="py-24 border-y-2 border-black bg-art-paper">
+          <div className="container mx-auto px-4 md:px-6">
+            <SectionHeader title="Coming Soon" linkText="Plan ahead" linkTo="/exhibitions" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {comingSoonEvents.map((item) => {
+                const exhibition = item?.exhibition;
+                if (!exhibition?.id) return null;
+                const gallerySlug = buildGallerySlug(exhibition.gallery);
+                const dateLabel = formatExhibitionRange(exhibition);
+                const ctaHref = item.ctaUrl ?? (gallerySlug ? `/galleries/${gallerySlug}` : null);
+                const isExternalCta = isExternalUrl(ctaHref);
+                const ctaLabel = item.ctaText ?? 'Get notified';
+
+                const ctaButton = ctaHref ? (
+                  isExternalCta ? (
+                    <a
+                      href={ctaHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-3 border-2 border-black px-4 py-2 font-bold uppercase text-xs bg-white hover:bg-black hover:text-white transition-colors"
+                    >
+                      {ctaLabel} <ArrowRight className="w-4 h-4" />
+                    </a>
+                  ) : (
+                    <Link
+                      to={ctaHref}
+                      className="inline-flex items-center gap-3 border-2 border-black px-4 py-2 font-bold uppercase text-xs bg-white hover:bg-black hover:text-white transition-colors"
+                    >
+                      {ctaLabel} <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )
+                ) : null;
+
+                return (
+                  <article
+                    key={item._key ?? exhibition.id}
+                    className="border-2 border-black bg-white p-6 flex flex-col justify-between"
+                  >
+                    <div>
+                      {item.urgencyLabel && (
+                        <span className="inline-block mb-3 bg-black text-white px-3 py-1 text-xs font-mono uppercase tracking-[0.3em]">
+                          {item.urgencyLabel}
+                        </span>
+                      )}
+                      <h3 className="text-2xl font-black uppercase leading-tight">{exhibition.title ?? 'Upcoming exhibition'}</h3>
+                      {exhibition.gallery?.name && (
+                        <p className="font-mono text-xs text-gray-600 mt-1">
+                          {exhibition.gallery.name}
+                          {exhibition.gallery.city ? ` • ${exhibition.gallery.city}` : ''}
+                        </p>
+                      )}
+                      {dateLabel && (
+                        <p className="font-mono text-xs text-gray-500">{dateLabel}</p>
+                      )}
+                      <p className="mt-4 text-sm leading-relaxed text-gray-700 line-clamp-4">
+                        {exhibition.description ?? 'Be the first to know when this show opens its doors.'}
+                      </p>
+                    </div>
+                    <div className="mt-6 flex items-center justify-between">
+                      <div className="text-xs font-mono text-gray-500">
+                        {item.sponsor?.logo?.asset?.url ? (
+                          <div className="flex items-center gap-2">
+                            <span>Partner</span>
+                            <img src={item.sponsor.logo.asset.url} alt={item.sponsor.logo.alt ?? item.sponsor.name ?? 'Sponsor'} className="h-6 object-contain" />
+                          </div>
+                        ) : (
+                          <span>Presented by Art Flaneur</span>
+                        )}
+                      </div>
+                      {ctaButton}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {weekendGuide?.slug?.current && (
         <section className="py-24 container mx-auto px-4 md:px-6">
           <SectionHeader title="Weekend Guides" linkText="All Cities" linkTo="/guides" />
@@ -361,6 +721,8 @@ const Home: React.FC = () => {
           </div>
         </section>
       )}
+
+      {renderDisplayAds('preFooter')}
 
       <NewsletterSection />
     </div>

@@ -11,7 +11,7 @@ const Mission: React.FC = () => {
             Our Mission
           </h1>
           
-          <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+          <div className="space-y-2 font-mono text-[14px] text-gray-700">
             <p>
               Art Flaneur exists for a simple reason: art should feel like something you can step into — not something you need permission to understand.
             </p>
@@ -35,7 +35,7 @@ const Mission: React.FC = () => {
               A world where art is playable and personal
             </h2>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 Our vision is a world where art feels playable and personal — where a city becomes a living museum and every walk can turn into a meaningful cultural journey. We use augmented reality, storytelling, gamified quests, and AI personalisation not as gimmicks, but as invitations: to look closer, to go further than the obvious, and to discover spaces you'd never find through mainstream tourist routes.
               </p>
@@ -62,7 +62,7 @@ const Mission: React.FC = () => {
                   Innovation with a purpose
                 </h3>
                 
-                <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+                <div className="space-y-2 font-mono text-[14px] text-gray-700">
                   <p>
                     Technology shapes where attention goes. In culture, that can either concentrate power — or distribute it. Art Flaneur is designed to do the second: to guide attention toward independent galleries, emerging artists, local institutions, and neighbourhood events that deserve to be seen.
                   </p>
@@ -78,7 +78,7 @@ const Mission: React.FC = () => {
                   Community is the point
                 </h3>
                 
-                <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+                <div className="space-y-2 font-mono text-[14px] text-gray-700">
                   <p>
                     Art is not just what hangs on a wall; it's also the ecosystems that make that work possible. The small galleries that take risks. The local venues that nurture artists long before anyone calls them "successful." The festival organisers who build temporary worlds and bring communities together.
                   </p>
@@ -101,7 +101,7 @@ const Mission: React.FC = () => {
               Responsibility: paperless by design
             </h3>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 We live in a time where sustainability is no longer optional. Cultural marketing still relies heavily on printed materials that are expensive to produce, difficult to distribute fairly, and often quickly discarded.
               </p>
@@ -122,7 +122,7 @@ const Mission: React.FC = () => {
               Education that deepens, not lectures
             </h3>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 We care about education because deeper understanding changes how people see. It makes art less intimidating. It makes cultural contexts more visible. It turns a casual visit into a meaningful encounter.
               </p>
@@ -143,7 +143,7 @@ const Mission: React.FC = () => {
               Ethical growth, long-term impact
             </h3>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 Art Flaneur is not built on the idea of "growth at any cost." We believe cultural technology should be sustainable not only financially, but emotionally and socially. That means building responsibly, partnering carefully, and choosing strategies that create lasting cultural value.
               </p>
@@ -164,7 +164,7 @@ const Mission: React.FC = () => {
               The Promise
             </h3>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 When someone opens Art Flaneur, the promise is not "more information." The promise is a different relationship with place: a slower pace, a sharper eye, and a sense that culture can meet you in the middle of an ordinary day and change it.
               </p>

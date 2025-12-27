@@ -34,14 +34,14 @@ export const blockContent = defineType({
       if (!headings.length) return true
 
       if (headings[0] !== 'h2') {
-        return 'Первый заголовок в тексте должен быть H2, чтобы сохранить правильную иерархию'
+        return 'The first heading must be an H2 to keep a logical hierarchy'
       }
 
       for (let i = 1; i < headings.length; i += 1) {
         const currentLevel = Number(headings[i].substring(1))
         const previousLevel = Number(headings[i - 1].substring(1))
         if (currentLevel - previousLevel > 1) {
-          return `Нельзя перепрыгивать с ${headings[i - 1].toUpperCase()} на ${headings[i].toUpperCase()}`
+          return `Do not skip from ${headings[i - 1].toUpperCase()} to ${headings[i].toUpperCase()}`
         }
       }
 

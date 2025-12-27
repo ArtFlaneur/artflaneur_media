@@ -1,7 +1,7 @@
-import {EarthGlobeIcon} from '@sanity/icons'
+import {CheckmarkCircleIcon, DocumentIcon, EarthGlobeIcon, StarIcon} from '@sanity/icons'
 import {defineArrayMember, defineField, defineType, type PreviewValue} from 'sanity'
 import {appCtaField, schemaMarkupField, seoField, slugField, summaryField} from '../fields/commonFields'
-import {publishWorkflowFields} from '../fields/publishWorkflowField'
+import {workflowFields} from '../fields/publishWorkflowField'
 import {sponsorshipField} from '../fields/sponsorshipField'
 import GraphqlGalleryInput from './GraphqlGalleryInput'
 
@@ -12,9 +12,9 @@ export const guide = defineType({
   icon: EarthGlobeIcon,
   groups: [
     {name: 'content', title: 'Content', default: true, icon: EarthGlobeIcon},
-    {name: 'publishing', title: 'Publishing', icon: EarthGlobeIcon},
-    {name: 'metadata', title: 'SEO & Metadata', icon: EarthGlobeIcon},
-    {name: 'sponsorship', title: 'Sponsorship', icon: EarthGlobeIcon},
+    {name: 'publishing', title: 'Workflow', icon: CheckmarkCircleIcon},
+    {name: 'metadata', title: 'SEO & Metadata', icon: DocumentIcon},
+    {name: 'sponsorship', title: 'Sponsorship', icon: StarIcon},
   ],
   fields: [
     defineField({
@@ -40,7 +40,17 @@ export const guide = defineType({
       type: 'image',
       group: 'content',
       options: {hotspot: true},
-      fields: [defineField({name: 'alt', type: 'string', title: 'Alt text'})],
+      description: 'Hero image for the guide hero and cards',
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alt text',
+          description: 'Describe the scene or location for accessibility',
+          validation: (Rule) => [Rule.required().error('Alt text is required')],
+        }),
+      ],
+      validation: (Rule) => [Rule.required().error('Cover image is required for guides')],
     }),
     defineField({
       name: 'body',
@@ -87,9 +97,17 @@ export const guide = defineType({
       title: 'CTA Text',
       type: 'string',
       group: 'content',
-      initialValue: 'Save Places',
+      description: 'Optional override for Settings → CTA Defaults → Guide CTA',
     }),
-    ...publishWorkflowFields().map((field) => ({
+    defineField({
+      name: 'author',
+      title: 'Author',
+      type: 'reference',
+      to: [{type: 'author'}],
+      group: 'publishing',
+      validation: (Rule) => [Rule.required().error('Guides must credit an author')],
+    }),
+    ...workflowFields().map((field) => ({
       ...field,
       group: 'publishing',
     })),

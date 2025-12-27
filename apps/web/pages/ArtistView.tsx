@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { fetchArtistById, fetchExhibitionsForArtist, GraphqlArtist, GraphqlExhibition } from '../lib/graphql';
+import { client } from '../sanity/lib/client';
+import { ARTIST_STORY_BY_GRAPHQL_ID_QUERY } from '../sanity/lib/queries';
+import { ARTIST_STORY_BY_GRAPHQL_ID_QUERYResult, BlockContent } from '../sanity/types';
 
 /**
  * Extract artist ID from URL slug.
@@ -17,10 +20,121 @@ const extractArtistIdFromSlug = (slug: string): string => {
   return slug;
 };
 
+type ArtistStoryDocument = NonNullable<ARTIST_STORY_BY_GRAPHQL_ID_QUERYResult>;
+type StoryMultimediaSection = NonNullable<ArtistStoryDocument['multimediaSections']> extends Array<infer U>
+  ? U
+  : never;
+type StoryArtworkImage = NonNullable<ArtistStoryDocument['artworkGallery']> extends Array<infer U> ? U : never;
+
+type VideoEmbedDetails = {
+  type: 'iframe' | 'video';
+  src: string;
+};
+
+const blocksToParagraphs = (body?: BlockContent | null): string[] => {
+  if (!body?.length) return [];
+  return body
+    .map((block) => {
+      if (block._type !== 'block') return '';
+      const text = (block.children ?? [])
+        .map((child) => child.text)
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      return text;
+    })
+    .filter(Boolean);
+};
+
+const isExternalUrl = (value?: string | null) => (value ? /^https?:/i.test(value) : false);
+
+const getVideoEmbedDetails = (url?: string | null): VideoEmbedDetails | null => {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '');
+    if (host.includes('youtube.com')) {
+      const videoId = parsed.searchParams.get('v') || parsed.pathname.split('/').filter(Boolean).pop();
+      if (videoId) {
+        return {type: 'iframe', src: `https://www.youtube.com/embed/${videoId}`};
+      }
+    }
+    if (host === 'youtu.be') {
+      const videoId = parsed.pathname.split('/').filter(Boolean).pop();
+      if (videoId) {
+        return {type: 'iframe', src: `https://www.youtube.com/embed/${videoId}`};
+      }
+    }
+    if (host.includes('vimeo.com')) {
+      const videoId = parsed.pathname.split('/').filter(Boolean).pop();
+      if (videoId) {
+        return {type: 'iframe', src: `https://player.vimeo.com/video/${videoId}`};
+      }
+    }
+  } catch (err) {
+    console.warn('Unable to parse video URL', err);
+  }
+
+  if (/\.(mp4|webm|ogg)$/i.test(url)) {
+    return {type: 'video', src: url};
+  }
+
+  if (isExternalUrl(url)) {
+    return {type: 'iframe', src: url};
+  }
+
+  return null;
+};
+
+const renderMultimediaMedia = (section: StoryMultimediaSection): React.ReactNode => {
+  const embed = getVideoEmbedDetails(section.videoUrl);
+  const fallbackUrl = section.fallbackImage?.asset?.url ?? null;
+  const fallbackAlt = section.fallbackImage?.alt ?? section.title ?? 'Artist feature still';
+
+  if (embed?.type === 'iframe') {
+    return (
+      <iframe
+        src={embed.src}
+        title={section.title ?? 'Artist multimedia'}
+        className="w-full h-full object-cover"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  }
+
+  if (embed?.type === 'video') {
+    return (
+      <video
+        src={embed.src}
+        className="w-full h-full object-cover"
+        controls
+        preload="metadata"
+        poster={fallbackUrl ?? undefined}
+      >
+        Your browser does not support the video tag.
+      </video>
+    );
+  }
+
+  if (fallbackUrl) {
+    return <img src={fallbackUrl} alt={fallbackAlt} className="w-full h-full object-cover" />;
+  }
+
+  return (
+    <div className="flex h-full w-full items-center justify-center text-center text-xs font-mono uppercase tracking-[0.3em] text-white/60">
+      Media coming soon
+    </div>
+  );
+};
+
 const ArtistView: React.FC = () => {
   const { id: slugParam } = useParams<{ id: string }>();
   const [artist, setArtist] = useState<GraphqlArtist | null>(null);
   const [exhibitions, setExhibitions] = useState<GraphqlExhibition[]>([]);
+  const [artistStory, setArtistStory] = useState<ARTIST_STORY_BY_GRAPHQL_ID_QUERYResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,22 +145,35 @@ const ArtistView: React.FC = () => {
         setLoading(false);
         return;
       }
-      
+
+      setLoading(true);
+      setError(null);
+      setArtistStory(null);
+
       // Extract actual ID from slug (e.g., "yayoi-kusama-0ef8ae4d-..." -> "0ef8ae4d-...")
       const id = extractArtistIdFromSlug(slugParam);
-      
+
       try {
-        const [artistData, exhibitionsData] = await Promise.all([
+        const storyPromise = client
+          .fetch<ARTIST_STORY_BY_GRAPHQL_ID_QUERYResult>(ARTIST_STORY_BY_GRAPHQL_ID_QUERY, {artistId: id})
+          .catch((storyError) => {
+            console.warn('No artist story available for GraphQL artist', storyError);
+            return null;
+          });
+
+        const [artistData, exhibitionsData, storyData] = await Promise.all([
           fetchArtistById(id),
           fetchExhibitionsForArtist(id),
+          storyPromise,
         ]);
         setArtist(artistData);
         setExhibitions(exhibitionsData);
+        setArtistStory(storyData);
         setError(artistData ? null : 'Artist not found.');
-        setLoading(false);
       } catch (err) {
         console.error('❌ Error fetching artist:', err);
         setError('Unable to load this artist right now.');
+      } finally {
         setLoading(false);
       }
     };
@@ -76,6 +203,41 @@ const ArtistView: React.FC = () => {
       : `b. ${artist.birth_year}`
     : null;
 
+  const biographyParagraphs = useMemo(() => blocksToParagraphs(artistStory?.biography), [artistStory?.biography]);
+
+  const multimediaSections = useMemo(
+    () => (artistStory?.multimediaSections ?? []) as StoryMultimediaSection[],
+    [artistStory?.multimediaSections],
+  );
+
+  const artworkGallery = useMemo(
+    () => (artistStory?.artworkGallery ?? []) as StoryArtworkImage[],
+    [artistStory?.artworkGallery],
+  );
+
+  const storyPortraitUrl = artistStory?.portrait?.asset?.url ?? null;
+
+  const storySponsor = useMemo(() => {
+    const sponsorship = artistStory?.sponsorship;
+    if (!sponsorship?.enabled) return null;
+    const sponsor = sponsorship.sponsor;
+    return {
+      label:
+        sponsorship.customDisclaimer ??
+        (sponsor?.name ? `Presented by ${sponsor.name}` : 'Sponsored Feature'),
+      logo: sponsor?.logo?.asset?.url ?? null,
+      alt: sponsor?.logo?.alt ?? sponsor?.name ?? 'Sponsor logo',
+      color: sponsor?.brandColor?.hex ?? undefined,
+    };
+  }, [artistStory?.sponsorship]);
+
+  const storyCta =
+    artistStory?.appCta?.deeplink && artistStory.appCta.text
+      ? {href: artistStory.appCta.deeplink, label: artistStory.appCta.text}
+      : null;
+
+  const storyTitle = artistStory?.title ?? artist.name ?? 'Artist Story';
+
   return (
     <div className="bg-white">
         {/* Hero Header */}
@@ -102,6 +264,161 @@ const ArtistView: React.FC = () => {
                 )}
             </div>
         </div>
+
+        {artistStory && (
+          <section className="border-b-2 border-black bg-white">
+            <div className="container mx-auto px-4 md:px-6 py-16">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+                <div className="lg:col-span-3 space-y-6">
+                  {storySponsor && (
+                    <div
+                      className="flex items-center gap-3 text-xs font-mono uppercase tracking-[0.4em]"
+                      style={storySponsor.color ? {color: storySponsor.color} : undefined}
+                    >
+                      {storySponsor.logo && (
+                        <img src={storySponsor.logo} alt={storySponsor.alt} className="h-6 w-auto" />
+                      )}
+                      <span>{storySponsor.label}</span>
+                    </div>
+                  )}
+                  <p className="font-mono text-xs uppercase tracking-[0.5em] text-gray-500">Artist Story</p>
+                  <h2 className="text-4xl md:text-5xl font-black uppercase leading-tight">{storyTitle}</h2>
+                  {artistStory.summary && (
+                    <p className="text-lg text-gray-700 leading-relaxed">{artistStory.summary}</p>
+                  )}
+                  {biographyParagraphs.length > 0 && (
+                    <div className="space-y-4 text-base leading-relaxed text-gray-700">
+                      {biographyParagraphs.map((paragraph, index) => (
+                        <p key={`bio-${index}`}>{paragraph}</p>
+                      ))}
+                    </div>
+                  )}
+                  {storyCta && (
+                    <a
+                      href={storyCta.href}
+                      className="inline-flex items-center gap-3 border-2 border-black px-5 py-3 font-bold uppercase text-sm tracking-widest hover:bg-black hover:text-white transition-colors"
+                    >
+                      {storyCta.label} →
+                    </a>
+                  )}
+                </div>
+                <div className="lg:col-span-2 border-2 border-black bg-art-paper min-h-[420px]">
+                  {storyPortraitUrl ? (
+                    <img
+                      src={storyPortraitUrl}
+                      alt={artistStory.portrait?.alt ?? `${artist.name} portrait`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-center text-xs font-mono uppercase tracking-[0.4em] text-gray-500">
+                      Portrait coming soon
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {multimediaSections.length > 0 && (
+              <div className="border-t-2 border-black bg-art-paper">
+                <div className="container mx-auto px-4 md:px-6 py-16">
+                  <div className="mb-10 flex items-center justify-between">
+                    <h3 className="text-3xl font-black uppercase">Multimedia Moments</h3>
+                    <span className="font-mono text-xs uppercase tracking-[0.4em] text-gray-600">
+                      {multimediaSections.length} features
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    {multimediaSections.map((section) => {
+                      const key = section._key ?? section.title ?? section.videoUrl ?? 'feature';
+                      const isExternal = section.ctaUrl ? isExternalUrl(section.ctaUrl) : false;
+                      return (
+                        <article
+                          key={key}
+                          className="flex flex-col border-2 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                        >
+                          <div className="relative aspect-video bg-black text-white">
+                            {renderMultimediaMedia(section)}
+                          </div>
+                          <div className="flex flex-col gap-4 p-6">
+                            <div>
+                              <p className="font-mono text-xs uppercase tracking-[0.4em] text-gray-500">Studio Drop</p>
+                              <h4 className="text-2xl font-black uppercase leading-tight">
+                                {section.title ?? 'Untitled feature'}
+                              </h4>
+                            </div>
+                            <p className="text-sm leading-relaxed text-gray-700">
+                              {section.description ?? artistStory.summary ?? 'Fresh work from the studio.'}
+                            </p>
+                            {section.ctaUrl && section.ctaText ? (
+                              isExternal ? (
+                                <a
+                                  href={section.ctaUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-art-blue hover:text-art-red"
+                                >
+                                  {section.ctaText} →
+                                </a>
+                              ) : (
+                                <Link
+                                  to={section.ctaUrl}
+                                  className="inline-flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-art-blue hover:text-art-red"
+                                >
+                                  {section.ctaText} →
+                                </Link>
+                              )
+                            ) : null}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {artworkGallery.length > 0 && (
+              <div className="border-t-2 border-black bg-white">
+                <div className="container mx-auto px-4 md:px-6 py-16">
+                  <div className="mb-8 flex items-center justify-between">
+                    <h3 className="text-3xl font-black uppercase">Studio Notes</h3>
+                    <span className="font-mono text-xs uppercase tracking-[0.4em] text-gray-500">
+                      {artworkGallery.length} works
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {artworkGallery.map((art) => (
+                      <figure
+                        key={art._key ?? `${art.title ?? 'artwork'}-${art.year ?? 'year'}`}
+                        className="border-2 border-black bg-art-paper"
+                      >
+                        {art.asset?.url ? (
+                          <img
+                            src={art.asset.url}
+                            alt={art.alt ?? art.title ?? 'Artwork preview'}
+                            className="h-64 w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-64 w-full items-center justify-center text-center text-xs font-mono uppercase tracking-[0.4em] text-gray-500">
+                            Image coming soon
+                          </div>
+                        )}
+                        <figcaption className="border-t-2 border-black p-4 text-sm leading-relaxed">
+                          <p className="font-black uppercase">{art.title ?? 'Untitled work'}</p>
+                          {(art.year || art.caption) && (
+                            <p className="text-xs text-gray-600">
+                              {[art.year, art.caption].filter(Boolean).join(' • ')}
+                            </p>
+                          )}
+                        </figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Exhibitions */}
         <div className="container mx-auto px-4 md:px-6 py-24">

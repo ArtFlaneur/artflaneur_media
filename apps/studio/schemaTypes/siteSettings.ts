@@ -57,6 +57,37 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({
+      name: 'ctaDefaults',
+      title: 'CTA Defaults',
+      type: 'object',
+      group: 'basic',
+      description: 'Fallback CTA labels used when documents do not override them',
+      options: {collapsible: true, collapsed: true},
+      fields: [
+        defineField({
+          name: 'reviewCta',
+          title: 'Review CTA',
+          type: 'string',
+          initialValue: 'Add to your Planner',
+          validation: (Rule) => [Rule.required().error('Provide a default CTA for reviews')],
+        }),
+        defineField({
+          name: 'guideCta',
+          title: 'Guide CTA',
+          type: 'string',
+          initialValue: 'Save Places',
+          validation: (Rule) => [Rule.required().error('Provide a default CTA for guides')],
+        }),
+        defineField({
+          name: 'artistStoryCta',
+          title: 'Artist Story CTA',
+          type: 'string',
+          initialValue: 'Meet the artist',
+          validation: (Rule) => [Rule.required().error('Provide a default CTA for artist stories')],
+        }),
+      ],
+    }),
+    defineField({
       name: 'sponsorshipDefaults',
       title: 'Sponsorship Defaults',
       type: 'object',

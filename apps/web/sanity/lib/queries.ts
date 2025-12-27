@@ -8,7 +8,7 @@ export const REVIEWS_QUERY = defineQuery(`*[
   _id,
   title,
   slug,
-  excerpt,
+  "excerpt": coalesce(summary, excerpt),
   mainImage {
     asset->{
       _id,
@@ -59,7 +59,7 @@ export const REVIEW_QUERY = defineQuery(`*[
   _id,
   title,
   slug,
-  excerpt,
+  "excerpt": coalesce(summary, excerpt),
   mainImage {
     asset->{
       _id,
@@ -67,12 +67,15 @@ export const REVIEW_QUERY = defineQuery(`*[
     },
     alt
   },
-  coverImage {
+  galleryImages[]{
+    _key,
     asset->{
+      _id,
       url
     },
     alt,
-    caption
+    caption,
+    credit
   },
   body,
   rating,
@@ -113,7 +116,7 @@ export const REVIEW_QUERY = defineQuery(`*[
     _id,
     title,
     slug,
-    excerpt,
+    "excerpt": coalesce(summary, excerpt),
     mainImage {
       asset->{
         url
@@ -157,7 +160,7 @@ export const LATEST_REVIEWS_QUERY = defineQuery(`*[
   _id,
   title,
   slug,
-  excerpt,
+  "excerpt": coalesce(summary, excerpt),
   mainImage {
     asset->{
       _id,
@@ -318,7 +321,7 @@ export const GALLERY_QUERY = defineQuery(`*[
     _id,
     title,
     slug,
-    excerpt,
+    "excerpt": coalesce(summary, excerpt),
     publishedAt,
     mainImage {
       asset->{
@@ -401,6 +404,80 @@ export const ARTIST_QUERY = defineQuery(`*[
   }
 }`)
 
+export const ARTIST_STORY_BY_GRAPHQL_ID_QUERY = defineQuery(`*[
+  _type == "artistStory"
+  && externalArtist.id == $artistId
+  && publishStatus == "published"
+] | order(_updatedAt desc) [0] {
+  _id,
+  title,
+  summary,
+  biography,
+  portrait{
+    asset->{
+      url
+    },
+    alt
+  },
+  externalArtist{
+    id,
+    name
+  },
+  author->{
+    _id,
+    name,
+    slug
+  },
+  appCta{
+    text,
+    deeplink
+  },
+  sponsorship{
+    enabled,
+    type,
+    customDisclaimer,
+    badgePlacement,
+    sponsor->{
+      _id,
+      name,
+      logo{
+        asset->{
+          url
+        },
+        alt
+      },
+      brandColor{
+        hex
+      }
+    }
+  },
+  multimediaSections[]{
+    _key,
+    title,
+    description,
+    videoUrl,
+    ctaText,
+    ctaUrl,
+    fallbackImage{
+      asset->{
+        url
+      },
+      alt,
+      caption
+    }
+  },
+  artworkGallery[]{
+    _key,
+    asset->{
+      url
+    },
+    alt,
+    caption,
+    title,
+    year
+  }
+}`)
+
 // Homepage content query
 export const HOMEPAGE_QUERY = defineQuery(`*[
   _type == "homepageContent"
@@ -413,7 +490,7 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
       _id,
       title,
       slug,
-      excerpt,
+      "excerpt": coalesce(summary, excerpt),
       publishedAt,
       mainImage{
         asset->{
@@ -435,7 +512,7 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
       _id,
       title,
       slug,
-      excerpt,
+      "excerpt": summary,
       portrait{
         asset->{
           url
@@ -457,7 +534,7 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
     _id,
     title,
     slug,
-    excerpt,
+    "excerpt": coalesce(summary, excerpt),
     publishedAt,
     mainImage{
       asset->{
@@ -512,6 +589,92 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
       }
     }
   },
+  featuredGalleries[]{
+    _key,
+    featureCopy,
+    ctaText,
+    ctaUrl,
+    gallery{
+      id,
+      name,
+      city,
+      address,
+      website,
+      workingHours
+    },
+    sponsor->{
+      _id,
+      name,
+      logo{
+        asset->{
+          url
+        },
+        alt
+      },
+      brandColor{
+        hex
+      }
+    },
+    highlightedExhibitions[]{
+      _key,
+      id,
+      title,
+      startDate,
+      endDate,
+      description,
+      gallery{
+        id,
+        name,
+        city
+      }
+    }
+  },
+  cityPicks[]{
+    _key,
+    city,
+    tagline,
+    ctaText,
+    ctaUrl,
+    heroImage{
+      asset->{
+        url
+      },
+      alt
+    },
+    sponsor->{
+      _id,
+      name,
+      logo{
+        asset->{
+          url
+        },
+        alt
+      }
+    },
+    picks[]{
+      _key,
+      "document": @->{
+        _id,
+        _type,
+        title,
+        slug,
+        "excerpt": coalesce(summary, description),
+        mainImage{
+          asset->{
+            url
+          },
+          alt
+        },
+        coverImage{
+          asset->{
+            url
+          },
+          alt
+        },
+        publishedAt
+      }
+    }
+  },
   weekendGuide->{
     _id,
     title,
@@ -559,6 +722,51 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
     description,
     placeholder,
     submitText
+  },
+  comingSoon[]{
+    _key,
+    urgencyLabel,
+    ctaText,
+    ctaUrl,
+    sponsor->{
+      _id,
+      name,
+      logo{
+        asset->{
+          url
+        },
+        alt
+      }
+    },
+    exhibition{
+      id,
+      title,
+      description,
+      startDate,
+      endDate,
+      gallery{
+        id,
+        name,
+        city,
+        address
+      }
+    }
+  },
+  displayAds[]{
+    _key,
+    placement,
+    label,
+    headline,
+    body,
+    ctaText,
+    ctaUrl,
+    backgroundColor,
+    image{
+      asset->{
+        url
+      },
+      alt
+    }
   }
 }`)
 
@@ -725,7 +933,7 @@ export const AUTHOR_QUERY = defineQuery(`*[
     title,
     slug,
     publishedAt,
-    excerpt,
+    "excerpt": coalesce(summary, excerpt),
     mainImage {
       asset->{
         url

@@ -10,6 +10,7 @@ import {SearchIcon, CloseIcon} from '@sanity/icons'
 const GRAPHQL_ENDPOINT = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.SANITY_STUDIO_GRAPHQL_ENDPOINT : undefined;
 const GRAPHQL_API_KEY = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.SANITY_STUDIO_GRAPHQL_API_KEY : undefined;
 const GRAPHQL_TENANT_ID = (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.SANITY_STUDIO_GRAPHQL_TENANT_ID : undefined) || 'artflaneur';
+const MIN_QUERY_LENGTH = 3;
 
 interface GraphqlExhibition {
   id: string
@@ -109,8 +110,13 @@ async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[
   const results: GraphqlExhibition[] = []
   let nextToken: string | null | undefined = null
   const PAGE_SIZE = 100
-  const MAX_PAGES = 10 // Search first 1000 exhibitions
+  const MAX_PAGES = 3 // Search first 300 exhibitions to keep responses fast
   const MAX_RESULTS = 20
+
+  if (searchLower.length < MIN_QUERY_LENGTH) {
+    console.warn('🔍 [Exhibition Search] Search term too short, skipping request')
+    return []
+  }
 
   console.log('🔍 [Exhibition Search] Starting pagination search...')
 
@@ -190,8 +196,15 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
     | undefined
 
   const handleSearch = useCallback(async () => {
-    if (!searchTerm.trim()) {
+    const normalizedTerm = searchTerm.trim()
+    if (!normalizedTerm) {
       setResults([])
+      setError('Enter a search term to find exhibitions')
+      return
+    }
+    if (normalizedTerm.length < MIN_QUERY_LENGTH) {
+      setResults([])
+      setError(`Type at least ${MIN_QUERY_LENGTH} characters to search`)
       return
     }
 
@@ -199,7 +212,7 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
     setError(null)
 
     try {
-      const exhibitions = await searchExhibitions(searchTerm)
+      const exhibitions = await searchExhibitions(normalizedTerm)
       setResults(exhibitions)
     } catch (err) {
       console.error('Failed to search exhibitions:', err)

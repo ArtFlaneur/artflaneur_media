@@ -115,11 +115,226 @@ export const homepageContent = defineType({
       validation: (Rule) => [Rule.max(6).warning('Homepage supports up to six spotlight exhibitions')],
     }),
     defineField({
+      name: 'featuredGalleries',
+      title: 'Gallery Partners',
+      description: 'Paid placements for partner galleries with their current programming',
+      type: 'array',
+      group: 'features',
+      of: [
+        defineArrayMember({
+          name: 'featuredGallery',
+          title: 'Featured Gallery',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'gallery',
+              title: 'Gallery',
+              type: 'externalGalleryReference',
+              validation: (Rule) => [Rule.required().error('Select a gallery to spotlight')],
+            }),
+            defineField({
+              name: 'sponsor',
+              title: 'Sponsor',
+              type: 'reference',
+              to: [{type: 'sponsor'}],
+              description: 'Optional sponsor entity powering this placement',
+            }),
+            defineField({
+              name: 'highlightedExhibitions',
+              title: 'Highlighted Exhibitions',
+              type: 'array',
+              of: [defineArrayMember({type: 'externalExhibitionReference'})],
+              validation: (Rule) => [
+                Rule.min(1).error('Add at least one exhibition for this partner'),
+                Rule.max(3).warning('Limit to three exhibitions per gallery partner'),
+              ],
+            }),
+            defineField({
+              name: 'featureCopy',
+              title: 'Feature Copy',
+              type: 'text',
+              rows: 3,
+              description: 'Commercial blurb that explains the partnership value',
+              validation: (Rule) => [Rule.required().error('Feature copy is required for sponsored placements')],
+            }),
+            defineField({
+              name: 'ctaText',
+              title: 'CTA Label',
+              type: 'string',
+              initialValue: 'Visit exhibition',
+            }),
+            defineField({
+              name: 'ctaUrl',
+              title: 'CTA URL',
+              type: 'url',
+              description: 'Link to booking page, microsite, or gallery landing page',
+            }),
+          ],
+          preview: {
+            select: {
+              title: 'gallery.name',
+              subtitle: 'gallery.city',
+            },
+            prepare({title, subtitle}) {
+              return {
+                title: title || 'Featured gallery',
+                subtitle: subtitle || 'Paid placement',
+              }
+            },
+          },
+        }),
+      ],
+      validation: (Rule) => [Rule.max(6).warning('Highlight up to six partner galleries at a time')],
+    }),
+    defineField({
+      name: 'cityPicks',
+      title: "Editor's Picks by City",
+      description: 'Localized modules that can be paired with regional sponsors',
+      type: 'array',
+      group: 'features',
+      of: [
+        defineArrayMember({
+          name: 'cityPick',
+          title: 'City Picks',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'city',
+              title: 'City',
+              type: 'string',
+              validation: (Rule) => [Rule.required().error('City label is required')],
+            }),
+            defineField({
+              name: 'tagline',
+              title: 'Tagline',
+              type: 'string',
+              description: 'Short line that sells the scene in this city',
+            }),
+            defineField({
+              name: 'heroImage',
+              title: 'Hero Image',
+              type: 'image',
+              options: {hotspot: true},
+              fields: [
+                defineField({
+                  name: 'alt',
+                  type: 'string',
+                  validation: (Rule) => [Rule.required().error('Alt text is required for city hero images')],
+                }),
+              ],
+              validation: (Rule) => [Rule.required().error('Provide a hero image for each city module')],
+            }),
+            defineField({
+              name: 'sponsor',
+              title: 'Local Sponsor',
+              type: 'reference',
+              to: [{type: 'sponsor'}],
+            }),
+            defineField({
+              name: 'picks',
+              title: 'Featured Pieces',
+              type: 'array',
+              of: [defineArrayMember({type: 'reference', to: [{type: 'review'}, {type: 'guide'}]})],
+              validation: (Rule) => [
+                Rule.required().error('Add at least one pick for this city'),
+                Rule.max(3).warning('Limit each city digest to three picks'),
+              ],
+            }),
+            defineField({
+              name: 'ctaText',
+              title: 'CTA Label',
+              type: 'string',
+              initialValue: 'Open city digest',
+            }),
+            defineField({
+              name: 'ctaUrl',
+              title: 'CTA URL',
+              type: 'url',
+              description: 'Optional override link (defaults to the first pick)',
+            }),
+          ],
+          preview: {
+            select: {
+              title: 'city',
+              subtitle: 'tagline',
+            },
+            prepare({title, subtitle}) {
+              return {
+                title: title || 'City digest',
+                subtitle: subtitle || 'Localized picks',
+              }
+            },
+          },
+        }),
+      ],
+      validation: (Rule) => [Rule.max(5).warning('Rotate up to five city spotlights per week')],
+    }),
+    defineField({
       name: 'weekendGuide',
       title: 'Weekend Guide Highlight',
       type: 'reference',
       group: 'features',
       to: [{type: 'guide'}],
+    }),
+    defineField({
+      name: 'comingSoon',
+      title: 'Coming Soon Events',
+      description: 'Upcoming launches or previews that drive urgency and early access',
+      type: 'array',
+      group: 'features',
+      of: [
+        defineArrayMember({
+          name: 'comingSoonEvent',
+          title: 'Coming Soon Event',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'exhibition',
+              title: 'Exhibition',
+              type: 'externalExhibitionReference',
+              components: {input: GraphqlExhibitionInput},
+              validation: (Rule) => [Rule.required().error('Select an exhibition to tease')],
+            }),
+            defineField({
+              name: 'urgencyLabel',
+              title: 'Urgency Label',
+              type: 'string',
+              initialValue: 'Coming soon',
+            }),
+            defineField({
+              name: 'sponsor',
+              title: 'Sponsor',
+              type: 'reference',
+              to: [{type: 'sponsor'}],
+              description: 'Partner who gets early access billing',
+            }),
+            defineField({
+              name: 'ctaText',
+              title: 'CTA Label',
+              type: 'string',
+              initialValue: 'Get notified',
+            }),
+            defineField({
+              name: 'ctaUrl',
+              title: 'CTA URL',
+              type: 'url',
+            }),
+          ],
+          preview: {
+            select: {
+              title: 'exhibition.title',
+              subtitle: 'urgencyLabel',
+            },
+            prepare({title, subtitle}) {
+              return {
+                title: title || 'Upcoming exhibition',
+                subtitle: subtitle || 'Coming soon',
+              }
+            },
+          },
+        }),
+      ],
+      validation: (Rule) => [Rule.max(4).warning('Showcase up to four upcoming events')],
     }),
     defineField({
       name: 'tickerMarquee',
@@ -190,6 +405,85 @@ export const homepageContent = defineType({
         defineField({name: 'placeholder', type: 'string', title: 'Email Placeholder'}),
         defineField({name: 'submitText', type: 'string', title: 'Submit Button Text'}),
       ],
+    }),
+    defineField({
+      name: 'displayAds',
+      title: 'Display Banner Slots',
+      description: 'Standard banner inventory for sponsors and house campaigns',
+      type: 'array',
+      group: 'engagement',
+      of: [
+        defineArrayMember({
+          name: 'displayAd',
+          title: 'Display Ad',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'placement',
+              title: 'Placement',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'After Hero', value: 'afterHero'},
+                  {title: 'Mid Page', value: 'midPage'},
+                  {title: 'Pre-Footer', value: 'preFooter'},
+                ],
+                layout: 'radio',
+              },
+              validation: (Rule) => [Rule.required().error('Select where this banner should render')],
+            }),
+            defineField({name: 'label', title: 'Label', type: 'string'}),
+            defineField({
+              name: 'headline',
+              title: 'Headline',
+              type: 'string',
+              validation: (Rule) => [Rule.required().error('Banner headline is required')],
+            }),
+            defineField({
+              name: 'body',
+              title: 'Body Copy',
+              type: 'text',
+              rows: 2,
+              validation: (Rule) => [Rule.required().error('Add supporting copy for the banner')],
+            }),
+            defineField({
+              name: 'image',
+              title: 'Creative',
+              type: 'image',
+              options: {hotspot: true},
+              fields: [
+                defineField({
+                  name: 'alt',
+                  type: 'string',
+                  validation: (Rule) => [Rule.required().error('Alt text is required for ad creatives')],
+                }),
+              ],
+              validation: (Rule) => [Rule.required().error('Upload creative artwork for the banner')],
+            }),
+            defineField({name: 'ctaText', title: 'CTA Label', type: 'string', initialValue: 'Learn more'}),
+            defineField({name: 'ctaUrl', title: 'CTA URL', type: 'url'}),
+            defineField({
+              name: 'backgroundColor',
+              title: 'Background Color',
+              type: 'string',
+              description: 'Optional hex or CSS color token for the banner background',
+            }),
+          ],
+          preview: {
+            select: {
+              title: 'headline',
+              subtitle: 'placement',
+            },
+            prepare({title, subtitle}) {
+              return {
+                title: title || 'Display ad',
+                subtitle: subtitle || 'Unplaced',
+              }
+            },
+          },
+        }),
+      ],
+      validation: (Rule) => [Rule.max(2).warning('Only sell two banner slots per page view')],
     }),
   ],
   preview: {

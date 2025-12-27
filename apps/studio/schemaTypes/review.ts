@@ -1,7 +1,7 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
-import {CalendarIcon, DocumentTextIcon, StarIcon} from '@sanity/icons'
+import {CalendarIcon, CheckmarkCircleIcon, DocumentIcon, DocumentTextIcon, StarIcon} from '@sanity/icons'
 import {appCtaField, schemaMarkupField, seoField, slugField, summaryField} from './fields/commonFields'
-import {editorialWorkflowField, publishWorkflowFields} from './fields/publishWorkflowField'
+import {workflowFields} from './fields/publishWorkflowField'
 import {sponsorshipField} from './fields/sponsorshipField'
 import GraphqlExhibitionInput from './review/GraphqlExhibitionInput'
 
@@ -12,9 +12,9 @@ export const review = defineType({
   icon: DocumentTextIcon,
   groups: [
     {name: 'content', title: 'Content', icon: DocumentTextIcon, default: true},
-    {name: 'editorial', title: 'Editorial Workflow', icon: DocumentTextIcon},
+    {name: 'workflow', title: 'Workflow', icon: CheckmarkCircleIcon},
     {name: 'exhibition', title: 'Exhibition', icon: CalendarIcon},
-    {name: 'metadata', title: 'SEO & Metadata', icon: DocumentTextIcon},
+    {name: 'metadata', title: 'SEO & Metadata', icon: DocumentIcon},
     {name: 'sponsorship', title: 'Sponsorship', icon: StarIcon},
   ],
   fields: [
@@ -30,18 +30,11 @@ export const review = defineType({
     slugField({group: 'content'}),
     summaryField({group: 'content'}),
     defineField({
-      name: 'excerpt',
-      type: 'text',
-      rows: 3,
-      group: 'content',
-      description: 'Optional teaser for cards and SEO (summary already feeds AI)',
-      validation: (Rule) => [Rule.max(200).warning('Excerpts work best under 200 characters')],
-    }),
-    defineField({
       name: 'mainImage',
       type: 'image',
       group: 'content',
       options: {hotspot: true},
+      description: 'Primary hero image used for cards, detail pages, and social previews',
       fields: [
         defineField({
           name: 'alt',
@@ -51,19 +44,33 @@ export const review = defineType({
           validation: (Rule) => [Rule.required().error('Alt text is required for accessibility')],
         }),
       ],
+      validation: (Rule) => [Rule.required().error('A lead image is required before publishing')],
     }),
     defineField({
-      name: 'coverImage',
-      type: 'image',
+      name: 'galleryImages',
+      title: 'Exhibition Gallery',
+      type: 'array',
       group: 'content',
-      options: {hotspot: true},
-      fields: [
-        defineField({
-          name: 'alt',
-          type: 'string',
-          validation: (Rule) => [Rule.required().error('Alt text is required')],
+      description: 'Upload installation views that power the review hero slider',
+      of: [
+        defineArrayMember({
+          type: 'image',
+          options: {hotspot: true},
+          fields: [
+            defineField({
+              name: 'alt',
+              type: 'string',
+              title: 'Alt text',
+              validation: (Rule) => [Rule.required().error('Provide alt text for every slide')],
+            }),
+            defineField({name: 'caption', type: 'string', title: 'Caption'}),
+            defineField({name: 'credit', type: 'string', title: 'Photo credit'}),
+          ],
         }),
-        defineField({name: 'caption', type: 'string'}),
+      ],
+      validation: (Rule) => [
+        Rule.min(1).warning('Add at least one additional image to unlock the carousel'),
+        Rule.max(8).warning('Limit to eight slides to keep the page fast'),
       ],
     }),
     defineField({
@@ -78,23 +85,20 @@ export const review = defineType({
       group: 'content',
       description: '1-5 star rating',
       validation: (Rule) => [
+        Rule.required().error('Rating is required so the gallery knows how it performed'),
         Rule.min(1).max(5).error('Rating must be between 1 and 5'),
         Rule.precision(1),
       ],
     }),
-    {
-      ...editorialWorkflowField(),
-      group: 'editorial',
-    },
-    ...publishWorkflowFields().map((field) => ({
+    ...workflowFields().map((field) => ({
       ...field,
-      group: 'editorial',
+      group: 'workflow',
     })),
     defineField({
       name: 'author',
       type: 'reference',
       to: [{type: 'author'}],
-      group: 'editorial',
+      group: 'workflow',
       validation: (Rule) => [Rule.required().error('Author is required')],
     }),
     defineField({
@@ -114,12 +118,30 @@ export const review = defineType({
       type: 'array',
       group: 'exhibition',
       of: [defineArrayMember({type: 'reference', to: [{type: 'review'}]})],
+      validation: (Rule) => [
+        Rule.unique().error('Choose each related review only once'),
+        Rule.custom((value, context) => {
+          if (!Array.isArray(value)) return true
+          const currentId = (context.document as {_id?: string} | undefined)?._id?.replace('drafts.', '')
+          const hasSelfReference = value.some((ref) => {
+            if (!ref || typeof ref !== 'object') return false
+            const referenceId = typeof (ref as {_ref?: unknown})._ref === 'string'
+              ? (ref as {_ref: string})._ref.replace('drafts.', '')
+              : undefined
+            return Boolean(referenceId && referenceId === currentId)
+          })
+          if (hasSelfReference) {
+            return 'A review cannot reference itself'
+          }
+          return true
+        }),
+      ],
     }),
     defineField({
       name: 'ctaText',
       type: 'string',
       group: 'metadata',
-      initialValue: 'Add to your Planner',
+      description: 'Overrides the default CTA from Settings → CTA Defaults',
     }),
     appCtaField({
       group: 'metadata',
@@ -143,15 +165,24 @@ export const review = defineType({
       sponsorshipEnabled: 'sponsorship.enabled',
       sponsorName: 'sponsorship.sponsor->name',
       rating: 'rating',
-      status: 'editorialStatus',
+      status: 'publishStatus',
     },
     prepare({title, author, media, sponsorshipEnabled, sponsorName, rating, status}) {
       const sponsorLabel = sponsorshipEnabled ? `💰 ${sponsorName || 'Sponsored'}` : author || 'No author'
       const stars = rating ? '⭐'.repeat(Math.round(rating)) : ''
-      const statusEmoji = status === 'approved' ? '✅' : status === 'needsRevision' ? '⚠️' : '👁️'
+      const statusEmojiMap: Record<string, string> = {
+        draft: '📝',
+        inReview: '👁️',
+        needsRevision: '⚠️',
+        approved: '✅',
+        scheduled: '🕐',
+        published: '🚀',
+        archived: '📦',
+      }
+      const statusEmoji = status ? statusEmojiMap[status] ?? '' : ''
 
       return {
-        title: `${statusEmoji} ${title}`,
+        title: `${statusEmoji ? `${statusEmoji} ` : ''}${title}`.trim(),
         subtitle: `${sponsorLabel} ${stars}`.trim(),
         media,
       }

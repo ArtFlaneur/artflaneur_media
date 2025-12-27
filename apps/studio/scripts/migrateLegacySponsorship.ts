@@ -44,12 +44,16 @@ const mapBadgePlacement = (value?: string | null): 'default' | 'top' | 'afterTit
   return undefined
 }
 
-const mapLegacyEditorialStatus = (value?: string | null): 'inReview' | 'needsRevision' | 'approved' | undefined => {
+const mapLegacyWorkflowStatus = (
+  value?: string | null,
+): 'draft' | 'inReview' | 'needsRevision' | 'approved' | 'published' | undefined => {
   if (!value) return undefined
   const normalized = value.trim().toLowerCase()
   if (['approved', 'ready', 'done'].includes(normalized)) return 'approved'
   if (['needsrevision', 'needs-revision', 'changes', 'revise'].includes(normalized)) return 'needsRevision'
   if (['inreview', 'review', 'pending'].includes(normalized)) return 'inReview'
+  if (['published', 'live'].includes(normalized)) return 'published'
+  if (['draft', 'new'].includes(normalized)) return 'draft'
   return undefined
 }
 
@@ -69,7 +73,7 @@ async function migrateLegacySponsorshipFields() {
         sponsorBadgeSettings,
         status,
         sponsorship,
-        editorialStatus
+        publishStatus
       }`
   )
 
@@ -120,9 +124,9 @@ async function migrateLegacySponsorshipFields() {
       setPayload.sponsorship = nextSponsorship
     }
 
-    const mappedEditorialStatus = mapLegacyEditorialStatus(review.status)
-    if (mappedEditorialStatus && review.editorialStatus !== mappedEditorialStatus) {
-      setPayload.editorialStatus = mappedEditorialStatus
+    const mappedWorkflowStatus = mapLegacyWorkflowStatus(review.status)
+    if (mappedWorkflowStatus && review.publishStatus !== mappedWorkflowStatus) {
+      setPayload.publishStatus = mappedWorkflowStatus
     }
 
     if (typeof review.sponsorshipEnabled !== 'undefined') unsetFields.push('sponsorshipEnabled')

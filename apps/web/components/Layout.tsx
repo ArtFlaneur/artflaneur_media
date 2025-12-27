@@ -282,13 +282,13 @@ export const Footer: React.FC = () => {
                     </ul>
                 </div>
                 <div>
-                    <h4 className="text-gray-500 uppercase tracking-widest mb-4">Partners</h4>
+                    <h4 className="text-gray-500 uppercase tracking-widest mb-4">For Partners</h4>
                     <ul className="space-y-2">
                         <li><Link to="/partners/galleries" className="hover:text-art-yellow">Galleries</Link></li>
                         <li><Link to="/partners/events" className="hover:text-art-yellow">Events</Link></li>
                         <li className="pt-2 border-t border-gray-800">
                             <Link to="/gallery-login" className="hover:text-art-blue font-bold">
-                                Gallery Login →
+                                HUB Login →
                             </Link>
                         </li>
                     </ul>
@@ -312,7 +312,7 @@ export const Footer: React.FC = () => {
       {/* Bottom Bar */}
       <div className="border-t border-gray-800">
           <div className="container mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-center text-xs font-mono text-gray-500 uppercase tracking-wider">
-              <p>© 2025 Art Flaneur Global Pty Ltd • ABN 27 672 710 520</p>
+              <p>© 2025 Art Flaneur Global Pty Ltd</p>
               <div className="flex gap-6 mt-2 md:mt-0">
                   <Link to="/privacy" className="hover:text-white">Privacy</Link>
                   <Link to="/terms" className="hover:text-white">Terms</Link>
