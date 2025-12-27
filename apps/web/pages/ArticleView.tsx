@@ -14,8 +14,7 @@ type ReviewLike = (REVIEW_QUERYResult | REVIEWS_QUERYResult[number]) & {
   externalExhibition?: ExternalExhibitionReference | null;
 };
 
-const isFullReview = (review: ReviewLike): review is REVIEW_QUERYResult =>
-  'sponsorshipEnabled' in review;
+const isFullReview = (review: ReviewLike): review is REVIEW_QUERYResult => 'sponsorship' in review;
 
 const hasResolvedExternalExhibition = (
   review: ReviewLike | EnrichedReview,
@@ -222,22 +221,21 @@ const badgeTemplateText: Record<string, string> = {
 };
 
 const getSponsorBadge = (review: REVIEW_QUERYResult | null) => {
-  if (!review || review.sponsorshipEnabled !== 'yes' || !review.sponsor) {
+  const sponsorship = review?.sponsorship;
+  const sponsor = sponsorship?.sponsor;
+
+  if (!sponsorship?.enabled || !sponsor) {
     return null;
   }
 
-  const templateKey = review.sponsorBadgeSettings?.template ?? 'default';
-  const template =
-    templateKey === 'custom'
-      ? review.sponsorBadgeSettings?.customText ?? badgeTemplateText.default
-      : badgeTemplateText[templateKey] ?? badgeTemplateText.default;
-
-  const text = template.replace('{logo}', review.sponsor.name ?? 'our partner');
+  const templateKey = sponsor.defaultBadgeTemplate ?? 'supportedBy';
+  const template = badgeTemplateText[templateKey] ?? badgeTemplateText.default;
+  const text = template.replace('{logo}', sponsor.name ?? 'our partner');
 
   return {
     text,
-    logoUrl: review.sponsor.logo?.asset?.url,
-    color: review.sponsor.brandColor?.hex ?? undefined,
+    logoUrl: sponsor.logo?.asset?.url,
+    color: sponsor.brandColor?.hex ?? undefined,
   };
 };
 
@@ -376,14 +374,35 @@ const ArticleView: React.FC = () => {
   const artistList = useMemo<LinkedDocument[]>(() => {
     if (!review) return [];
     const graphqlNames = parseGraphqlArtists(review.resolvedExternalExhibition?.artist);
-    if (graphqlNames.length) {
-      return graphqlNames.map((name, index) => ({
-        _id: `${review._id}-artist-${index}`,
-        name,
-      }));
-    }
-    return ((review.artists ?? []) as LinkedDocument[]) || [];
+    return graphqlNames.map((name, index) => ({
+      _id: `${review._id}-artist-${index}`,
+      name,
+    }));
   }, [review]);
+
+  const exhibitionOverview = useMemo(() => {
+    if (!review) return null;
+
+    return {
+      title: review.resolvedExternalExhibition?.title ?? review.externalExhibition?.title ?? review.title,
+      galleryName: hostGalleryName,
+      galleryCity: galleryMeta.city ?? review.externalExhibition?.gallery?.city ?? null,
+      dates: exhibitionTimeline,
+      artists: artistList.map((artist) => artist.name).filter(Boolean) as string[],
+      admission: admissionDetails,
+      website: galleryWebsite,
+      websiteLabel: galleryWebsiteLabel,
+    };
+  }, [
+    admissionDetails,
+    artistList,
+    exhibitionTimeline,
+    galleryMeta.city,
+    galleryWebsite,
+    galleryWebsiteLabel,
+    hostGalleryName,
+    review,
+  ]);
 
   const curatorList: LinkedDocument[] = [];
 
@@ -523,6 +542,64 @@ const ArticleView: React.FC = () => {
       <div className="w-full h-[50vh] md:h-[70vh] relative border-b-2 border-black overflow-hidden">
           <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
       </div>
+
+      {exhibitionOverview && (
+        <div className="container mx-auto px-4 md:px-6 -mt-10 relative z-10">
+          <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-6 md:p-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] text-gray-500">Exhibition Overview</p>
+                <h2 className="text-2xl md:text-3xl font-black uppercase leading-tight mt-2">
+                  {exhibitionOverview.title}
+                </h2>
+                <p className="text-sm md:text-base text-gray-600 mt-1">
+                  {exhibitionOverview.galleryName}
+                  {exhibitionOverview.galleryCity ? ` • ${exhibitionOverview.galleryCity}` : ''}
+                </p>
+              </div>
+              <div className="flex flex-col md:items-end gap-1 font-mono text-xs uppercase tracking-widest">
+                <span>{exhibitionOverview.dates.primary}</span>
+                {exhibitionOverview.dates.secondary && (
+                  <span className="text-gray-500">{exhibitionOverview.dates.secondary}</span>
+                )}
+              </div>
+            </div>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-2">Artists</p>
+                {exhibitionOverview.artists.length ? (
+                  <p className="text-sm md:text-base leading-relaxed">
+                    {exhibitionOverview.artists.join(', ')}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">Artist details coming soon.</p>
+                )}
+              </div>
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-2">Admission</p>
+                <p className="text-sm md:text-base leading-relaxed">
+                  {exhibitionOverview.admission ?? 'Admission details available via the venue.'}
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-gray-500">Plan a visit</p>
+                {exhibitionOverview.website && exhibitionOverview.websiteLabel ? (
+                  <a
+                    href={exhibitionOverview.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center border-2 border-black px-4 py-2 text-xs font-mono uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+                  >
+                    Visit {exhibitionOverview.websiteLabel}
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-500">Gallery link coming soon.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">

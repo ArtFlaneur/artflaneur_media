@@ -77,48 +77,6 @@ export const REVIEW_QUERY = defineQuery(`*[
     },
     bio
   },
-  artists[]->{
-    _id,
-    name,
-    slug
-  },
-  gallery->{
-    _id,
-    name,
-    slug,
-    city,
-    address,
-    website,
-    supabaseId,
-    graphqlId
-  },
-  exhibition->{
-    _id,
-    title,
-    slug,
-    supabaseId,
-    graphqlId,
-    gallery->{
-      _id,
-      name,
-      slug,
-      city,
-      address,
-      website,
-      supabaseId,
-      graphqlId
-    },
-    artists[]->{
-      _id,
-      name,
-      slug
-    },
-    curators[]->{
-      _id,
-      name,
-      slug
-    }
-  },
   externalExhibition {
     _type,
     id,
@@ -131,26 +89,42 @@ export const REVIEW_QUERY = defineQuery(`*[
       city
     }
   },
-  sponsorshipEnabled,
-  sponsor->{
+  relatedReviews[]->{
     _id,
-    name,
-    logo {
+    title,
+    slug,
+    excerpt,
+    mainImage {
       asset->{
         url
-      },
-      alt
+      }
     },
-    defaultBadgeTemplate,
-    brandColor {
-      hex
+    author->{
+      _id,
+      name
     }
   },
-  sponsorBadgeSettings{
-    template,
-    customText,
-    placement,
-    style
+  ctaText,
+  appCta,
+  sponsorship {
+    enabled,
+    type,
+    customDisclaimer,
+    badgePlacement,
+    sponsor->{
+      _id,
+      name,
+      logo {
+        asset->{
+          url
+        },
+        alt
+      },
+      defaultBadgeTemplate,
+      brandColor {
+        hex
+      }
+    }
   },
   publishedAt
 }`)
@@ -182,44 +156,6 @@ export const LATEST_REVIEWS_QUERY = defineQuery(`*[
   },
   publishedAt,
   rating
-}`)
-
-// Exhibitions queries
-export const EXHIBITIONS_QUERY = defineQuery(`*[
-  _type == "exhibition"
-  && defined(startDate)
-] | order(startDate desc) [0...20] {
-  _id,
-  title,
-  slug,
-  description,
-  startDate,
-  endDate,
-  gallery->{
-    _id,
-    name,
-    slug,
-    city,
-    address,
-    "location": coalesce(location, geopoint)
-  },
-  artists[]->{
-    _id,
-    name,
-    slug
-  },
-  "mainImage": image{
-    asset->{
-      url
-    },
-    alt
-  },
-  ticketing{
-    access,
-    ticketPrice,
-    bookingUrl,
-    ctaLabel
-  }
 }`)
 
 export const EXHIBITION_QUERY = defineQuery(`*[
@@ -569,15 +505,28 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
       },
       alt
     },
-    sponsorshipStatus,
-    sponsor->{
-      _id,
-      name,
-      logo{
-        asset->{
-          url
+    sponsorship {
+      enabled,
+      type,
+      badgePlacement,
+      customDisclaimer,
+      sponsor->{
+        _id,
+        name,
+        logo{
+          asset->{
+            url
+          },
+          alt
         }
       }
+    }
+  },
+  tickerMarquee{
+    messages[]{
+      _key,
+      message,
+      status
     }
   },
   aiChatbotTeaser{
@@ -606,10 +555,19 @@ export const SITE_SETTINGS_QUERY = defineQuery(`*[
       url
     }
   },
-  social,
-  tickerMessages[]{
-    message,
-    isActive
+  social
+}`)
+
+export const HOMEPAGE_TICKER_QUERY = defineQuery(`*[
+  _type == "homepageContent"
+  && !(_id in path("drafts.**"))
+][0] {
+  tickerMarquee{
+    messages[]{
+      _key,
+      message,
+      status
+    }
   }
 }`)
 
@@ -646,13 +604,19 @@ export const GUIDES_QUERY = defineQuery(`*[
     alt
   },
   ctaText,
-  sponsorshipStatus,
-  sponsor->{
-    _id,
-    name,
-    logo {
-      asset->{
-        url
+  sponsorship {
+    enabled,
+    type,
+    badgePlacement,
+    customDisclaimer,
+    sponsor->{
+      _id,
+      name,
+      logo {
+        asset->{
+          url
+        },
+        alt
       }
     }
   },
@@ -682,19 +646,21 @@ export const GUIDE_QUERY = defineQuery(`*[
   city,
   description,
   ctaText,
-  sponsorshipStatus,
-  sponsor->{
-    _id,
-    name,
-    logo {
-      asset->{
-        url
+  sponsorship {
+    enabled,
+    type,
+    badgePlacement,
+    customDisclaimer,
+    sponsor->{
+      _id,
+      name,
+      logo {
+        asset->{
+          url
+        },
+        alt
       }
     }
-  },
-  sponsorBadgeSettings{
-    template,
-    placement
   },
   coverImage {
     asset->{

@@ -1,6 +1,8 @@
 import {EarthGlobeIcon} from '@sanity/icons'
-import {defineArrayMember, defineField, defineType} from 'sanity'
-
+import {defineArrayMember, defineField, defineType, type PreviewValue} from 'sanity'
+import {appCtaField, schemaMarkupField, seoField, slugField, summaryField} from '../fields/commonFields'
+import {publishWorkflowFields} from '../fields/publishWorkflowField'
+import {sponsorshipField} from '../fields/sponsorshipField'
 import GraphqlGalleryInput from './GraphqlGalleryInput'
 
 export const guide = defineType({
@@ -8,50 +10,50 @@ export const guide = defineType({
   title: 'Guide',
   type: 'document',
   icon: EarthGlobeIcon,
+  groups: [
+    {name: 'content', title: 'Content', default: true, icon: EarthGlobeIcon},
+    {name: 'publishing', title: 'Publishing', icon: EarthGlobeIcon},
+    {name: 'metadata', title: 'SEO & Metadata', icon: EarthGlobeIcon},
+    {name: 'sponsorship', title: 'Sponsorship', icon: EarthGlobeIcon},
+  ],
   fields: [
     defineField({
       name: 'title',
       title: 'Title',
       type: 'string',
+      group: 'content',
       validation: (Rule) => [Rule.required().error('Title is required to publish a guide')],
     }),
-    defineField({
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
-      options: {
-        source: 'title',
-        maxLength: 96,
-      },
-      validation: (Rule) => [Rule.required().error('Slug is required to generate a URL')],
-    }),
+    slugField({group: 'content'}),
+    summaryField({group: 'content'}),
     defineField({
       name: 'city',
       title: 'City',
       type: 'string',
-      description: 'Primary city covered by this weekend guide',
+      group: 'content',
+      description: 'Primary city covered by this guide',
       validation: (Rule) => [Rule.required().error('City name is required to publish a guide')],
     }),
     defineField({
       name: 'coverImage',
       title: 'Cover Image',
       type: 'image',
+      group: 'content',
       options: {hotspot: true},
       fields: [defineField({name: 'alt', type: 'string', title: 'Alt text'})],
     }),
     defineField({
-      name: 'description',
-      title: 'Short Description',
-      type: 'text',
-      rows: 4,
-      validation: (Rule) => [
-        Rule.required().error('Add a short description to help users understand the trail'),
-      ],
+      name: 'body',
+      title: 'Guide Introduction',
+      type: 'blockContent',
+      group: 'content',
+      description: 'Optional editorial context before the stops',
     }),
     defineField({
       name: 'stops',
       title: 'Stops',
       type: 'array',
+      group: 'content',
       of: [
         defineArrayMember({
           type: 'object',
@@ -84,67 +86,20 @@ export const guide = defineType({
       name: 'ctaText',
       title: 'CTA Text',
       type: 'string',
+      group: 'content',
       initialValue: 'Save Places',
     }),
-    defineField({
-      name: 'publishedAt',
-      title: 'Published at',
-      type: 'datetime',
-    }),
-    defineField({
-      name: 'sponsorshipStatus',
-      title: 'Sponsored Content',
-      type: 'string',
-      options: {
-        list: [
-          {title: 'Not Sponsored', value: 'notSponsored'},
-          {title: 'Sponsored Content', value: 'sponsored'},
-        ],
-        layout: 'radio',
-      },
-      initialValue: 'notSponsored',
-    }),
-    defineField({
-      name: 'sponsor',
-      title: 'Sponsor',
-      type: 'reference',
-      to: [{type: 'sponsor'}],
-      hidden: ({document}) => document?.sponsorshipStatus !== 'sponsored',
-    }),
-    defineField({
-      name: 'sponsorBadgeSettings',
-      title: 'Sponsor Badge Settings',
-      type: 'object',
-      hidden: ({document}) => document?.sponsorshipStatus !== 'sponsored',
-      fields: [
-        {
-          name: 'template',
-          type: 'string',
-          title: 'Badge Template',
-          options: {
-            list: [
-              {title: 'Use sponsor default', value: 'default'},
-              {title: 'Supported by {logo}', value: 'supportedBy'},
-            ],
-            layout: 'radio',
-          },
-          initialValue: 'default',
-        },
-        {
-          name: 'placement',
-          type: 'string',
-          title: 'Placement',
-          options: {
-            list: [
-              {title: 'Top', value: 'top'},
-              {title: 'Bottom', value: 'bottom'},
-            ],
-            layout: 'radio',
-          },
-          initialValue: 'top',
-        },
-      ],
-    }),
+    ...publishWorkflowFields().map((field) => ({
+      ...field,
+      group: 'publishing',
+    })),
+    seoField({group: 'metadata'}),
+    schemaMarkupField({group: 'metadata'}),
+    appCtaField({group: 'metadata'}),
+    {
+      ...sponsorshipField(),
+      group: 'sponsorship',
+    },
   ],
   preview: {
     select: {
@@ -157,7 +112,7 @@ export const guide = defineType({
       const {title, city, media, stops} = selection as {
         title?: string
         city?: string
-        media?: any
+        media?: PreviewValue['media']
         stops?: unknown
       }
       const stopCount = Array.isArray(stops) ? stops.length : 0

@@ -1,6 +1,7 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 import {UserIcon} from '@sanity/icons'
 import {appCtaField, schemaMarkupField, seoField, slugField, summaryField} from './fields/commonFields'
+import {socialLinksField} from './fields/socialLinksField'
 
 export const author = defineType({
   name: 'author',
@@ -75,8 +76,8 @@ export const author = defineType({
       type: 'array',
       description: 'Link galleries, exhibitions, or guides they recommend',
       of: [
-        defineArrayMember({name: 'galleryRecommendation', type: 'reference', to: [{type: 'gallery'}]}),
-        defineArrayMember({name: 'exhibitionRecommendation', type: 'reference', to: [{type: 'exhibition'}]}),
+        defineArrayMember({name: 'galleryRecommendation', type: 'externalGalleryReference'}),
+        defineArrayMember({name: 'exhibitionRecommendation', type: 'externalExhibitionReference'}),
         defineArrayMember({name: 'guideRecommendation', type: 'reference', to: [{type: 'guide'}]}),
       ],
     }),
@@ -86,16 +87,7 @@ export const author = defineType({
       type: 'string',
       validation: (Rule) => [Rule.email()],
     }),
-    defineField({
-      name: 'social',
-      title: 'Socials',
-      type: 'object',
-      fields: [
-        {name: 'instagram', type: 'url', title: 'Instagram'},
-        {name: 'twitter', type: 'url', title: 'Twitter/X'},
-        {name: 'website', type: 'url', title: 'Личный сайт'},
-      ],
-    }),
+    socialLinksField(),
     appCtaField(),
     seoField(),
     schemaMarkupField(),

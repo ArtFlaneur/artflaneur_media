@@ -15,21 +15,21 @@ export const structure = (S: StructureBuilder) =>
                 .child(
                   S.documentList()
                     .title('Reviews in Review')
-                    .filter('_type == "review" && status == "inReview"')
+                    .filter('_type == "review" && editorialStatus == "inReview"')
                 ),
               S.listItem()
                 .title('Needs Revision')
                 .child(
                   S.documentList()
                     .title('Reviews Needing Revision')
-                    .filter('_type == "review" && status == "needsRevision"')
+                    .filter('_type == "review" && editorialStatus == "needsRevision"')
                 ),
               S.listItem()
                 .title('Approved')
                 .child(
                   S.documentList()
                     .title('Approved Reviews')
-                    .filter('_type == "review" && status == "approved"')
+                    .filter('_type == "review" && editorialStatus == "approved"')
                 ),
               S.divider(),
               S.listItem()
@@ -45,7 +45,7 @@ export const structure = (S: StructureBuilder) =>
                 .child(
                   S.documentList()
                     .title('All Sponsored Content')
-                    .filter('(_type == "review" && sponsorshipEnabled == "yes") || (_type in ["artistStory", "guide"] && sponsorshipStatus == "sponsored")')
+                    .filter('defined(sponsorship.enabled) && sponsorship.enabled == true')
                 ),
             ])
         ),
@@ -55,19 +55,11 @@ export const structure = (S: StructureBuilder) =>
       S.documentTypeListItem('review').title('Reviews'),
       S.documentTypeListItem('artistStory').title('Artist Stories'),
       S.documentTypeListItem('guide').title('Guides'),
-      S.documentTypeListItem('exhibition').title('Exhibitions'),
       
       S.divider(),
       
       // People
       S.documentTypeListItem('author').title('Authors'),
-      S.documentTypeListItem('artist').title('Artists'),
-      S.documentTypeListItem('curator').title('Curators'),
-      
-      S.divider(),
-      
-      // Places
-      S.documentTypeListItem('gallery').title('Galleries'),
       
       S.divider(),
       

@@ -1,4 +1,3 @@
-
 import {defineArrayMember, defineField, defineType} from 'sanity'
 import GraphqlExhibitionInput from './review/GraphqlExhibitionInput'
 
@@ -24,6 +23,7 @@ export const homepageContent = defineType({
           type: 'reference',
           to: [{type: 'review'}],
           title: 'Featured Review',
+          validation: (Rule) => [Rule.required().error('Featured review is required for the hero')],
         }),
         defineField({
           name: 'weeklyStory',
@@ -107,6 +107,52 @@ export const homepageContent = defineType({
       title: 'Weekend Guide Highlight',
       type: 'reference',
       to: [{type: 'guide'}],
+    }),
+    defineField({
+      name: 'tickerMarquee',
+      title: 'Header Ticker',
+      type: 'object',
+      description: 'Controls the scrolling marquee that appears at the top of every page',
+      fields: [
+        defineField({
+          name: 'messages',
+          title: 'Ticker Messages',
+          type: 'array',
+          of: [
+            defineArrayMember({
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'message',
+                  title: 'Message',
+                  type: 'string',
+                  validation: (Rule) => [
+                    Rule.required().error('Ticker messages must include text'),
+                    Rule.max(120).warning('Keep ticker messages short for readability'),
+                  ],
+                }),
+                defineField({
+                  name: 'status',
+                  title: 'Status',
+                  type: 'string',
+                  options: {
+                    list: [
+                      {title: 'Active', value: 'active'},
+                      {title: 'Paused', value: 'paused'},
+                    ],
+                    layout: 'radio',
+                  },
+                  initialValue: 'active',
+                }),
+              ],
+            }),
+          ],
+          validation: (Rule) => [
+            Rule.min(1).warning('Add at least one ticker message to populate the marquee'),
+            Rule.max(10).warning('Ticker works best with 10 or fewer messages'),
+          ],
+        }),
+      ],
     }),
     defineField({
       name: 'aiChatbotTeaser',

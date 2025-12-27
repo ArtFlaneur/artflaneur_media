@@ -115,8 +115,8 @@ const GuideView: React.FC = () => {
 
             const stops: GuideStop[] = Array.isArray(guide.stops) ? guide.stops : [];
             const coverImageUrl = guide.coverImage?.asset?.url;
-            const isSponsored = guide.sponsorshipStatus === 'sponsored';
-            const sponsorLogoUrl = guide.sponsor?.logo?.asset?.url;
+            const isSponsored = Boolean(guide.sponsorship?.enabled);
+            const sponsorLogoUrl = guide.sponsorship?.sponsor?.logo?.asset?.url;
 
   return (
     <div className="bg-white">
@@ -128,9 +128,9 @@ const GuideView: React.FC = () => {
                                 <div className="flex items-center gap-2 bg-white border-2 border-black px-3 py-1 font-mono text-[10px] uppercase">
                                     <span>Sponsored by</span>
                                     {sponsorLogoUrl ? (
-                                        <img src={sponsorLogoUrl} alt={guide.sponsor?.name ?? 'Sponsor logo'} className="h-4 object-contain" />
+                                        <img src={sponsorLogoUrl} alt={guide.sponsorship?.sponsor?.name ?? 'Sponsor logo'} className="h-4 object-contain" />
                                     ) : (
-                                        <span>{guide.sponsor?.name}</span>
+                                        <span>{guide.sponsorship?.sponsor?.name}</span>
                                     )}
                                 </div>
                             )}

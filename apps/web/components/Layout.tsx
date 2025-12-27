@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, Smartphone } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
 import { client } from '../sanity/lib/client';
-import { SITE_SETTINGS_QUERY } from '../sanity/lib/queries';
+import { HOMEPAGE_TICKER_QUERY } from '../sanity/lib/queries';
+import type { HOMEPAGE_TICKER_QUERYResult } from '../sanity/types';
 
 // The Art Flaneur Logo Component
 const BrandLogo = () => (
@@ -27,10 +28,14 @@ const BrandLogo = () => (
   </div>
 );
 
-interface TickerMessage {
-  message: string;
-  isActive: boolean;
-}
+type TickerQueryResult = HOMEPAGE_TICKER_QUERYResult;
+type MarqueeMessage = NonNullable<
+  NonNullable<NonNullable<TickerQueryResult>['tickerMarquee']>['messages']
+>[number];
+
+const isActiveMessage = (message: MarqueeMessage | null | undefined): message is MarqueeMessage => {
+  return Boolean(message && message.message && message.status === 'active');
+};
 
 const Ticker: React.FC = () => {
   const [messages, setMessages] = useState<string[]>([
@@ -41,18 +46,16 @@ const Ticker: React.FC = () => {
 
   useEffect(() => {
     const fetchTickerMessages = async () => {
-      try {
-        const settings = await client.fetch(SITE_SETTINGS_QUERY);
-        if (settings?.tickerMessages) {
-          const activeMessages = settings.tickerMessages
-            .filter((msg: TickerMessage) => msg.isActive)
-            .map((msg: TickerMessage) => `• ${msg.message}`);
-          
+        try {
+          const tickerData = await client.fetch<TickerQueryResult | null>(HOMEPAGE_TICKER_QUERY);
+          const activeMessages = (tickerData?.tickerMarquee?.messages ?? [])
+            .filter((msg): msg is MarqueeMessage => isActiveMessage(msg))
+            .map((msg) => `• ${msg.message}`);
+
           if (activeMessages.length > 0) {
             // Дублируем сообщения для бесшовной анимации
             setMessages([...activeMessages, ...activeMessages]);
           }
-        }
       } catch (error) {
         console.error('Error fetching ticker messages:', error);
       }
