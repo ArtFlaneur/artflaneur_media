@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Facebook, Twitter, Linkedin, MapPin, Clock, Ticket } from 'lucide-react';
+import { Facebook, Twitter, Linkedin, MapPin, Clock, Ticket, CalendarDays } from 'lucide-react';
 import { ArticleCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
 import { BlockContent } from '../sanity/types';
 import { REVIEW_QUERYResult, REVIEWS_QUERYResult, ExternalExhibitionReference } from '../sanity/types';
 import { Article, ContentType } from '../types';
-import { getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
+import { formatWorkingHoursSchedule, getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
 import { fetchExhibitionById, fetchGalleryById, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
 
 type ReviewLike = (REVIEW_QUERYResult | REVIEWS_QUERYResult[number]) & {
@@ -46,6 +46,121 @@ const formatDate = (value?: string | null) =>
   value
     ? new Date(value).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'})
     : undefined;
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+const describeDuration = (start?: string | null, end?: string | null) => {
+  if (!start || !end) return null;
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return null;
+  }
+  const diffDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / MS_PER_DAY) + 1);
+  if (diffDays === 1) return 'One-day event';
+  if (diffDays < 7) return `${diffDays} day run`;
+  const weeks = diffDays / 7;
+  if (weeks < 5) {
+    const rounded = Number.isInteger(weeks) ? weeks : Number(weeks.toFixed(1));
+    return `${rounded} week run`;
+  }
+  const months = diffDays / 30;
+  if (months >= 1) {
+    const rounded = months >= 2 ? Math.round(months) : Number(months.toFixed(1));
+    return `${rounded} month run`;
+  }
+  return `${diffDays} day run`;
+};
+
+const formatExhibitionWindow = (
+  resolved?: GraphqlExhibition | null,
+  fallback?: ExternalExhibitionReference | null,
+) => {
+  const start = resolved?.datefrom ?? fallback?.startDate ?? null;
+  const end = resolved?.dateto ?? fallback?.endDate ?? null;
+
+  const formatDateLabel = (value: string | null) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+  };
+
+  const startLabel = start ? formatDateLabel(start) : null;
+  const endLabel = end ? formatDateLabel(end) : null;
+
+  if (startLabel && endLabel) {
+    if (startLabel === endLabel) {
+      return {
+        primary: startLabel,
+        secondary: describeDuration(start, end),
+      };
+    }
+
+    return {
+      primary: `${startLabel} – ${endLabel}`,
+      secondary: describeDuration(start, end),
+    };
+  }
+
+  if (startLabel) {
+    return {
+      primary: `Opens ${startLabel}`,
+      secondary: null,
+    };
+  }
+
+  if (endLabel) {
+    return {
+      primary: `On view until ${endLabel}`,
+      secondary: null,
+    };
+  }
+
+  return null;
+};
+
+const getTodaysScheduleEntry = (schedule: string[]): string | null => {
+  if (!schedule.length) return null;
+  const jsDay = new Date().getDay(); // Sunday = 0
+  const index = (jsDay + 6) % 7; // Align to Monday-first array
+  return schedule[index] ?? null;
+};
+
+const stripDayLabel = (entry: string) => entry.replace(/^[^:]+:\s*/, '').trim();
+
+const normalizeHoursText = (value?: string | null) =>
+  value ? value.replace(/(\d{1,2})\.(\d{2})/g, '$1:$2') : '';
+
+const formatSchedulePreviewLine = (entry: string) => {
+  const normalized = normalizeHoursText(entry);
+  const [day, ...rest] = normalized.split(':');
+  if (!rest.length) return normalized;
+  const remainder = rest.join(':').trim();
+  const shortDay = (day?.trim().slice(0, 3) || '').replace(/\.$/, '');
+  return remainder ? `${shortDay}: ${remainder}` : `${shortDay}: Closed`;
+};
+
+const deriveAdmissionDetails = (
+  gallery?: GraphqlGallery | null,
+  exhibition?: GraphqlExhibition | null,
+) => {
+  const list = [
+    gallery?.allowed,
+    gallery?.specialevent,
+    gallery?.eventtype,
+    exhibition?.eventtype,
+    Array.isArray(exhibition?.exhibition_type)
+      ? exhibition?.exhibition_type.filter(Boolean).join(', ')
+      : typeof exhibition?.exhibition_type === 'string'
+        ? exhibition?.exhibition_type
+        : null,
+  ]
+    .map((value) => value?.toString().trim())
+    .filter(Boolean);
+
+  return list.length ? list[0] ?? null : null;
+};
 
 const mapReviewToArticle = (review: ReviewLike): Article => {
   const {name: galleryName, city: galleryCity} = extractGalleryMeta(review);
@@ -218,12 +333,45 @@ const ArticleView: React.FC = () => {
   const galleryMeta = useMemo(() => extractGalleryMeta(review), [review]);
   const location = galleryMeta.name ? `${galleryMeta.name}${galleryMeta.city ? `, ${galleryMeta.city}` : ''}` : 'Gallery Location';
 
-  const galleryAddress = review?.resolvedExternalGallery?.fulladdress ?? galleryMeta.city ?? null;
+  const galleryAddress =
+    review?.resolvedExternalGallery?.fulladdress ?? galleryMeta.city ?? null;
   const galleryWebsite = review?.resolvedExternalGallery?.placeurl ?? null;
   const galleryWebsiteLabel = galleryWebsite
     ? getDisplayDomain(galleryWebsite) ?? galleryWebsite.replace(/^https?:\/\//i, '').replace(/\/$/, '')
     : null;
   const hostGalleryName = galleryMeta.name;
+
+  const exhibitionTimeline = useMemo(() => {
+    const formatted = formatExhibitionWindow(review?.resolvedExternalExhibition, review?.externalExhibition);
+    return formatted ?? {primary: 'Dates to be announced', secondary: null};
+  }, [review?.externalExhibition, review?.resolvedExternalExhibition]);
+
+  const rawOpeningHours = review?.resolvedExternalGallery?.openinghours?.trim() || null;
+  const openingHoursSchedule = useMemo(
+    () => (rawOpeningHours ? formatWorkingHoursSchedule(rawOpeningHours) : []),
+    [rawOpeningHours],
+  );
+  const todaysScheduleLine = useMemo(() => getTodaysScheduleEntry(openingHoursSchedule), [openingHoursSchedule]);
+  const weeklyHoursPreview = useMemo(
+    () => (openingHoursSchedule.length ? openingHoursSchedule.slice(0, 3) : []),
+    [openingHoursSchedule],
+  );
+  const weeklyHoursPreviewFormatted = useMemo(
+    () => weeklyHoursPreview.map(formatSchedulePreviewLine),
+    [weeklyHoursPreview],
+  );
+  const showHoursEllipsis = openingHoursSchedule.length > weeklyHoursPreview.length;
+
+  const openTodayLabel = todaysScheduleLine
+    ? stripDayLabel(normalizeHoursText(todaysScheduleLine))
+    : rawOpeningHours
+      ? rawOpeningHours.split(/\r?\n/)[0]?.trim() ?? null
+      : null;
+
+  const admissionDetails = useMemo(
+    () => deriveAdmissionDetails(review?.resolvedExternalGallery, review?.resolvedExternalExhibition),
+    [review?.resolvedExternalGallery, review?.resolvedExternalExhibition],
+  );
 
   const artistList = useMemo<LinkedDocument[]>(() => {
     if (!review) return [];
@@ -402,19 +550,35 @@ const ArticleView: React.FC = () => {
                              </div>
                          </div>
                          <div className="flex items-start gap-3">
+                             <CalendarDays className="w-4 h-4 mt-1" />
+                             <div>
+                                 <p className="font-bold">{exhibitionTimeline.primary}</p>
+                                 {exhibitionTimeline.secondary && (
+                                   <p className="text-gray-500 text-xs">{exhibitionTimeline.secondary}</p>
+                                 )}
+                             </div>
+                         </div>
+                         <div className="flex items-start gap-3">
                              <Clock className="w-4 h-4 mt-1" />
                              <div>
-                                 <p className="font-bold">Open Today</p>
-                                 <p className="text-gray-500 text-xs">10:00 - 18:00</p>
+                                <p className="font-bold">
+                                  {openTodayLabel ? `Open today: ${openTodayLabel}` : 'Opening hours available soon'}
+                                </p>
+                                {weeklyHoursPreviewFormatted.length > 0 ? (
+                                  <p className="text-gray-500 text-[11px] leading-relaxed whitespace-pre-line">
+                                    {weeklyHoursPreviewFormatted.join('\n')}
+                                    {showHoursEllipsis && '\n…'}
+                                  </p>
+                                ) : null}
                              </div>
                          </div>
                          <div className="flex items-start gap-3">
                              <Ticket className="w-4 h-4 mt-1" />
                              <div>
-                                 <p className="font-bold">Entry: Free</p>
-                                 {hostGalleryName && (
-                                   <p className="text-gray-500 text-xs">Hosted by {hostGalleryName}</p>
-                                 )}
+                                <p className="font-bold">{admissionDetails ?? 'Entry details available via the venue'}</p>
+                                {hostGalleryName && (
+                                  <p className="text-gray-500 text-xs">Hosted by {hostGalleryName}</p>
+                                )}
                              </div>
                          </div>
                          <div className="border-t border-gray-200 pt-4 space-y-4">
