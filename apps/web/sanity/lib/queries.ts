@@ -34,10 +34,20 @@ export const REVIEWS_QUERY = defineQuery(`*[
     title,
     startDate,
     endDate,
+    artist,
+    description,
+    eventType,
+    exhibitionType,
     gallery {
       id,
       name,
-      city
+      city,
+      address,
+      website,
+      openingHours,
+      allowed,
+      specialEvent,
+      eventType
     }
   }
 }`)
@@ -83,10 +93,20 @@ export const REVIEW_QUERY = defineQuery(`*[
     title,
     startDate,
     endDate,
+    artist,
+    description,
+    eventType,
+    exhibitionType,
     gallery {
       id,
       name,
-      city
+      city,
+      address,
+      website,
+      openingHours,
+      allowed,
+      specialEvent,
+      eventType
     }
   },
   relatedReviews[]->{

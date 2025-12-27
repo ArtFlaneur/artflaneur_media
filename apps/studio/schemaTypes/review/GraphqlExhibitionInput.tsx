@@ -21,6 +21,20 @@ interface GraphqlExhibition {
   gallery_id?: string | null
   artist?: string | null
   description?: string | null
+  eventtype?: string | null
+  exhibition_type?: string[] | string | null
+}
+
+interface GraphqlGallery {
+  id: string
+  galleryname?: string | null
+  city?: string | null
+  fulladdress?: string | null
+  placeurl?: string | null
+  openinghours?: string | null
+  allowed?: string | null
+  specialevent?: string | null
+  eventtype?: string | null
 }
 
 type ListExhibitionsResponse = {
@@ -29,6 +43,12 @@ type ListExhibitionsResponse = {
       items?: GraphqlExhibition[]
       nextToken?: string | null
     }
+  }
+}
+
+type GetGalleryResponse = {
+  data?: {
+    getGalleryById?: GraphqlGallery | null
   }
 }
 
@@ -45,8 +65,26 @@ const SEARCH_EXHIBITIONS_QUERY = `#graphql
         gallery_id
         artist
         description
+        eventtype
+        exhibition_type
       }
       nextToken
+    }
+  }
+`
+
+const GET_GALLERY_QUERY = `#graphql
+  query GetGalleryById($id: ID!) {
+    getGalleryById(id: $id) {
+      id
+      galleryname
+      city
+      fulladdress
+      placeurl
+      openinghours
+      allowed
+      specialevent
+      eventtype
     }
   }
 `
@@ -171,8 +209,47 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
     }
   }, [searchTerm])
 
+  const fetchGalleryDetails = useCallback(async (galleryId?: string | null) => {
+    if (!galleryId || !GRAPHQL_ENDPOINT || !GRAPHQL_API_KEY) {
+      return null
+    }
+
+    try {
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': GRAPHQL_API_KEY,
+          'x-tenant-id': GRAPHQL_TENANT_ID,
+        },
+        body: JSON.stringify({
+          query: GET_GALLERY_QUERY,
+          variables: {id: galleryId},
+        }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ [Gallery Fetch] Request failed:', errorText)
+        return null
+      }
+
+      const payload: GetGalleryResponse = await response.json()
+      return payload.data?.getGalleryById ?? null
+    } catch (err) {
+      console.error('❌ [Gallery Fetch] Unexpected error:', err)
+      return null
+    }
+  }, [])
+
   const handleSelect = useCallback(
-    (exhibition: GraphqlExhibition) => {
+    async (exhibition: GraphqlExhibition) => {
+      const galleryDetails = await fetchGalleryDetails(exhibition.gallery_id)
+
+      const normalizedExhibitionType = Array.isArray(exhibition.exhibition_type)
+        ? exhibition.exhibition_type.filter(Boolean).join(', ')
+        : exhibition.exhibition_type ?? undefined
+
       onChange(
         set({
           _type: 'externalExhibitionReference',
@@ -180,18 +257,28 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
           title: exhibition.title ?? undefined,
           startDate: exhibition.datefrom ?? undefined,
           endDate: exhibition.dateto ?? undefined,
+          artist: exhibition.artist ?? undefined,
+          eventType: exhibition.eventtype ?? undefined,
+          exhibitionType: normalizedExhibitionType,
+          description: exhibition.description ?? undefined,
           gallery: {
             _type: 'object',
-            id: exhibition.gallery_id ?? undefined,
-            name: exhibition.galleryname ?? undefined,
-            city: exhibition.city ?? undefined,
+            id: exhibition.gallery_id ?? galleryDetails?.id ?? undefined,
+            name: exhibition.galleryname ?? galleryDetails?.galleryname ?? undefined,
+            city: exhibition.city ?? galleryDetails?.city ?? undefined,
+            address: galleryDetails?.fulladdress ?? undefined,
+            website: galleryDetails?.placeurl ?? undefined,
+            openingHours: galleryDetails?.openinghours ?? undefined,
+            allowed: galleryDetails?.allowed ?? undefined,
+            specialEvent: galleryDetails?.specialevent ?? undefined,
+            eventType: galleryDetails?.eventtype ?? undefined,
           },
         }),
       )
       setSearchTerm('')
       setResults([])
     },
-    [onChange],
+    [fetchGalleryDetails, onChange],
   )
 
   const handleClear = useCallback(() => {
@@ -301,7 +388,9 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
               shadow={1}
               tone="default"
               style={{cursor: 'pointer'}}
-              onClick={() => handleSelect(exhibition)}
+              onClick={() => {
+                void handleSelect(exhibition)
+              }}
             >
               <Stack space={2}>
                 <Text size={1} weight="semibold">

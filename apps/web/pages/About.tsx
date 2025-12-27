@@ -11,7 +11,7 @@ const About: React.FC = () => {
             We Are Art Flaneur
           </h1>
           
-          <p className="text-[18px] font-serif leading-relaxed text-black">
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-gray-700">
             Art Flaneur Global Pty Ltd began the way many good cultural stories begin: not with a pitch deck, but with walking. Walking through unfamiliar streets, noticing small "gallery" signs in windows, following curiosity into laneways, and learning that art is often hiding in plain sight — waiting for someone to slow down long enough to find it.
           </p>
         </div>
@@ -25,7 +25,7 @@ const About: React.FC = () => {
               Who we are (and why it matters)
             </h2>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-gray-700">
               <p>
                 We're Eva and Tim — a "big corporation" of two humans based in Melbourne, Australia. Art Flaneur is our love story and our family story, built with our own hands, our own time, and our own family budget. It's also our long-term cultural project: a platform designed to make art discovery feel more alive, more playful, and more accessible — for locals and cultural travellers, in Australia and around the world.
               </p>
@@ -54,7 +54,7 @@ const About: React.FC = () => {
               What Art Flaneur is
             </h2>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-gray-700">
               <p>
                 Art Flaneur is a mobile-first platform for discovering galleries, exhibitions, and cultural events, with interactive maps, personal planning tools, and recommendations. We use technology like geofencing, gamification and immersive, smartphone-first formats to turn cultural exploration into a journey rather than a to-do list.
               </p>
@@ -83,7 +83,7 @@ const About: React.FC = () => {
               Who it's for
             </h2>
             
-            <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+            <div className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-gray-700">
               <p>
                 Art Flaneur is for cultural tourists, local explorers, students, collectors, artists, and anyone who wants to feel more connected to where they are. It's for the person who lands in a new city and doesn't want an itinerary that feels like homework. It's also for the local who has lived somewhere for years and suddenly realises there are entire creative worlds within a 15‑minute walk.
               </p>
@@ -106,7 +106,7 @@ const About: React.FC = () => {
                   Our approach: open discovery, not gated culture
                 </h3>
                 
-                <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+                <div className="space-y-2 font-mono text-[11px] uppercase tracking-widest text-gray-700">
                   <p>
                     Art Flaneur is not "invitation-only." We don't believe cultural visibility should belong only to the biggest budgets. Any independent gallery or artist studio can appear on the map, because that's how cultural ecosystems stay diverse and alive.
                   </p>

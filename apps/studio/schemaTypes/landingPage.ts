@@ -1,16 +1,23 @@
-
+import {PresentationIcon} from '@sanity/icons'
 import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const landingPage = defineType({
   name: 'landingPage',
   title: 'Landing Page',
   type: 'document',
+  icon: PresentationIcon,
+  groups: [
+    {name: 'hero', title: 'Hero', icon: PresentationIcon, default: true},
+    {name: 'content', title: 'Content Blocks', icon: PresentationIcon},
+    {name: 'conversion', title: 'Conversion', icon: PresentationIcon},
+  ],
   fields: [
     defineField({
       name: 'title',
       title: 'Title',
       type: 'string',
-      validation: (Rule) => [Rule.required().error('Title is required to publish a landing page')],
+      group: 'hero',
+      validation: (Rule) => [Rule.required().error('Title is required to publish a landing page'), Rule.max(80).warning('Keep titles short for hero layouts')],
     }),
     defineField({
       name: 'slug',
@@ -20,12 +27,14 @@ export const landingPage = defineType({
         source: 'title',
         maxLength: 96,
       },
+      group: 'hero',
       validation: (Rule) => [Rule.required().error('Slug is required to generate a URL')],
     }),
     defineField({
       name: 'pageType',
       title: 'Page Type',
       type: 'string',
+      group: 'hero',
       options: {
         list: [
           {title: 'For Galleries', value: 'forGalleries'},
@@ -38,18 +47,24 @@ export const landingPage = defineType({
       name: 'heroSection',
       title: 'Hero Section',
       type: 'object',
+      group: 'hero',
       fields: [
-        defineField({name: 'headline', type: 'string'}),
+        defineField({
+          name: 'headline',
+          type: 'string',
+          validation: (Rule) => [Rule.required().error('Headline is required for the hero section')],
+        }),
         defineField({name: 'subheadline', type: 'text', rows: 2}),
         defineField({name: 'heroImage', type: 'image', options: {hotspot: true}}),
-        defineField({name: 'ctaText', type: 'string'}),
-        defineField({name: 'ctaUrl', type: 'string'}),
+        defineField({name: 'ctaText', type: 'string', title: 'Primary CTA Label'}),
+        defineField({name: 'ctaUrl', type: 'url', title: 'Primary CTA URL'}),
       ],
     }),
     defineField({
       name: 'problemCards',
       title: 'Problem Cards',
       type: 'array',
+      group: 'content',
       of: [
         defineArrayMember({
           type: 'object',
@@ -60,11 +75,13 @@ export const landingPage = defineType({
           ],
         }),
       ],
+      validation: (Rule) => [Rule.max(4).warning('Keep hero problem statements focused (max 4)')],
     }),
     defineField({
       name: 'packages',
       title: 'Packages',
       type: 'array',
+      group: 'content',
       of: [
         defineArrayMember({
           type: 'object',
@@ -86,6 +103,7 @@ export const landingPage = defineType({
       name: 'testimonials',
       title: 'Testimonials',
       type: 'array',
+      group: 'content',
       of: [
         defineArrayMember({
           type: 'object',
@@ -102,6 +120,7 @@ export const landingPage = defineType({
       name: 'faq',
       title: 'FAQ',
       type: 'array',
+      group: 'content',
       of: [
         defineArrayMember({
           type: 'object',
@@ -116,6 +135,7 @@ export const landingPage = defineType({
       name: 'contactForm',
       title: 'Contact Form',
       type: 'object',
+      group: 'conversion',
       fields: [
         defineField({name: 'headline', type: 'string'}),
         defineField({name: 'description', type: 'text', rows: 2}),
@@ -126,9 +146,10 @@ export const landingPage = defineType({
       name: 'trialCta',
       title: 'Trial CTA',
       type: 'object',
+      group: 'conversion',
       fields: [
         defineField({name: 'text', type: 'string', title: 'CTA Text'}),
-        defineField({name: 'url', type: 'string'}),
+        defineField({name: 'url', type: 'url'}),
       ],
     }),
   ],
@@ -136,12 +157,15 @@ export const landingPage = defineType({
     select: {
       title: 'title',
       pageType: 'pageType',
+      hero: 'heroSection.headline',
     },
     prepare(selection) {
-      const {title, pageType} = selection
+      const {title, pageType, hero} = selection
+      const typeLabel = pageType === 'forGalleries' ? 'Galleries' : pageType === 'forEvents' ? 'Events' : 'Generic'
       return {
         title: title,
-        subtitle: pageType || 'Landing Page',
+        subtitle: hero ? `${typeLabel} • ${hero}` : typeLabel,
+        media: PresentationIcon,
       }
     },
   },

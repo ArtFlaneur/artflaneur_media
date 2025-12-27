@@ -1,3 +1,4 @@
+import {HomeIcon} from '@sanity/icons'
 import {defineArrayMember, defineField, defineType} from 'sanity'
 import GraphqlExhibitionInput from './review/GraphqlExhibitionInput'
 
@@ -5,6 +6,12 @@ export const homepageContent = defineType({
   name: 'homepageContent',
   title: 'Homepage Content',
   type: 'document',
+  icon: HomeIcon,
+  groups: [
+    {name: 'hero', title: 'Hero & Stories', icon: HomeIcon, default: true},
+    {name: 'features', title: 'Curated Content', icon: HomeIcon},
+    {name: 'engagement', title: 'Engagement Modules', icon: HomeIcon},
+  ],
   fields: [
     defineField({
       name: 'title',
@@ -12,11 +19,13 @@ export const homepageContent = defineType({
       type: 'string',
       initialValue: 'Homepage',
       readOnly: true,
+      group: 'hero',
     }),
     defineField({
       name: 'heroSection',
       title: 'Hero Section',
       type: 'object',
+      group: 'hero',
       fields: [
         defineField({
           name: 'featuredReview',
@@ -37,6 +46,7 @@ export const homepageContent = defineType({
       name: 'latestReviews',
       title: 'Latest Reviews',
       type: 'array',
+      group: 'hero',
       of: [defineArrayMember({type: 'reference', to: [{type: 'review'}]})],
       validation: (Rule) => [Rule.max(6).warning('Homepage supports up to 6 curated reviews')],
     }),
@@ -44,6 +54,7 @@ export const homepageContent = defineType({
       name: 'featuredArtistStory',
       title: 'Featured Artist Story',
       type: 'reference',
+      group: 'hero',
       to: [{type: 'artistStory'}],
     }),
     defineField({
@@ -51,6 +62,7 @@ export const homepageContent = defineType({
       title: 'Spotlight Exhibitions',
       description: 'Curated GraphQL exhibitions to highlight on the homepage',
       type: 'array',
+      group: 'features',
       of: [
         defineArrayMember({
           name: 'spotlightExhibition',
@@ -106,6 +118,7 @@ export const homepageContent = defineType({
       name: 'weekendGuide',
       title: 'Weekend Guide Highlight',
       type: 'reference',
+      group: 'features',
       to: [{type: 'guide'}],
     }),
     defineField({
@@ -113,6 +126,7 @@ export const homepageContent = defineType({
       title: 'Header Ticker',
       type: 'object',
       description: 'Controls the scrolling marquee that appears at the top of every page',
+      group: 'engagement',
       fields: [
         defineField({
           name: 'messages',
@@ -158,6 +172,7 @@ export const homepageContent = defineType({
       name: 'aiChatbotTeaser',
       title: 'AI Chatbot Teaser',
       type: 'object',
+      group: 'engagement',
       fields: [
         defineField({name: 'headline', type: 'string'}),
         defineField({name: 'description', type: 'text', rows: 2}),
@@ -168,6 +183,7 @@ export const homepageContent = defineType({
       name: 'newsletterSignup',
       title: 'Newsletter Signup',
       type: 'object',
+      group: 'engagement',
       fields: [
         defineField({name: 'headline', type: 'string'}),
         defineField({name: 'description', type: 'text', rows: 2}),
@@ -176,4 +192,21 @@ export const homepageContent = defineType({
       ],
     }),
   ],
+  preview: {
+    select: {
+      title: 'heroSection.featuredReview.title',
+      guide: 'weekendGuide.title',
+      tickerCount: 'tickerMarquee.messages',
+    },
+    prepare({title, guide, tickerCount}) {
+      const tickerLength = Array.isArray(tickerCount) ? tickerCount.length : 0
+      const subtitleParts = [guide ? `Weekend Guide: ${guide}` : null, tickerLength ? `${tickerLength} ticker messages` : null]
+        .filter(Boolean)
+      return {
+        title: title || 'Homepage layout',
+        subtitle: subtitleParts.join(' • ') || 'Update hero and engagement blocks',
+        media: HomeIcon,
+      }
+    },
+  },
 })

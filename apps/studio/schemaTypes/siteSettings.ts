@@ -1,3 +1,4 @@
+import {CogIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 import {socialLinksField} from './fields/socialLinksField'
 
@@ -5,6 +6,7 @@ export const siteSettings = defineType({
   name: 'siteSettings',
   title: 'Site Settings',
   type: 'document',
+  icon: CogIcon,
   groups: [
     {name: 'basic', title: 'Basic', default: true},
     {name: 'sponsorship', title: 'Sponsorship Defaults'},
@@ -83,4 +85,19 @@ export const siteSettings = defineType({
       ],
     }),
   ],
+  preview: {
+    select: {
+      title: 'title',
+      tagline: 'tagline',
+      email: 'contactEmail',
+    },
+    prepare({title, tagline, email}) {
+      const subtitleParts = [tagline, email].filter(Boolean)
+      return {
+        title: title || 'Site Settings',
+        subtitle: subtitleParts.join(' • ') || 'Configure global defaults',
+        media: CogIcon,
+      }
+    },
+  },
 })

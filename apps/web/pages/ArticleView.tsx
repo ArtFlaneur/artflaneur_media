@@ -23,7 +23,7 @@ const hasResolvedExternalExhibition = (
 
 const extractGalleryMeta = (review: ReviewLike | EnrichedReview | null) => {
   if (!review) {
-    return {name: undefined, city: undefined};
+    return {name: undefined, city: undefined, address: undefined, website: undefined, openingHours: undefined};
   }
 
   const resolved = hasResolvedExternalExhibition(review) ? review.resolvedExternalExhibition : undefined;
@@ -32,6 +32,9 @@ const extractGalleryMeta = (review: ReviewLike | EnrichedReview | null) => {
   return {
     name: resolved?.galleryname ?? fallback?.gallery?.name ?? undefined,
     city: resolved?.city ?? fallback?.gallery?.city ?? undefined,
+    address: fallback?.gallery?.address ?? undefined,
+    website: fallback?.gallery?.website ?? undefined,
+    openingHours: fallback?.gallery?.openingHours ?? undefined,
   };
 };
 
@@ -143,6 +146,7 @@ const formatSchedulePreviewLine = (entry: string) => {
 const deriveAdmissionDetails = (
   gallery?: GraphqlGallery | null,
   exhibition?: GraphqlExhibition | null,
+  fallback?: ExternalExhibitionReference | null,
 ) => {
   const list = [
     gallery?.allowed,
@@ -154,6 +158,11 @@ const deriveAdmissionDetails = (
       : typeof exhibition?.exhibition_type === 'string'
         ? exhibition?.exhibition_type
         : null,
+    fallback?.gallery?.allowed,
+    fallback?.gallery?.specialEvent,
+    fallback?.gallery?.eventType,
+    fallback?.eventType,
+    fallback?.exhibitionType,
   ]
     .map((value) => value?.toString().trim())
     .filter(Boolean);
@@ -332,8 +341,8 @@ const ArticleView: React.FC = () => {
   const location = galleryMeta.name ? `${galleryMeta.name}${galleryMeta.city ? `, ${galleryMeta.city}` : ''}` : 'Gallery Location';
 
   const galleryAddress =
-    review?.resolvedExternalGallery?.fulladdress ?? galleryMeta.city ?? null;
-  const galleryWebsite = review?.resolvedExternalGallery?.placeurl ?? null;
+    review?.resolvedExternalGallery?.fulladdress ?? galleryMeta.address ?? galleryMeta.city ?? null;
+  const galleryWebsite = review?.resolvedExternalGallery?.placeurl ?? galleryMeta.website ?? null;
   const galleryWebsiteLabel = galleryWebsite
     ? getDisplayDomain(galleryWebsite) ?? galleryWebsite.replace(/^https?:\/\//i, '').replace(/\/$/, '')
     : null;
@@ -344,7 +353,10 @@ const ArticleView: React.FC = () => {
     return formatted ?? {primary: 'Dates to be announced', secondary: null};
   }, [review?.externalExhibition, review?.resolvedExternalExhibition]);
 
-  const rawOpeningHours = review?.resolvedExternalGallery?.openinghours?.trim() || null;
+  const rawOpeningHours =
+    review?.resolvedExternalGallery?.openinghours?.trim() ||
+    galleryMeta.openingHours?.trim() ||
+    null;
   const openingHoursSchedule = useMemo(
     () => (rawOpeningHours ? formatWorkingHoursSchedule(rawOpeningHours) : []),
     [rawOpeningHours],
@@ -367,13 +379,20 @@ const ArticleView: React.FC = () => {
       : null;
 
   const admissionDetails = useMemo(
-    () => deriveAdmissionDetails(review?.resolvedExternalGallery, review?.resolvedExternalExhibition),
-    [review?.resolvedExternalGallery, review?.resolvedExternalExhibition],
+    () =>
+      deriveAdmissionDetails(
+        review?.resolvedExternalGallery,
+        review?.resolvedExternalExhibition,
+        review?.externalExhibition ?? null,
+      ),
+    [review?.externalExhibition, review?.resolvedExternalExhibition, review?.resolvedExternalGallery],
   );
 
   const artistList = useMemo<LinkedDocument[]>(() => {
     if (!review) return [];
-    const graphqlNames = parseGraphqlArtists(review.resolvedExternalExhibition?.artist);
+    const graphqlNames = parseGraphqlArtists(
+      review.resolvedExternalExhibition?.artist ?? review.externalExhibition?.artist,
+    );
     return graphqlNames.map((name, index) => ({
       _id: `${review._id}-artist-${index}`,
       name,

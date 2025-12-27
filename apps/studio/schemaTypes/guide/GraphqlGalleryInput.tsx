@@ -12,6 +12,7 @@ export type ExternalGalleryValue = {
   city?: string
   address?: string
   website?: string
+  workingHours?: string
 }
 
 type GraphqlGalleryHit = {
@@ -20,6 +21,7 @@ type GraphqlGalleryHit = {
   country?: string | null
   fulladdress?: string | null
   placeurl?: string | null
+  openinghours?: string | null
 }
 
 type GraphqlEnvelope = {
@@ -27,6 +29,13 @@ type GraphqlEnvelope = {
     listGalleriesById?: {
       items?: GraphqlGalleryHit[]
     }
+  }
+  errors?: Array<{message?: string}>
+}
+
+type GetGalleryEnvelope = {
+  data?: {
+    getGalleryById?: GraphqlGalleryHit | null
   }
   errors?: Array<{message?: string}>
 }
@@ -68,6 +77,17 @@ const SEARCH_GALLERIES_QUERY = `query SearchGuideGalleries($limit: Int!, $filter
       fulladdress
       placeurl
     }
+  }
+}`
+
+const GET_GALLERY_QUERY = `query GetGuideGalleryById($id: ID!) {
+  getGalleryById(id: $id) {
+    id
+    galleryname
+    city
+    fulladdress
+    placeurl
+    openinghours
   }
 }`
 
@@ -130,6 +150,39 @@ const fetchGraphqlGalleries = async (term: string): Promise<GraphqlGalleryHit[]>
   return payload.data?.listGalleriesById?.items ?? []
 }
 
+const fetchGalleryDetails = async (galleryId: string): Promise<GraphqlGalleryHit | null> => {
+  if (!GRAPHQL_ENDPOINT || !GRAPHQL_API_KEY) {
+    return null
+  }
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': GRAPHQL_API_KEY,
+      'x-tenant-id': GRAPHQL_TENANT_ID,
+    },
+    body: JSON.stringify({
+      query: GET_GALLERY_QUERY,
+      variables: {id: galleryId},
+    }),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('Failed to fetch gallery details', galleryId, errorText)
+    return null
+  }
+
+  const payload = (await response.json()) as GetGalleryEnvelope
+  if (payload.errors?.length) {
+    console.error('GraphQL returned an error while fetching gallery details', payload.errors)
+    return null
+  }
+
+  return payload.data?.getGalleryById ?? null
+}
+
 const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
   const {value, onChange, schemaType, elementProps, readOnly} = props
   const [query, setQuery] = useState(value?.name ?? '')
@@ -157,8 +210,17 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
   }, [isSearchingDisabled, query])
 
   const handleSelect = useCallback(
-    (gallery: GraphqlGalleryHit) => {
+    async (gallery: GraphqlGalleryHit) => {
       if (readOnly) return
+
+      let workingHours: string | undefined
+      try {
+        const details = await fetchGalleryDetails(gallery.id)
+        workingHours = details?.openinghours ?? gallery.openinghours ?? undefined
+      } catch (err) {
+        console.error('Failed to load gallery details for working hours', gallery.id, err)
+        workingHours = gallery.openinghours ?? undefined
+      }
 
       onChange(
         set({
@@ -168,6 +230,7 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
           city: deriveCity(gallery),
           address: gallery.fulladdress ?? undefined,
           website: gallery.placeurl ?? undefined,
+          workingHours,
         }),
       )
       setResults([])
@@ -229,6 +292,11 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
                 {value.website}
               </Text>
             )}
+            {value.workingHours && (
+              <Text size={1} muted>
+                {value.workingHours.split(/\r?\n/)[0]}
+              </Text>
+            )}
           </Stack>
         </Card>
       ) : (
@@ -280,7 +348,9 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
               radius={2}
               shadow={1}
               border
-              onClick={() => handleSelect(gallery)}
+              onClick={() => {
+                void handleSelect(gallery)
+              }}
               disabled={readOnly}
             >
               <Stack space={1}>

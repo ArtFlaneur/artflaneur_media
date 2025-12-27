@@ -1,5 +1,6 @@
 import {EarthGlobeIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
+import {workingHoursField} from './fields/workingHoursField'
 
 export const externalGalleryReference = defineType({
   name: 'externalGalleryReference',
@@ -17,6 +18,9 @@ export const externalGalleryReference = defineType({
     defineField({name: 'city', title: 'City', type: 'string'}),
     defineField({name: 'address', title: 'Address', type: 'string'}),
     defineField({name: 'website', title: 'Website', type: 'url'}),
+    workingHoursField({
+      description: 'One entry per line (e.g. "Mon-Fri 10:00-18:00", "Sun Closed")',
+    }),
   ],
   preview: {
     select: {
