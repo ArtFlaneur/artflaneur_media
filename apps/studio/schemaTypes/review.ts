@@ -129,72 +129,14 @@ export const review = defineType({
       validation: (Rule) => [Rule.required().error('Author is required')],
     }),
     defineField({
-      name: 'exhibition',
-      type: 'reference',
-      to: [{type: 'exhibition'}],
-      group: 'metadata',
-      description: 'Reference an editorially managed exhibition from Sanity',
-      options: {
-        filter: 'defined(title)',
-      },
-      validation: (Rule) => [Rule.custom((exhibition, context) => {
-        const externalExhibition = (context.document as any)?.externalExhibition
-        const gallery = (context.document as any)?.gallery
-        if (!exhibition && !externalExhibition && !gallery) {
-          return 'Select an Exhibition (Sanity or GraphQL) or a Gallery'
-        }
-        return true
-      })],
-    }),
-    defineField({
       name: 'externalExhibition',
       title: 'GraphQL Exhibition',
       type: 'externalExhibitionReference',
       group: 'metadata',
       description: 'Search and select an exhibition from the global GraphQL catalogue',
       components: {input: GraphqlExhibitionInput},
-      validation: (Rule) => [Rule.custom((externalExhibition, context) => {
-        const exhibition = (context.document as any)?.exhibition
-        const gallery = (context.document as any)?.gallery
-        if (!externalExhibition && !exhibition && !gallery) {
-          return 'Select an Exhibition (Sanity or GraphQL) or a Gallery'
-        }
-        return true
-      })],
-    }),
-    defineField({
-      name: 'gallery',
-      type: 'reference',
-      to: [{type: 'gallery'}],
-      group: 'metadata',
-      options: {
-        filter: 'defined(name)',
-      },
-    }),
-    defineField({
-      name: 'artists',
-      type: 'array',
-      group: 'metadata',
-      of: [defineArrayMember({type: 'reference', to: [{type: 'artist'}]})],
-    }),
-    defineField({
-      name: 'exhibitionDates',
-      type: 'object',
-      group: 'metadata',
-      fields: [
-        defineField({name: 'startDate', type: 'datetime'}),
-        defineField({name: 'endDate', type: 'datetime'}),
-      ],
-      fieldsets: [{name: 'dates', options: {columns: 2}}],
-    }),
-    defineField({
-      name: 'venue',
-      type: 'object',
-      group: 'metadata',
-      fields: [
-        defineField({name: 'address', type: 'string'}),
-        defineField({name: 'workingHours', type: 'text', rows: 2}),
-        defineField({name: 'ticketPrice', type: 'string'}),
+      validation: (Rule) => [
+        Rule.required().error('Select an exhibition from the GraphQL catalogue to publish'),
       ],
     }),
     defineField({

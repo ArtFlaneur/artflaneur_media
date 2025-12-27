@@ -27,7 +27,19 @@ export const REVIEWS_QUERY = defineQuery(`*[
     }
   },
   publishedAt,
-  rating
+  rating,
+  externalExhibition {
+    _type,
+    id,
+    title,
+    startDate,
+    endDate,
+    gallery {
+      id,
+      name,
+      city
+    }
+  }
 }`)
 
 export const REVIEW_QUERY = defineQuery(`*[
@@ -623,19 +635,7 @@ export const GUIDES_QUERY = defineQuery(`*[
     _key,
     title,
     summary,
-    address,
     notes,
-    image {
-      asset->{
-        url
-      },
-      alt
-    },
-    gallery->{
-      _id,
-      name,
-      address
-    },
     externalGallery {
       _type,
       id,
@@ -643,15 +643,6 @@ export const GUIDES_QUERY = defineQuery(`*[
       city,
       address,
       website
-    },
-    exhibition->{
-      _id,
-      title,
-      slug
-    },
-    location {
-      lat,
-      lng
     }
   }
 }`)
@@ -690,23 +681,7 @@ export const GUIDE_QUERY = defineQuery(`*[
     _key,
     title,
     summary,
-    address,
     notes,
-    image {
-      asset->{
-        url
-      },
-      alt
-    },
-    location {
-      lat,
-      lng
-    },
-    gallery->{
-      _id,
-      name,
-      address
-    },
     externalGallery {
       _type,
       id,
@@ -714,11 +689,6 @@ export const GUIDE_QUERY = defineQuery(`*[
       city,
       address,
       website
-    },
-    exhibition->{
-      _id,
-      title,
-      slug
     }
   }
 }`)

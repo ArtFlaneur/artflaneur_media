@@ -189,8 +189,8 @@ const mapGuideToCard = (guide: GUIDES_QUERYResult[number]): Guide => ({
     id: stop._key ?? `${guide._id}-stop`,
     title: stop.title ?? 'Featured stop',
     description: stop.summary ?? stop.notes ?? '',
-    image: stop.image?.asset?.url ?? guide.coverImage?.asset?.url ?? `https://picsum.photos/seed/${guide._id}-stop/600/600`,
-    location: stop.address ?? guide.city ?? 'City',
+    image: guide.coverImage?.asset?.url ?? `https://picsum.photos/seed/${guide._id}-stop/600/600`,
+    location: stop.externalGallery?.city ?? stop.externalGallery?.address ?? guide.city ?? 'City',
   })),
 });
 

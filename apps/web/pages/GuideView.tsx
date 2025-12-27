@@ -161,18 +161,15 @@ const GuideView: React.FC = () => {
                                             </div>
                                         )}
                                         {stops.map((step, index) => {
-                                                                                        const stopImage = step.image?.asset?.url ?? coverImageUrl;
-                                                                                        const stopImageAlt = step.image?.alt ?? step.title ?? 'Guide stop visual';
+                                                                                        const stopImage = coverImageUrl ?? null;
+                                                                                        const stopImageAlt = step.title ?? 'Guide stop visual';
                                                                                         const galleryName =
-                                                                                            step.gallery?.name ??
-                                                                                            step.externalGallery?.name ??
                                                                                             step.resolvedExternalGallery?.galleryname ??
+                                                                                            step.externalGallery?.name ??
                                                                                             null;
                                                                                         const galleryAddress =
-                                                                                            step.address ??
-                                                                                            step.gallery?.address ??
-                                                                                            step.externalGallery?.address ??
                                                                                             step.resolvedExternalGallery?.fulladdress ??
+                                                                                            step.externalGallery?.address ??
                                                                                             guide.city ??
                                                                                             'Location TBD';
                                             return (
@@ -198,11 +195,11 @@ const GuideView: React.FC = () => {
                                                                             <MapPin className="w-3 h-3" /> {galleryAddress}
                                     </p>
                                                                         <p className="text-gray-800 leading-relaxed">{step.summary || step.notes || 'Details coming soon.'}</p>
-                                                                        {(step.exhibition?.title || galleryName) && (
-                                                                            <p className="mt-4 text-xs font-mono uppercase tracking-wide text-gray-500">
-                                                                                {[step.exhibition?.title, galleryName].filter(Boolean).join(' • ')}
-                                                                            </p>
-                                                                        )}
+                                                                                                {galleryName && (
+                                                                                                    <p className="mt-4 text-xs font-mono uppercase tracking-wide text-gray-500">
+                                                                                                        {galleryName}
+                                                                                                    </p>
+                                                                                                )}
                                 </div>
                             </div>
                             

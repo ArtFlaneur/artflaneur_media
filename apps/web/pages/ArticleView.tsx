@@ -8,12 +8,39 @@ import { BlockContent } from '../sanity/types';
 import { REVIEW_QUERYResult, REVIEWS_QUERYResult, ExternalExhibitionReference } from '../sanity/types';
 import { Article, ContentType } from '../types';
 import { getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
-import { fetchExhibitionById, type GraphqlExhibition } from '../lib/graphql';
+import { fetchExhibitionById, fetchGalleryById, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
 
-type ReviewLike = REVIEW_QUERYResult | REVIEWS_QUERYResult[number];
+type ReviewLike = (REVIEW_QUERYResult | REVIEWS_QUERYResult[number]) & {
+  externalExhibition?: ExternalExhibitionReference | null;
+};
 
 const isFullReview = (review: ReviewLike): review is REVIEW_QUERYResult =>
-  'sponsorshipEnabled' in review || 'gallery' in review || 'exhibition' in review;
+  'sponsorshipEnabled' in review;
+
+const hasResolvedExternalExhibition = (
+  review: ReviewLike | EnrichedReview,
+): review is EnrichedReview =>
+  typeof review === 'object' && review !== null && 'resolvedExternalExhibition' in review;
+
+const extractGalleryMeta = (review: ReviewLike | EnrichedReview | null) => {
+  if (!review) {
+    return {name: undefined, city: undefined};
+  }
+
+  const resolved = hasResolvedExternalExhibition(review) ? review.resolvedExternalExhibition : undefined;
+  const fallback = review.externalExhibition;
+
+  return {
+    name: resolved?.galleryname ?? fallback?.gallery?.name ?? undefined,
+    city: resolved?.city ?? fallback?.gallery?.city ?? undefined,
+  };
+};
+
+const parseGraphqlArtists = (value?: string | null) =>
+  value
+    ?.split(/,|&|\/| and /i)
+    .map((name) => name.trim())
+    .filter(Boolean) ?? [];
 
 const formatDate = (value?: string | null) =>
   value
@@ -21,12 +48,7 @@ const formatDate = (value?: string | null) =>
     : undefined;
 
 const mapReviewToArticle = (review: ReviewLike): Article => {
-  const galleryName = isFullReview(review)
-    ? review.exhibition?.gallery?.name ?? review.gallery?.name
-    : undefined;
-  const galleryCity = isFullReview(review)
-    ? review.exhibition?.gallery?.city ?? review.gallery?.city
-    : undefined;
+  const {name: galleryName, city: galleryCity} = extractGalleryMeta(review);
 
   return {
     id: review._id,
@@ -76,28 +98,6 @@ const portableTextToPlain = (body?: BlockContent | null) => {
     .join('\n\n');
 };
 
-const getLocationLabel = (review: REVIEW_QUERYResult | null, resolvedExternalExhibition?: GraphqlExhibition | null) => {
-  // External exhibition (from GraphQL)
-  if (resolvedExternalExhibition) {
-    const parts = [resolvedExternalExhibition.galleryname, resolvedExternalExhibition.city].filter(Boolean);
-    return parts.length > 0 ? parts.join(', ') : 'Gallery Location';
-  }
-  
-  // Sanity exhibition
-  if (review?.exhibition?.gallery?.name) {
-    const gallery = review.exhibition.gallery;
-    return `${gallery.name}${gallery.city ? `, ${gallery.city}` : ''}`;
-  }
-  
-  // Direct gallery reference
-  if (review?.gallery?.name) {
-    const gallery = review.gallery;
-    return `${gallery.name}${gallery.city ? `, ${gallery.city}` : ''}`;
-  }
-  
-  return 'Gallery Location';
-};
-
 const badgeTemplateText: Record<string, string> = {
   supportedBy: 'Supported by {logo}',
   partnershipWith: 'In partnership with {logo}',
@@ -130,6 +130,7 @@ type SharePlatform = 'facebook' | 'twitter' | 'linkedin';
 
 type EnrichedReview = REVIEW_QUERYResult & {
   resolvedExternalExhibition?: GraphqlExhibition | null;
+  resolvedExternalGallery?: GraphqlGallery | null;
 };
 
 const ArticleView: React.FC = () => {
@@ -159,8 +160,10 @@ const ArticleView: React.FC = () => {
           return;
         }
 
-        // Hydrate external exhibition if present
+        // Hydrate external exhibition + gallery if present
         let resolvedExternalExhibition: GraphqlExhibition | null = null;
+        let resolvedExternalGallery: GraphqlGallery | null = null;
+
         if (reviewData.externalExhibition?.id) {
           try {
             resolvedExternalExhibition = await fetchExhibitionById(reviewData.externalExhibition.id);
@@ -169,7 +172,18 @@ const ArticleView: React.FC = () => {
           }
         }
 
-        setReview({ ...reviewData, resolvedExternalExhibition });
+        const galleryId =
+          resolvedExternalExhibition?.gallery_id ?? reviewData.externalExhibition?.gallery?.id ?? null;
+
+        if (galleryId) {
+          try {
+            resolvedExternalGallery = await fetchGalleryById(galleryId);
+          } catch (err) {
+            console.error('Failed to fetch external gallery:', err);
+          }
+        }
+
+        setReview({ ...reviewData, resolvedExternalExhibition, resolvedExternalGallery });
         
         const relatedData = await client.fetch<REVIEWS_QUERYResult>(REVIEWS_QUERY);
         if (!isMounted) return;
@@ -201,30 +215,29 @@ const ArticleView: React.FC = () => {
   const sponsorBadge = useMemo(() => getSponsorBadge(review), [review]);
   const article = useMemo(() => (review ? mapReviewToArticle(review) : null), [review]);
   const articleBody = review ? portableTextToPlain(review.body) : '';
-  const location = getLocationLabel(review, review?.resolvedExternalExhibition);
-  
-  const galleryAddress = 
-    review?.resolvedExternalExhibition?.city ??
-    review?.gallery?.address ?? 
-    review?.exhibition?.gallery?.address;
-    
-  const galleryWebsite = review?.gallery?.website ?? review?.exhibition?.gallery?.website;
-  const galleryDoc = review?.exhibition?.gallery ?? review?.gallery;
+  const galleryMeta = useMemo(() => extractGalleryMeta(review), [review]);
+  const location = galleryMeta.name ? `${galleryMeta.name}${galleryMeta.city ? `, ${galleryMeta.city}` : ''}` : 'Gallery Location';
+
+  const galleryAddress = review?.resolvedExternalGallery?.fulladdress ?? galleryMeta.city ?? null;
+  const galleryWebsite = review?.resolvedExternalGallery?.placeurl ?? null;
   const galleryWebsiteLabel = galleryWebsite
     ? getDisplayDomain(galleryWebsite) ?? galleryWebsite.replace(/^https?:\/\//i, '').replace(/\/$/, '')
     : null;
+  const hostGalleryName = galleryMeta.name;
 
   const artistList = useMemo<LinkedDocument[]>(() => {
     if (!review) return [];
-    const reviewArtists = (review.artists ?? []) as LinkedDocument[];
-    if (reviewArtists.length) return reviewArtists;
-    return ((review.exhibition?.artists ?? []) as LinkedDocument[]) || [];
+    const graphqlNames = parseGraphqlArtists(review.resolvedExternalExhibition?.artist);
+    if (graphqlNames.length) {
+      return graphqlNames.map((name, index) => ({
+        _id: `${review._id}-artist-${index}`,
+        name,
+      }));
+    }
+    return ((review.artists ?? []) as LinkedDocument[]) || [];
   }, [review]);
 
-  const curatorList = useMemo<LinkedDocument[]>(() => {
-    if (!review?.exhibition?.curators) return [];
-    return (review.exhibition.curators as LinkedDocument[]) ?? [];
-  }, [review]);
+  const curatorList: LinkedDocument[] = [];
 
   const authorProfilePath = article?.author
     ? `/ambassadors/${article.author.slug ?? article.author.id}`
@@ -399,8 +412,8 @@ const ArticleView: React.FC = () => {
                              <Ticket className="w-4 h-4 mt-1" />
                              <div>
                                  <p className="font-bold">Entry: Free</p>
-                                 {galleryDoc?.name && (
-                                   <p className="text-gray-500 text-xs">Hosted by {galleryDoc.name}</p>
+                                 {hostGalleryName && (
+                                   <p className="text-gray-500 text-xs">Hosted by {hostGalleryName}</p>
                                  )}
                              </div>
                          </div>

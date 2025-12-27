@@ -19,11 +19,22 @@ interface GraphqlExhibition {
   datefrom?: string | null
   dateto?: string | null
   gallery_id?: string | null
+  artist?: string | null
+  description?: string | null
+}
+
+type ListExhibitionsResponse = {
+  data?: {
+    listAllExhibitions?: {
+      items?: GraphqlExhibition[]
+      nextToken?: string | null
+    }
+  }
 }
 
 const SEARCH_EXHIBITIONS_QUERY = `#graphql
-  query SearchExhibitions($filter: ExhibitionFilterInput, $limit: Int) {
-    listAllExhibitions(filter: $filter, limit: $limit) {
+  query SearchExhibitions($limit: Int, $nextToken: String) {
+    listAllExhibitions(limit: $limit, nextToken: $nextToken) {
       items {
         id
         title
@@ -32,44 +43,101 @@ const SEARCH_EXHIBITIONS_QUERY = `#graphql
         datefrom
         dateto
         gallery_id
+        artist
+        description
       }
+      nextToken
     }
   }
 `
 
 async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[]> {
+  console.log('🔍 [Exhibition Search] Starting search...')
+  console.log('🔍 [Exhibition Search] Endpoint:', GRAPHQL_ENDPOINT)
+  console.log('🔍 [Exhibition Search] API Key:', GRAPHQL_API_KEY ? 'SET' : 'NOT SET')
+  console.log('🔍 [Exhibition Search] Tenant ID:', GRAPHQL_TENANT_ID)
+  console.log('🔍 [Exhibition Search] Search term:', searchTerm)
+
   if (!GRAPHQL_ENDPOINT || !GRAPHQL_API_KEY) {
-    console.warn('GraphQL API not configured')
+    console.error('❌ [Exhibition Search] GraphQL API not configured!')
     return []
   }
 
-  const filter = {
-    or: [
-      {title: {contains: searchTerm}},
-      {galleryname: {contains: searchTerm}},
-      {city: {contains: searchTerm}},
-    ],
+  const searchLower = searchTerm.toLowerCase().trim()
+  if (!searchLower) {
+    return []
   }
 
-  const response = await fetch(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': GRAPHQL_API_KEY,
-      'x-tenant-id': GRAPHQL_TENANT_ID,
-    },
-    body: JSON.stringify({
+  const results: GraphqlExhibition[] = []
+  let nextToken: string | null | undefined = null
+  const PAGE_SIZE = 100
+  const MAX_PAGES = 10 // Search first 1000 exhibitions
+  const MAX_RESULTS = 20
+
+  console.log('🔍 [Exhibition Search] Starting pagination search...')
+
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const requestBody: {
+      query: string
+      variables: {limit: number; nextToken: string | null | undefined}
+    } = {
       query: SEARCH_EXHIBITIONS_QUERY,
-      variables: {filter, limit: 20},
-    }),
-  })
+      variables: { limit: PAGE_SIZE, nextToken },
+    }
 
-  if (!response.ok) {
-    throw new Error(`GraphQL request failed: ${response.statusText}`)
+    console.log(`🔍 [Exhibition Search] Page ${page + 1}, nextToken:`, nextToken || 'null')
+
+    const response: Response = await fetch(GRAPHQL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': GRAPHQL_API_KEY,
+        'x-tenant-id': GRAPHQL_TENANT_ID,
+      },
+      body: JSON.stringify(requestBody),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ [Exhibition Search] Request failed:', errorText)
+      throw new Error(`GraphQL request failed: ${response.statusText}`)
+    }
+
+    const data: ListExhibitionsResponse = await response.json()
+    const items = data.data?.listAllExhibitions?.items ?? []
+    
+    console.log(`🔍 [Exhibition Search] Page ${page + 1} returned ${items.length} items`)
+
+    // Client-side filtering
+    const matching = items.filter((exhibition: GraphqlExhibition) => {
+      const titleMatch = exhibition.title?.toLowerCase().includes(searchLower)
+      const galleryMatch = exhibition.galleryname?.toLowerCase().includes(searchLower)
+      const cityMatch = exhibition.city?.toLowerCase().includes(searchLower)
+      const artistMatch = exhibition.artist?.toLowerCase().includes(searchLower)
+      
+      return titleMatch || galleryMatch || cityMatch || artistMatch
+    })
+
+    console.log(`🔍 [Exhibition Search] Found ${matching.length} matching exhibitions on page ${page + 1}`)
+    
+    results.push(...matching)
+
+    // Stop if we have enough results
+    if (results.length >= MAX_RESULTS) {
+      break
+    }
+
+    nextToken = data.data?.listAllExhibitions?.nextToken ?? null
+    if (!nextToken) {
+      console.log('🔍 [Exhibition Search] No more pages')
+      break
+    }
   }
 
-  const data = await response.json()
-  return data?.data?.listAllExhibitions?.items ?? []
+  const finalResults = results.slice(0, MAX_RESULTS)
+  console.log('✅ [Exhibition Search] Returning', finalResults.length, 'exhibitions')
+
+  return finalResults
 }
 
 const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
@@ -194,10 +262,13 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
 
       {loading && (
         <Card padding={3} radius={2} tone="transparent">
-          <Flex align="center" justify="center">
+          <Flex align="center" justify="center" direction="column" gap={2}>
             <Spinner />
-            <Text size={1} muted style={{marginLeft: 8}}>
-              Searching GraphQL catalog...
+            <Text size={1} muted align="center">
+              Searching global exhibition catalog...
+            </Text>
+            <Text size={0} muted align="center">
+              This may take 5-10 seconds ⏱️
             </Text>
           </Flex>
         </Card>
@@ -236,6 +307,11 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
                 <Text size={1} weight="semibold">
                   {exhibition.title || 'Untitled'}
                 </Text>
+                {exhibition.artist && (
+                  <Text size={1} style={{fontStyle: 'italic'}}>
+                    {exhibition.artist}
+                  </Text>
+                )}
                 <Text size={1} muted>
                   {[exhibition.galleryname, exhibition.city].filter(Boolean).join(' • ')}
                 </Text>

@@ -17,7 +17,6 @@ export type ExternalGalleryValue = {
 type GraphqlGalleryHit = {
   id: string
   galleryname: string
-  city?: string | null
   country?: string | null
   fulladdress?: string | null
   placeurl?: string | null
@@ -65,7 +64,6 @@ const SEARCH_GALLERIES_QUERY = `query SearchGuideGalleries($limit: Int!, $filter
     items {
       id
       galleryname
-      city
       country
       fulladdress
       placeurl
@@ -74,8 +72,6 @@ const SEARCH_GALLERIES_QUERY = `query SearchGuideGalleries($limit: Int!, $filter
 }`
 
 const deriveCity = (gallery: GraphqlGalleryHit): string | undefined => {
-  if (gallery.city?.trim()) return gallery.city.trim() || undefined
-
   const segments = gallery.fulladdress?.split(',').map((segment) => segment.trim()).filter(Boolean) ?? []
   if (!segments.length) return undefined
 
@@ -113,7 +109,6 @@ const fetchGraphqlGalleries = async (term: string): Promise<GraphqlGalleryHit[]>
         filter: {
           or: [
             {galleryname: {contains: trimmed}},
-            {city: {contains: trimmed}},
             {country: {contains: trimmed}},
             {fulladdress: {contains: trimmed}},
           ],

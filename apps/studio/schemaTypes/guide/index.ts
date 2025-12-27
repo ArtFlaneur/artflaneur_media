@@ -64,57 +64,16 @@ export const guide = defineType({
             }),
             defineField({name: 'summary', type: 'text', title: 'Summary', rows: 3}),
             defineField({name: 'notes', type: 'text', title: 'Notes', rows: 2}),
-            defineField({name: 'address', type: 'string', title: 'Address'}),
-            defineField({
-              name: 'location',
-              type: 'geopoint',
-              title: 'Map Location',
-            }),
-            defineField({
-              name: 'image',
-              type: 'image',
-              title: 'Image',
-              options: {hotspot: true},
-              fields: [defineField({name: 'alt', type: 'string', title: 'Alt text'})],
-            }),
-            defineField({
-              name: 'gallery',
-              type: 'reference',
-              title: 'Sanity Gallery',
-              to: [{type: 'gallery'}],
-              description: 'Reference an editorially managed gallery',
-              validation: (Rule) => [
-                Rule.custom((value, context) => {
-                  const externalGallery = (context.parent as any)?.externalGallery
-                  if (!value && !externalGallery?.id) {
-                    return 'Link a Sanity gallery or choose one from the GraphQL catalogue'
-                  }
-                  return true
-                }).error('Required when an external gallery is not provided'),
-              ],
-            }),
             defineField({
               name: 'externalGallery',
               title: 'GraphQL Gallery',
               type: 'externalGalleryReference',
-              description: 'Optional gallery pulled from the global AppSync catalogue',
+              description: 'Search the global GraphQL catalogue for this stop',
               options: {collapsible: true, collapsed: true},
               components: {input: GraphqlGalleryInput},
               validation: (Rule) => [
-                Rule.custom((value, context) => {
-                  const hasReference = Boolean((context.parent as any)?.gallery)
-                  if (!value && !hasReference) {
-                    return 'Select a gallery via the lookup or reference an existing one'
-                  }
-                  return true
-                }).error('GraphQL gallery is required when no Sanity gallery is referenced'),
+                Rule.required().error('Select a gallery via the GraphQL lookup for every stop'),
               ],
-            }),
-            defineField({
-              name: 'exhibition',
-              type: 'reference',
-              title: 'Exhibition',
-              to: [{type: 'exhibition'}],
             }),
           ],
         }),
