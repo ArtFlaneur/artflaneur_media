@@ -68,11 +68,11 @@ For web applications that need to authenticate users for write operations, use t
 // Firebase Web SDK Configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyAOThOZ-c25MFgXQQoHeGlinnFPfCs9TSg",
-  authDomain: "device-streaming-56c6f689.firebaseapp.com",
-  projectId: "device-streaming-56c6f689",
-  storageBucket: "device-streaming-56c6f689.firebasestorage.app",
-  messagingSenderId: "641443564375",
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.firebasestorage.app",
+  messagingSenderId: "YOUR_SENDER_ID",
   appId: "1:641443564375:web:8443a6a40e9e4b8eba4c12",
   measurementId: "G-E6J9JQ9JRY"
 };

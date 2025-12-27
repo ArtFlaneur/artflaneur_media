@@ -130,8 +130,8 @@ GraphQL ID: abc123
 В файле [`apps/studio/.env`](../../apps/studio/.env) настроены:
 
 ```env
-SANITY_STUDIO_GRAPHQL_ENDPOINT=https://hv2h5zqj65hwvjq7ylemx3ayaa.appsync-api.ap-southeast-2.amazonaws.com/graphql
-SANITY_STUDIO_GRAPHQL_API_KEY=da2-qola7vmdgbaqbkks6lje5bkta4
+SANITY_STUDIO_GRAPHQL_ENDPOINT=https://your-appsync-api.appsync-api.region.amazonaws.com/graphql
+SANITY_STUDIO_GRAPHQL_API_KEY=da2-your-api-key-here
 SANITY_STUDIO_GRAPHQL_TENANT_ID=artflaneur
 ```
 

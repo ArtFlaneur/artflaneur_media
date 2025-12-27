@@ -34,3 +34,14 @@ pnpm-debug.log*
 
 # Sanity
 .sanity/
+
+# GraphQL configuration
+*.graphql
+.graphqlrc*
+graphql.config.*
+codegen.yml
+codegen.yaml
+
+# API Keys and Environment files
+.env*
+!.env.example
