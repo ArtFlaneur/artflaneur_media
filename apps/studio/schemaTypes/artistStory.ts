@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
+import GraphqlArtistInput from './artistStory/GraphqlArtistInput'
 
 export const artistStory = defineType({
   name: 'artistStory',
@@ -22,11 +23,12 @@ export const artistStory = defineType({
           validation: (Rule) => [Rule.required().error('Slug is required to generate a URL')],
     }),
     defineField({
-      name: 'artist',
-      title: 'Artist',
-      type: 'reference',
-      to: [{type: 'artist'}],
-          validation: (Rule) => [Rule.required().error('Artist reference is required to publish this story')],
+      name: 'externalArtist',
+      title: 'GraphQL Artist',
+      type: 'externalArtistReference',
+      description: 'Search the global GraphQL catalogue to lock this story to a canonical artist entry',
+      components: {input: GraphqlArtistInput},
+      validation: (Rule) => [Rule.required().error('Select an artist from the GraphQL catalogue to publish')],
     }),
     defineField({
       name: 'portrait',
@@ -95,6 +97,7 @@ export const artistStory = defineType({
         layout: 'radio',
       },
       initialValue: 'draft',
+      validation: (Rule) => [Rule.required().error('Publishing status must be tracked for artist stories')],
     }),
     defineField({
       name: 'sponsorshipStatus',
@@ -234,7 +237,7 @@ export const artistStory = defineType({
   preview: {
     select: {
       title: 'title',
-      artist: 'artist.name',
+      artist: 'externalArtist.name',
       media: 'portrait',
       sponsorshipStatus: 'sponsorshipStatus',
     },

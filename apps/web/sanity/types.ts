@@ -126,6 +126,14 @@ export type HomepageContent = {
     _weak?: boolean;
     [internalGroqTypeReferenceTo]?: "artistStory";
   };
+  spotlightExhibitions?: Array<{
+    exhibition?: ExternalExhibitionReference;
+    badge?: string;
+    featureCopy?: string;
+    ctaText?: string;
+    _type: "spotlightExhibition";
+    _key: string;
+  }>;
   weekendGuide?: {
     _ref: string;
     _type: "reference";
@@ -230,6 +238,112 @@ export type LandingPage = {
   };
 };
 
+export type Artist = {
+  _id: string;
+  _type: "artist";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  slug?: Slug;
+  photo?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    _type: "image";
+  };
+  summary?: string;
+  bio?: string;
+  body?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal" | "h2" | "h3" | "h4" | "blockquote";
+    listItem?: "bullet" | "number";
+    markDefs?: Array<{
+      href?: string;
+      _type: "link";
+      _key: string;
+    }>;
+    level?: number;
+    _type: "block";
+    _key: string;
+  } | {
+    _key: string;
+  } & FactTable | {
+    _key: string;
+  } & KeyInsights | {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    caption?: string;
+    _type: "image";
+    _key: string;
+  }>;
+  birthYear?: number;
+  country?: string;
+  basedIn?: string;
+  practiceFocus?: string;
+  website?: string;
+  keyWorks?: Array<{
+    title?: string;
+    year?: string;
+    exhibition?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "exhibition";
+    };
+    concept?: string;
+    _type: "keyWork";
+    _key: string;
+  }>;
+  exhibitions?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "exhibition";
+  }>;
+  collections?: Array<{
+    institution?: string;
+    location?: string;
+    _type: "collectionEntry";
+    _key: string;
+  }>;
+  social?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+  };
+  appCta?: {
+    text?: string;
+    deeplink?: string;
+  };
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: Array<string>;
+  };
+  schemaMarkup?: string;
+};
+
 export type Curator = {
   _id: string;
   _type: "curator";
@@ -251,6 +365,166 @@ export type Curator = {
     _type: "image";
   };
   bio?: string;
+};
+
+export type Exhibition = {
+  _id: string;
+  _type: "exhibition";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title?: string;
+  slug?: Slug;
+  gallery?: {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "gallery";
+  };
+  image?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  };
+  artists?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "artist";
+  }>;
+  curators?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "curator";
+  }>;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  ticketing?: {
+    access?: "free" | "ticketed";
+    ticketPrice?: string;
+    bookingUrl?: string;
+    ctaLabel?: string;
+  };
+  supabaseId?: string;
+  graphqlId?: string;
+};
+
+export type Gallery = {
+  _id: string;
+  _type: "gallery";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  slug?: Slug;
+  image?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    _type: "image";
+  };
+  summary?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  geopoint?: Geopoint;
+  website?: string;
+  focus?: string;
+  artists?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "artist";
+  }>;
+  upcomingShows?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "exhibition";
+  }>;
+  workingHours?: string;
+  contact?: {
+    phone?: string;
+    email?: string;
+  };
+  social?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+  };
+  exportTrends?: {
+    headline?: string;
+    details?: string;
+  };
+  body?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal" | "h2" | "h3" | "h4" | "blockquote";
+    listItem?: "bullet" | "number";
+    markDefs?: Array<{
+      href?: string;
+      _type: "link";
+      _key: string;
+    }>;
+    level?: number;
+    _type: "block";
+    _key: string;
+  } | {
+    _key: string;
+  } & FactTable | {
+    _key: string;
+  } & KeyInsights | {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    caption?: string;
+    _type: "image";
+    _key: string;
+  }>;
+  supabaseId?: string;
+  graphqlId?: string;
+  appCta?: {
+    text?: string;
+    deeplink?: string;
+  };
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: Array<string>;
+  };
+  schemaMarkup?: string;
 };
 
 export type KeyInsights = {
@@ -449,12 +723,7 @@ export type ArtistStory = {
   _rev: string;
   title?: string;
   slug?: Slug;
-  artist?: {
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "artist";
-  };
+  externalArtist?: ExternalArtistReference;
   portrait?: {
     asset?: {
       _ref: string;
@@ -524,200 +793,15 @@ export type ArtistStory = {
   };
 };
 
-export type Artist = {
-  _id: string;
-  _type: "artist";
-  _createdAt: string;
-  _updatedAt: string;
-  _rev: string;
+export type ExternalArtistReference = {
+  _type: "externalArtistReference";
+  id?: string;
   name?: string;
-  slug?: Slug;
-  photo?: {
-    asset?: {
-      _ref: string;
-      _type: "reference";
-      _weak?: boolean;
-      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-    };
-    media?: unknown;
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    _type: "image";
-  };
-  summary?: string;
-  bio?: string;
-  body?: BlockContent;
+  country?: string;
+  description?: string;
   birthYear?: number;
-  country?: string;
-  basedIn?: string;
-  practiceFocus?: string;
-  website?: string;
-  keyWorks?: Array<{
-    title?: string;
-    year?: string;
-    exhibition?: {
-      _ref: string;
-      _type: "reference";
-      _weak?: boolean;
-      [internalGroqTypeReferenceTo]?: "exhibition";
-    };
-    concept?: string;
-    _type: "keyWork";
-    _key: string;
-  }>;
-  exhibitions?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "exhibition";
-  }>;
-  collections?: Array<{
-    institution?: string;
-    location?: string;
-    _type: "collectionEntry";
-    _key: string;
-  }>;
-  social?: {
-    instagram?: string;
-    facebook?: string;
-    twitter?: string;
-  };
-  appCta?: {
-    text?: string;
-    deeplink?: string;
-  };
-  seo?: {
-    metaTitle?: string;
-    metaDescription?: string;
-    keywords?: Array<string>;
-  };
-  schemaMarkup?: string;
-};
-
-export type Exhibition = {
-  _id: string;
-  _type: "exhibition";
-  _createdAt: string;
-  _updatedAt: string;
-  _rev: string;
-  title?: string;
-  slug?: Slug;
-  gallery?: {
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "gallery";
-  };
-  image?: {
-    asset?: {
-      _ref: string;
-      _type: "reference";
-      _weak?: boolean;
-      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-    };
-    media?: unknown;
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    alt?: string;
-    _type: "image";
-  };
-  artists?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "artist";
-  }>;
-  curators?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "curator";
-  }>;
-  description?: string;
-  startDate?: string;
-  endDate?: string;
-  ticketing?: {
-    access?: "free" | "ticketed";
-    ticketPrice?: string;
-    bookingUrl?: string;
-    ctaLabel?: string;
-  };
-  supabaseId?: string;
-  graphqlId?: string;
-};
-
-export type Gallery = {
-  _id: string;
-  _type: "gallery";
-  _createdAt: string;
-  _updatedAt: string;
-  _rev: string;
-  name?: string;
-  slug?: Slug;
-  image?: {
-    asset?: {
-      _ref: string;
-      _type: "reference";
-      _weak?: boolean;
-      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-    };
-    media?: unknown;
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    _type: "image";
-  };
-  summary?: string;
-  description?: string;
-  address?: string;
-  city?: string;
-  country?: string;
-  geopoint?: Geopoint;
-  website?: string;
-  focus?: string;
-  artists?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "artist";
-  }>;
-  upcomingShows?: Array<{
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    _key: string;
-    [internalGroqTypeReferenceTo]?: "exhibition";
-  }>;
-  workingHours?: string;
-  contact?: {
-    phone?: string;
-    email?: string;
-  };
-  social?: {
-    instagram?: string;
-    facebook?: string;
-    twitter?: string;
-  };
-  exportTrends?: {
-    headline?: string;
-    details?: string;
-  };
-  body?: BlockContent;
-  supabaseId?: string;
-  graphqlId?: string;
-  appCta?: {
-    text?: string;
-    deeplink?: string;
-  };
-  seo?: {
-    metaTitle?: string;
-    metaDescription?: string;
-    keywords?: Array<string>;
-  };
-  schemaMarkup?: string;
+  deathYear?: number;
+  wikipediaUrl?: string;
 };
 
 export type Review = {
@@ -1098,7 +1182,7 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = SiteSettings | HomepageContent | LandingPage | Curator | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ExternalGalleryReference | ArtistStory | Artist | Exhibition | Gallery | Review | Sponsor | Color | ExternalExhibitionReference | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = SiteSettings | HomepageContent | LandingPage | Artist | Curator | Exhibition | Gallery | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ExternalGalleryReference | ArtistStory | ExternalArtistReference | Review | Sponsor | Color | ExternalExhibitionReference | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ../web/pages/SearchResults.tsx
 // Variable: SEARCH_QUERY
@@ -1518,7 +1602,7 @@ export type ARTIST_QUERYResult = {
   }>;
 } | null;
 // Variable: HOMEPAGE_QUERY
-// Query: *[  _type == "homepageContent"  && !(_id in path("drafts.**"))][0] {  _id,  title,  heroSection{    featuredReview->{      _id,      title,      slug,      excerpt,      publishedAt,      mainImage{        asset->{          url        },        alt      },      author->{        _id,        name,        photo{          asset->{            url          }        }      }    },    weeklyStory->{      _id,      title,      slug,      excerpt,      portrait{        asset->{          url        },        alt      },      artist->{        _id,        name,        slug      }    }  },  latestReviews[]->{    _id,    title,    slug,    excerpt,    publishedAt,    mainImage{      asset->{        url      },      alt    },    author->{      _id,      name,      photo{        asset->{          url        }      }    }  },  featuredArtistStory->{    _id,    title,    slug,    portrait{      asset->{        url      },      alt    },    artist->{      _id,      name,      slug    }  },  weekendGuide->{    _id,    title,    slug,    city,    description,    ctaText,    coverImage{      asset->{        url      },      alt    },    sponsorshipStatus,    sponsor->{      _id,      name,      logo{        asset->{          url        }      }    }  },  aiChatbotTeaser{    headline,    description,    ctaText  },  newsletterSignup{    headline,    description,    placeholder,    submitText  }}
+// Query: *[  _type == "homepageContent"  && !(_id in path("drafts.**"))][0] {  _id,  title,  heroSection{    featuredReview->{      _id,      title,      slug,      excerpt,      publishedAt,      mainImage{        asset->{          url        },        alt      },      author->{        _id,        name,        photo{          asset->{            url          }        }      }    },    weeklyStory->{      _id,      title,      slug,      excerpt,      portrait{        asset->{          url        },        alt      },      externalArtist{        id,        name,        country,        description,        birthYear,        deathYear,        wikipediaUrl      }    }  },  latestReviews[]->{    _id,    title,    slug,    excerpt,    publishedAt,    mainImage{      asset->{        url      },      alt    },    author->{      _id,      name,      photo{        asset->{          url        }      }    }  },  featuredArtistStory->{    _id,    title,    slug,    portrait{      asset->{        url      },      alt    },    externalArtist{      id,      name,      country,      description,      birthYear,      deathYear,      wikipediaUrl    }  },  spotlightExhibitions[]{    _key,    badge,    featureCopy,    ctaText,    exhibition{      id,      title,      startDate,      endDate,      gallery{        id,        name,        city      }    }  },  weekendGuide->{    _id,    title,    slug,    city,    description,    ctaText,    coverImage{      asset->{        url      },      alt    },    sponsorshipStatus,    sponsor->{      _id,      name,      logo{        asset->{          url        }      }    }  },  aiChatbotTeaser{    headline,    description,    ctaText  },  newsletterSignup{    headline,    description,    placeholder,    submitText  }}
 export type HOMEPAGE_QUERYResult = {
   _id: string;
   title: string | null;
@@ -1556,10 +1640,14 @@ export type HOMEPAGE_QUERYResult = {
         } | null;
         alt: string | null;
       } | null;
-      artist: {
-        _id: string;
+      externalArtist: {
+        id: string | null;
         name: string | null;
-        slug: Slug | null;
+        country: string | null;
+        description: string | null;
+        birthYear: number | null;
+        deathYear: number | null;
+        wikipediaUrl: string | null;
       } | null;
     } | null;
   } | null;
@@ -1595,12 +1683,33 @@ export type HOMEPAGE_QUERYResult = {
       } | null;
       alt: string | null;
     } | null;
-    artist: {
-      _id: string;
+    externalArtist: {
+      id: string | null;
       name: string | null;
-      slug: Slug | null;
+      country: string | null;
+      description: string | null;
+      birthYear: number | null;
+      deathYear: number | null;
+      wikipediaUrl: string | null;
     } | null;
   } | null;
+  spotlightExhibitions: Array<{
+    _key: string;
+    badge: string | null;
+    featureCopy: string | null;
+    ctaText: string | null;
+    exhibition: {
+      id: string | null;
+      title: string | null;
+      startDate: string | null;
+      endDate: string | null;
+      gallery: {
+        id: string | null;
+        name: string | null;
+        city: string | null;
+      } | null;
+    } | null;
+  }> | null;
   weekendGuide: {
     _id: string;
     title: string | null;
@@ -1824,7 +1933,7 @@ declare module "@sanity/client" {
     "*[\n  _type == \"artist\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  }\n}": ARTISTS_QUERYResult;
     "*[\n  _type == \"artist\"\n] | order(name asc) [$offset...$end] {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  }\n}": PAGINATED_ARTISTS_QUERYResult;
     "*[\n  _type == \"artist\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  bio,\n  birthYear,\n  country,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  website,\n  social,\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...10] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    gallery->{\n      name,\n      city\n    }\n  }\n}": ARTIST_QUERYResult;
-    "*[\n  _type == \"homepageContent\"\n  && !(_id in path(\"drafts.**\"))\n][0] {\n  _id,\n  title,\n  heroSection{\n    featuredReview->{\n      _id,\n      title,\n      slug,\n      excerpt,\n      publishedAt,\n      mainImage{\n        asset->{\n          url\n        },\n        alt\n      },\n      author->{\n        _id,\n        name,\n        photo{\n          asset->{\n            url\n          }\n        }\n      }\n    },\n    weeklyStory->{\n      _id,\n      title,\n      slug,\n      excerpt,\n      portrait{\n        asset->{\n          url\n        },\n        alt\n      },\n      artist->{\n        _id,\n        name,\n        slug\n      }\n    }\n  },\n  latestReviews[]->{\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      photo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  featuredArtistStory->{\n    _id,\n    title,\n    slug,\n    portrait{\n      asset->{\n        url\n      },\n      alt\n    },\n    artist->{\n      _id,\n      name,\n      slug\n    }\n  },\n  weekendGuide->{\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    ctaText,\n    coverImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    sponsorshipStatus,\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  aiChatbotTeaser{\n    headline,\n    description,\n    ctaText\n  },\n  newsletterSignup{\n    headline,\n    description,\n    placeholder,\n    submitText\n  }\n}": HOMEPAGE_QUERYResult;
+    "*[\n  _type == \"homepageContent\"\n  && !(_id in path(\"drafts.**\"))\n][0] {\n  _id,\n  title,\n  heroSection{\n    featuredReview->{\n      _id,\n      title,\n      slug,\n      excerpt,\n      publishedAt,\n      mainImage{\n        asset->{\n          url\n        },\n        alt\n      },\n      author->{\n        _id,\n        name,\n        photo{\n          asset->{\n            url\n          }\n        }\n      }\n    },\n    weeklyStory->{\n      _id,\n      title,\n      slug,\n      excerpt,\n      portrait{\n        asset->{\n          url\n        },\n        alt\n      },\n      externalArtist{\n        id,\n        name,\n        country,\n        description,\n        birthYear,\n        deathYear,\n        wikipediaUrl\n      }\n    }\n  },\n  latestReviews[]->{\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishedAt,\n    mainImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      photo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  featuredArtistStory->{\n    _id,\n    title,\n    slug,\n    portrait{\n      asset->{\n        url\n      },\n      alt\n    },\n    externalArtist{\n      id,\n      name,\n      country,\n      description,\n      birthYear,\n      deathYear,\n      wikipediaUrl\n    }\n  },\n  spotlightExhibitions[]{\n    _key,\n    badge,\n    featureCopy,\n    ctaText,\n    exhibition{\n      id,\n      title,\n      startDate,\n      endDate,\n      gallery{\n        id,\n        name,\n        city\n      }\n    }\n  },\n  weekendGuide->{\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    ctaText,\n    coverImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    sponsorshipStatus,\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  aiChatbotTeaser{\n    headline,\n    description,\n    ctaText\n  },\n  newsletterSignup{\n    headline,\n    description,\n    placeholder,\n    submitText\n  }\n}": HOMEPAGE_QUERYResult;
     "*[\n  _type == \"siteSettings\"\n][0] {\n  _id,\n  title,\n  description,\n  keywords,\n  logo {\n    asset->{\n      url\n    }\n  },\n  social,\n  tickerMessages[]{\n    message,\n    isActive\n  }\n}": SITE_SETTINGS_QUERYResult;
     "*[\n  _type == \"author\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  role,\n  bio,\n  photo {\n    asset->{\n      url\n    }\n  },\n  social\n}": AUTHORS_QUERYResult;
     "*[\n  _type == \"guide\"\n] | order(_createdAt desc) {\n  _id,\n  slug,\n  title,\n  city,\n  description,\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  ctaText,\n  sponsorshipStatus,\n  sponsor->{\n    _id,\n    name,\n    logo {\n      asset->{\n        url\n      }\n    }\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    notes,\n    externalGallery {\n      _type,\n      id,\n      name,\n      city,\n      address,\n      website\n    }\n  }\n}": GUIDES_QUERYResult;

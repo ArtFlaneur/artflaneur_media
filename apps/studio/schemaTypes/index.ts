@@ -16,6 +16,7 @@ import {siteSettings} from './siteSettings'
 import {sponsor} from './sponsor'
 import {externalGalleryReference} from './externalGalleryReference'
 import {externalExhibitionReference} from './externalExhibitionReference'
+import {externalArtistReference} from './externalArtistReference'
 
 // Old schemas (if needed)
 // import category from './category'
@@ -39,4 +40,5 @@ export const schemaTypes = [
   siteSettings,
   externalGalleryReference,
   externalExhibitionReference,
+  externalArtistReference,
 ]

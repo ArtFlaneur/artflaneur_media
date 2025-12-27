@@ -15,6 +15,7 @@ type ReviewSource = FeaturedReviewNode | LatestReviewNode | LATEST_REVIEWS_QUERY
 type ReviewWithSlug = ReviewSource & { slug: { current: string } };
 type FeaturedArtistStory = NonNullable<HomepageData['featuredArtistStory']>;
 type WeekendGuide = NonNullable<HomepageData['weekendGuide']>;
+type SpotlightExhibition = NonNullable<HomepageData['spotlightExhibitions']>[number];
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -27,6 +28,36 @@ const formatDate = (value?: string | null) =>
 
 const hasSlug = (review: ReviewSource | undefined | null): review is ReviewWithSlug =>
   Boolean(review?.slug?.current);
+
+const slugifyName = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const buildArtistSlug = (artist?: { id?: string | null; name?: string | null } | null) => {
+  if (!artist?.id) return null;
+  const safeName = artist.name ? slugifyName(artist.name) : 'artist';
+  return `${safeName}-${artist.id}`;
+};
+
+const buildGallerySlug = (gallery?: { id?: string | null; name?: string | null } | null) => {
+  if (!gallery?.id) return null;
+  if (gallery.name) {
+    return `${slugifyName(gallery.name)}-${gallery.id}`;
+  }
+  return String(gallery.id);
+};
+
+const formatExhibitionRange = (exhibition?: { startDate?: string | null; endDate?: string | null }) => {
+  if (!exhibition) return null;
+  const start = formatDate(exhibition.startDate ?? undefined);
+  const end = formatDate(exhibition.endDate ?? undefined);
+  if (start && end) return `${start} — ${end}`;
+  return start || end || null;
+};
 
 const mapReviewToArticle = (review: ReviewWithSlug): Article => ({
   id: review._id,
@@ -51,6 +82,7 @@ const Home: React.FC = () => {
   const [latestReviews, setLatestReviews] = useState<Article[]>([]);
   const [featuredStory, setFeaturedStory] = useState<FeaturedArtistStory | null>(null);
   const [weekendGuide, setWeekendGuide] = useState<WeekendGuide | null>(null);
+  const [spotlightExhibitions, setSpotlightExhibitions] = useState<SpotlightExhibition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,19 +109,21 @@ const Home: React.FC = () => {
           ? heroCandidate
           : filteredLatest[0];
 
-  setFeaturedArticle(heroReview ? mapReviewToArticle(heroReview) : null);
-  setLatestReviews(filteredLatest.length ? filteredLatest.map(mapReviewToArticle) : []);
-  setFeaturedStory(homepageData?.featuredArtistStory ?? null);
-  setWeekendGuide(homepageData?.weekendGuide ?? null);
+      setFeaturedArticle(heroReview ? mapReviewToArticle(heroReview) : null);
+      setLatestReviews(filteredLatest.length ? filteredLatest.map(mapReviewToArticle) : []);
+      setFeaturedStory(homepageData?.featuredArtistStory ?? null);
+      setWeekendGuide(homepageData?.weekendGuide ?? null);
+      setSpotlightExhibitions(homepageData?.spotlightExhibitions ?? []);
         setError(null);
       } catch (err) {
         console.error('❌ Error fetching Sanity data:', err);
         if (!isMounted) return;
         setError('Unable to load the latest editor picks right now.');
-  setFeaturedArticle(null);
-  setLatestReviews([]);
-  setFeaturedStory(null);
-  setWeekendGuide(null);
+      setFeaturedArticle(null);
+      setLatestReviews([]);
+      setFeaturedStory(null);
+      setWeekendGuide(null);
+      setSpotlightExhibitions([]);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -105,6 +139,7 @@ const Home: React.FC = () => {
   }, []);
 
   const heroArticle = featuredArticle;
+  const featuredArtistSlug = buildArtistSlug(featuredStory?.externalArtist);
 
   return (
     <div className="min-h-screen">
@@ -187,7 +222,65 @@ const Home: React.FC = () => {
         )}
       </section>
 
-      {featuredStory?.artist?.slug?.current && (
+      {spotlightExhibitions.length > 0 && (
+        <section className="py-24 border-y-2 border-black bg-art-paper">
+          <div className="container mx-auto px-4 md:px-6">
+            <SectionHeader title="Now Showing" linkText="Browse Galleries" linkTo="/galleries" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {spotlightExhibitions.map((spotlight) => {
+                const exhibition = spotlight?.exhibition;
+                if (!exhibition?.id) return null;
+                const gallerySlug = buildGallerySlug(exhibition.gallery);
+                const galleryLabel = [exhibition.gallery?.name, exhibition.gallery?.city]
+                  .filter(Boolean)
+                  .join(' • ');
+                const dateLabel = formatExhibitionRange(exhibition);
+
+                return (
+                  <article
+                    key={spotlight._key ?? exhibition.id}
+                    className="border-2 border-black bg-white p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    <div>
+                      {spotlight.badge && (
+                        <span className="inline-block mb-4 bg-black text-white px-3 py-1 text-xs font-mono uppercase tracking-widest">
+                          {spotlight.badge}
+                        </span>
+                      )}
+                      <h3 className="text-2xl font-black uppercase leading-snug">
+                        {exhibition.title ?? 'Untitled exhibition'}
+                      </h3>
+                      {galleryLabel && (
+                        <p className="font-mono text-xs text-gray-600 mt-2">{galleryLabel}</p>
+                      )}
+                      {dateLabel && (
+                        <p className="font-mono text-xs text-gray-500">{dateLabel}</p>
+                      )}
+                      <p className="mt-6 text-sm leading-relaxed text-gray-700">
+                        {spotlight.featureCopy ?? 'Fresh picks from the global exhibition catalog curated by Art Flaneur editors.'}
+                      </p>
+                    </div>
+                    {gallerySlug ? (
+                      <Link
+                        to={`/galleries/${gallerySlug}`}
+                        className="mt-8 inline-flex items-center justify-between border-2 border-black px-4 py-3 font-bold uppercase text-sm hover:bg-black hover:text-white transition-colors"
+                      >
+                        {spotlight.ctaText ?? 'View gallery'} <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    ) : (
+                      <span className="mt-8 text-xs font-mono uppercase text-gray-500">
+                        Gallery link coming soon
+                      </span>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {featuredStory && (
         <section className="border-y-2 border-black bg-white">
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div className="p-12 md:p-24 flex flex-col justify-between border-b-2 md:border-b-0 md:border-r-2 border-black">
@@ -196,25 +289,31 @@ const Home: React.FC = () => {
                   Artist Profile
                 </span>
                 <h2 className="text-5xl md:text-7xl font-serif mb-8 leading-none">
-                  {featuredStory.title ?? featuredStory.artist?.name ?? 'Featured Artist'}
+                  {featuredStory.title ?? featuredStory.externalArtist?.name ?? 'Featured Artist'}
                 </h2>
                 <p className="font-mono text-gray-600 text-sm mb-12 leading-loose max-w-md">
-                  Step inside the world of {featuredStory.artist?.name ?? 'this artist'} and discover the ideas shaping their latest work.
+                  Step inside the world of {featuredStory.externalArtist?.name ?? 'this artist'} and discover the ideas shaping their latest work.
                 </p>
               </div>
-              <Link
-                to={`/artists/${featuredStory.artist.slug?.current}`}
-                className="inline-block self-start border-2 border-black text-black px-8 py-3 font-bold uppercase hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-              >
-                Read Story
-              </Link>
+              {featuredArtistSlug ? (
+                <Link
+                  to={`/artists/${featuredArtistSlug}`}
+                  className="inline-block self-start border-2 border-black text-black px-8 py-3 font-bold uppercase hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                >
+                  Read Story
+                </Link>
+              ) : (
+                <span className="inline-block self-start border-2 border-dashed border-black text-black px-8 py-3 font-bold uppercase text-xs">
+                  GraphQL artist link unavailable
+                </span>
+              )}
             </div>
             <div className="h-[600px] relative grayscale hover:grayscale-0 transition-all duration-500">
               {featuredStory.portrait?.asset?.url ? (
                 <img
                   src={featuredStory.portrait.asset.url}
                   className="w-full h-full object-cover"
-                  alt={featuredStory.title ?? featuredStory.artist?.name ?? 'Artist portrait'}
+                  alt={featuredStory.title ?? featuredStory.externalArtist?.name ?? 'Artist portrait'}
                 />
               ) : (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center font-mono text-xs uppercase">

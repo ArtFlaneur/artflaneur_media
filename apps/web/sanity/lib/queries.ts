@@ -486,10 +486,14 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
         },
         alt
       },
-      artist->{
-        _id,
+      externalArtist{
+        id,
         name,
-        slug
+        country,
+        description,
+        birthYear,
+        deathYear,
+        wikipediaUrl
       }
     }
   },
@@ -525,10 +529,31 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
       },
       alt
     },
-    artist->{
-      _id,
+    externalArtist{
+      id,
       name,
-      slug
+      country,
+      description,
+      birthYear,
+      deathYear,
+      wikipediaUrl
+    }
+  },
+  spotlightExhibitions[]{
+    _key,
+    badge,
+    featureCopy,
+    ctaText,
+    exhibition{
+      id,
+      title,
+      startDate,
+      endDate,
+      gallery{
+        id,
+        name,
+        city
+      }
     }
   },
   weekendGuide->{
