@@ -211,9 +211,9 @@ const ExhibitionView: React.FC = () => {
       <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <aside className="lg:col-span-4 order-2 lg:order-1">
-            <div className="border-2 border-black bg-white p-6 space-y-6 sticky top-24">
+            <div className="border-2 border-black bg-white p-6 space-y-6 sticky top-24 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
               <div>
-                <h3 className="font-black uppercase text-sm tracking-[0.3em] mb-3">Details</h3>
+                <h3 className="font-black uppercase text-lg mb-6 border-b-2 border-black pb-2">Details</h3>
                 <div className="space-y-4">
                   {artistLabel && (
                     <div className="flex gap-3">
@@ -279,7 +279,7 @@ const ExhibitionView: React.FC = () => {
             {description ? (
               <div className="border-2 border-black bg-white p-8">
                 <h2 className="text-2xl md:text-3xl font-black uppercase mb-4">Description</h2>
-                <p className="text-lg md:text-xl leading-relaxed text-gray-700">{description}</p>
+                <p className="font-mono text-sm md:text-base leading-relaxed text-gray-700">{description}</p>
               </div>
             ) : (
               <div className="border-2 border-dashed border-black p-8 text-center font-mono text-sm text-gray-500">

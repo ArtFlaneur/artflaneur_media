@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MapPin, ArrowDown, Plus } from 'lucide-react';
 import { fetchGalleryById, type GraphqlGallery } from '../lib/graphql';
+import { getAppDownloadLink } from '../lib/formatters';
 import { client } from '../sanity/lib/client';
 import { GUIDE_QUERY } from '../sanity/lib/queries';
 import type { GUIDE_QUERYResult, ExternalGalleryReference } from '../sanity/types';
@@ -20,6 +21,8 @@ const GuideView: React.FC = () => {
         const [guide, setGuide] = useState<GuideDocument | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const appDownloadLink = useMemo(() => getAppDownloadLink(), []);
 
     const hydrateStops = React.useCallback(async (stops: RawGuideStop[] = []): Promise<GuideStop[]> => {
         const graphqlIds = stops
@@ -149,7 +152,7 @@ const GuideView: React.FC = () => {
                         )}
                         {guide.ctaText && (
                             <a 
-                                href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783" 
+                                href={appDownloadLink}
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="mt-6 bg-black text-white px-6 py-3 font-mono text-xs uppercase tracking-widest border-2 border-black hover:bg-art-blue transition-colors inline-block"
@@ -209,7 +212,7 @@ const GuideView: React.FC = () => {
                             </div>
                         </div>
                         <a 
-                            href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783" 
+                            href={appDownloadLink}
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="block w-full bg-art-blue text-white py-3 px-6 font-mono text-xs uppercase tracking-widest text-center hover:bg-black transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
@@ -372,7 +375,7 @@ const GuideView: React.FC = () => {
                             </div>
                         </div>
                         <a 
-                            href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783" 
+                            href={appDownloadLink}
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="block w-full bg-art-blue text-white py-4 px-6 font-mono text-sm uppercase tracking-widest text-center hover:bg-black transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"

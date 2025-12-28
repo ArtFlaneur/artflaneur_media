@@ -7,6 +7,8 @@ import { HOMEPAGE_QUERY, LATEST_REVIEWS_QUERY } from '../sanity/lib/queries';
 import { HOMEPAGE_QUERYResult, LATEST_REVIEWS_QUERYResult } from '../sanity/types';
 import { Article, ContentType } from '../types';
 import { fetchExhibitionById, fetchGalleryById, fetchGalleryByName, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
+import SecureImage from '../components/SecureImage';
+import { getAppDownloadLink } from '../lib/formatters';
 
 type HomepageData = NonNullable<HOMEPAGE_QUERYResult>;
 type HeroSection = NonNullable<HomepageData['heroSection']>;
@@ -209,17 +211,19 @@ const Home: React.FC = () => {
       partners.forEach((partner) => {
         const galleryName = partner?.gallery?.name?.trim() ?? '';
         const galleryId = partner?.gallery?.id?.trim() ?? '';
-        if (galleryName) {
-          const key = `name:${normalizeLookupKey(galleryName)}`;
-          if (!uniqueGalleryEntries.has(key)) {
-            uniqueGalleryEntries.set(key, {key, galleryName});
-          }
-          return;
-        }
+        // Prefer ID lookups to avoid stale `name` fields causing mismatches.
         if (galleryId) {
           const key = `id:${galleryId}`;
           if (!uniqueGalleryEntries.has(key)) {
             uniqueGalleryEntries.set(key, {key, galleryId});
+          }
+          return;
+        }
+
+        if (galleryName) {
+          const key = `name:${normalizeLookupKey(galleryName)}`;
+          if (!uniqueGalleryEntries.has(key)) {
+            uniqueGalleryEntries.set(key, {key, galleryName});
           }
         }
       });
@@ -387,7 +391,7 @@ const Home: React.FC = () => {
       
       {/* Mondrian Hero Section */}
       <section className="border-b-2 border-black relative">
-        <div className="grid grid-cols-1 lg:grid-cols-12 h-auto lg:h-[85vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 h-auto lg:h-[70vh]">
             
             {/* Feature Badge - всегда поверх изображения */}
       <div className="absolute top-0 left-0 bg-art-red text-white px-4 py-2 text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10">
@@ -440,8 +444,8 @@ const Home: React.FC = () => {
                         alt={slide.alt}
                         className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 grayscale group-hover:grayscale-0 ${
                           index === heroSlideIndex 
-                            ? 'opacity-100 scale-100' 
-                            : 'opacity-0 scale-105'
+                            ? 'opacity-100' 
+                            : 'opacity-0'
                         }`}
                       />
                     ))}
@@ -487,10 +491,30 @@ const Home: React.FC = () => {
       </section>
 
 
+      {/* Latest Reviews Grid */}
+      <section className="py-24 container mx-auto px-4 md:px-6">
+        <SectionHeader title="Latest Reviews" linkText="Archive" linkTo="/reviews" />
+        {error && (
+          <p className="text-sm font-mono text-red-600 mb-6">{error}</p>
+        )}
+        {loading && !latestReviews.length ? (
+          <p className="font-mono text-gray-500">Loading editor picks…</p>
+        ) : latestReviews.length ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {latestReviews.map((article) => (
+              <ArticleCard key={article.slug ?? article.id} article={article} imageAspect="square" />
+            ))}
+          </div>
+        ) : (
+          <p className="font-mono text-gray-500">No reviews published yet.</p>
+        )}
+      </section>
+
       {cityPicks.length > 0 && (
-        <section className="py-24 border-y-2 border-black bg-black text-white">
+        <section className="py-24 border-y-2 border-black bg-art-blue text-white">
           <div className="container mx-auto px-4 md:px-6">
             <SectionHeader title="Editor's Picks by City" linkText="All City Guides" linkTo="/guides" />
+            <p className="text-sm font-mono text-white/80 mb-8 max-w-2xl">Discover the best of contemporary art in major cities around the world, curated by local experts.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {cityPicks.slice(0, 6).map((city) => {
                 const picks = city?.picks ?? [];
@@ -512,9 +536,9 @@ const Home: React.FC = () => {
                         className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
                       />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black opacity-70" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-800 to-black opacity-70" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-950/90 via-blue-900/60 to-transparent" />
                     <div className="relative z-10 h-full flex flex-col justify-end p-6">
                       <div>
                         <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-art-yellow mb-2">
@@ -560,135 +584,11 @@ const Home: React.FC = () => {
         </section>
       )}
 
-      {renderDisplayAds('afterHero')}
-
-      {/* Latest Reviews Grid */}
-      <section className="py-24 container mx-auto px-4 md:px-6">
-        <SectionHeader title="Latest Reviews" linkText="Archive" linkTo="/reviews" />
-        {error && (
-          <p className="text-sm font-mono text-red-600 mb-6">{error}</p>
-        )}
-        {loading && !latestReviews.length ? (
-          <p className="font-mono text-gray-500">Loading editor picks…</p>
-        ) : latestReviews.length ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {latestReviews.map((article) => (
-              <ArticleCard key={article.slug ?? article.id} article={article} imageAspect="square" />
-            ))}
-          </div>
-        ) : (
-          <p className="font-mono text-gray-500">No reviews published yet.</p>
-        )}
-      </section>
-
-      {featuredGalleries.length > 0 && (
-        <section className="py-24 border-y-2 border-black bg-white">
-          <div className="container mx-auto px-4 md:px-6">
-            <SectionHeader title="Gallery Partners" linkText="Promote your gallery" linkTo="/advertise" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredGalleries.map((partner) => {
-                const galleryName = partner?.gallery?.name?.trim() ?? '';
-                const galleryId = partner?.gallery?.id?.trim() ?? '';
-                const lookupKey = galleryName ? `name:${normalizeLookupKey(galleryName)}` : galleryId ? `id:${galleryId}` : null;
-                const resolvedGallery = lookupKey ? partnerGalleriesByKey[lookupKey] : undefined;
-                const resolvedGalleryName = resolvedGallery?.galleryname ?? galleryName;
-                const resolvedGalleryId = resolvedGallery?.id ?? galleryId;
-                const gallerySlug = buildGallerySlug({
-                  id: resolvedGalleryId,
-                  name: resolvedGalleryName,
-                });
-                const exhibitions = partner.highlightedExhibitions ?? [];
-                const resolvedWebsite = resolvedGallery?.placeurl ?? null;
-                const fallbackCta = gallerySlug ? `/galleries/${gallerySlug}` : resolvedWebsite ?? null;
-                const ctaHref = partner.ctaUrl ?? fallbackCta;
-                const isExternalCta = isExternalUrl(ctaHref);
-
-                const ctaButton = ctaHref ? (
-                  isExternalCta ? (
-                    <a
-                      href={ctaHref}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-6 inline-flex items-center justify-between border-2 border-black px-4 py-3 font-bold uppercase text-sm bg-black text-white hover:bg-white hover:text-black transition-colors"
-                    >
-                      {partner.ctaText ?? 'Plan visit'} <ArrowRight className="w-4 h-4" />
-                    </a>
-                  ) : (
-                    <Link
-                      to={ctaHref}
-                      className="mt-6 inline-flex items-center justify-between border-2 border-black px-4 py-3 font-bold uppercase text-sm bg-black text-white hover:bg-white hover:text-black transition-colors"
-                    >
-                      {partner.ctaText ?? 'Plan visit'} <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  )
-                ) : null;
-
-                return (
-                  <article
-                    key={partner._key ?? resolvedGalleryId ?? galleryName ?? 'partner'}
-                    className="border-2 border-black bg-art-paper p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-4 mb-4">
-                        <div>
-                          <p className="font-mono text-xs uppercase tracking-widest text-gray-600">Paid Partner</p>
-                          <h3 className="text-2xl font-black uppercase leading-tight">{resolvedGalleryName || 'Gallery Partner'}</h3>
-                          {resolvedGallery?.city && (
-                            <p className="font-mono text-xs text-gray-500">{resolvedGallery.city}</p>
-                          )}
-                        </div>
-                        {partner.sponsor?.logo?.asset?.url && (
-                          <img
-                            src={partner.sponsor.logo.asset.url}
-                            alt={partner.sponsor.logo.alt ?? partner.sponsor.name ?? 'Sponsor logo'}
-                            className="h-12 object-contain"
-                          />
-                        )}
-                      </div>
-                      <p className="text-sm leading-relaxed text-gray-700">
-                        {partner.featureCopy ?? 'Partner programming selected by Art Flaneur editors.'}
-                      </p>
-                      <div className="mt-6 space-y-4">
-                        {exhibitions.map((exhibition, index) => {
-                          if (!exhibition?.id) return null;
-                          const resolvedExhibition = partnerExhibitionsById[exhibition.id] ?? null;
-                          const dateLabel = formatGraphqlDateRange(resolvedExhibition);
-                          const exhibitionTitle = resolvedExhibition?.title ?? exhibition.title ?? 'Exhibition';
-                          const exhibitionCity = resolvedExhibition?.city ?? null;
-                          return (
-                            <div
-                              key={`${partner._key ?? resolvedGalleryId ?? galleryName ?? 'partner'}-${exhibition.id}-${index}`}
-                              className="border-2 border-black/30 bg-white px-4 py-3"
-                            >
-                              <p className="text-sm font-bold uppercase">{exhibitionTitle}</p>
-                              {exhibitionCity && (
-                                <p className="font-mono text-[11px] text-gray-500">
-                                  {exhibitionCity}
-                                </p>
-                              )}
-                              {dateLabel && (
-                                <p className="font-mono text-[11px] text-gray-400">{dateLabel}</p>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {ctaButton}
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {renderDisplayAds('midPage')}
-
       {spotlightExhibitions.length > 0 && (
         <section className="py-24 border-y-2 border-black bg-art-paper">
           <div className="container mx-auto px-4 md:px-6">
-            <SectionHeader title="Now Showing" linkText="Browse Galleries" linkTo="/galleries" />
+            <SectionHeader title="Now Showing" linkText="Browse Exhibitions" linkTo="/exhibitions" />
+            <p className="text-sm font-mono text-gray-600 mb-8 max-w-2xl">Exhibitions handpicked by our editorial team, happening right now in galleries worldwide.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {spotlightExhibitions.map((spotlight) => {
                 const exhibition = spotlight?.exhibition;
@@ -706,7 +606,7 @@ const Home: React.FC = () => {
                   >
                     <div>
                       {spotlight.badge && (
-                        <span className="inline-block mb-4 bg-black text-white px-3 py-1 text-xs font-mono uppercase tracking-widest">
+                        <span className="inline-block mb-4 bg-art-yellow text-black px-3 py-1 text-xs font-mono uppercase tracking-widest font-bold">
                           {spotlight.badge}
                         </span>
                       )}
@@ -719,22 +619,18 @@ const Home: React.FC = () => {
                       {dateLabel && (
                         <p className="font-mono text-xs text-gray-500">{dateLabel}</p>
                       )}
-                      <p className="mt-6 text-sm leading-relaxed text-gray-700">
-                        {spotlight.featureCopy ?? 'Fresh picks from the global exhibition catalog curated by Art Flaneur editors.'}
-                      </p>
+                      {spotlight.featureCopy && (
+                        <p className="mt-6 text-sm leading-relaxed text-gray-700">
+                          {spotlight.featureCopy}
+                        </p>
+                      )}
                     </div>
-                    {gallerySlug ? (
-                      <Link
-                        to={`/galleries/${gallerySlug}`}
-                        className="mt-8 inline-flex items-center justify-between border-2 border-black px-4 py-3 font-bold uppercase text-sm hover:bg-black hover:text-white transition-colors"
-                      >
-                        {spotlight.ctaText ?? 'View gallery'} <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    ) : (
-                      <span className="mt-8 text-xs font-mono uppercase text-gray-500">
-                        Gallery link coming soon
-                      </span>
-                    )}
+                    <Link
+                      to={`/exhibitions/${exhibition.id}`}
+                      className="mt-8 inline-flex items-center justify-center gap-2 border-2 border-black px-4 py-3 font-bold uppercase text-sm hover:bg-black hover:text-white transition-colors"
+                    >
+                      View <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </article>
                 );
               })}
@@ -743,13 +639,175 @@ const Home: React.FC = () => {
         </section>
       )}
 
+      {featuredGalleries.length > 0 && (
+        <section className="py-24 border-y-2 border-black bg-art-yellow">
+          <div className="container mx-auto px-4 md:px-6">
+            <SectionHeader title="Gallery Partners" linkText="View all partners" linkTo="/partners/galleries" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredGalleries.map((partner) => {
+                const galleryName = partner?.gallery?.name?.trim() ?? '';
+                const galleryId = partner?.gallery?.id?.trim() ?? '';
+                const lookupKey = galleryId
+                  ? `id:${galleryId}`
+                  : galleryName
+                    ? `name:${normalizeLookupKey(galleryName)}`
+                    : null;
+                const resolvedGallery = lookupKey ? partnerGalleriesByKey[lookupKey] : undefined;
+                const resolvedGalleryName = resolvedGallery?.galleryname ?? galleryName;
+                const resolvedGalleryId = resolvedGallery?.id ?? galleryId;
+                const gallerySlug = buildGallerySlug({
+                  id: resolvedGalleryId,
+                  name: resolvedGalleryName,
+                });
+                const exhibitions = partner.highlightedExhibitions ?? [];
+                const resolvedWebsite = resolvedGallery?.placeurl ?? null;
+                const fallbackCta = gallerySlug ? `/galleries/${gallerySlug}` : resolvedWebsite ?? null;
+                const ctaHref = partner.ctaUrl ?? fallbackCta;
+                const isExternalCta = isExternalUrl(ctaHref);
+
+                const galleryImageUrl = resolvedGallery?.gallery_img_url ?? null;
+
+                const linkHref = ctaHref ?? (gallerySlug ? `/galleries/${gallerySlug}` : null);
+                const shouldUseExternalLink = isExternalUrl(linkHref);
+
+                const cardClassName =
+                  'group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(37,99,235,1)] transition-all duration-200 h-full flex flex-col min-h-[400px]';
+
+                const CardContent = (
+                  <>
+                    <div className="relative aspect-square overflow-hidden border-b-2 border-black">
+                      {galleryImageUrl ? (
+                        <SecureImage
+                          src={galleryImageUrl}
+                          alt={resolvedGalleryName || 'Gallery'}
+                          className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700 grayscale group-hover:grayscale-0"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100" />
+                      )}
+                      {resolvedGallery?.city && (
+                        <div className="absolute top-0 left-0 bg-white px-3 py-1 text-xs font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10 group-hover:bg-art-blue group-hover:text-white transition-colors">
+                          {resolvedGallery.city}
+                        </div>
+                      )}
+                      {partner.sponsor?.logo?.asset?.url && (
+                        <div className="absolute top-0 right-0 bg-white border-l-2 border-b-2 border-black px-3 py-2 z-10">
+                          <img
+                            src={partner.sponsor.logo.asset.url}
+                            alt={partner.sponsor.logo.alt ?? partner.sponsor.name ?? 'Sponsor logo'}
+                            className="h-8 object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-6 flex flex-col flex-grow">
+                      <div>
+                        <h3 className="text-2xl font-black uppercase leading-tight mb-3 group-hover:underline decoration-2 underline-offset-2">
+                          {resolvedGalleryName || 'Gallery Partner'}
+                        </h3>
+                        <p className="text-sm font-mono text-gray-600 leading-relaxed mb-6 line-clamp-3">
+                          {partner.featureCopy ?? 'Partner programming selected by Art Flaneur editors.'}
+                        </p>
+
+                        {exhibitions.length > 0 && (
+                          <div className="space-y-3">
+                            {exhibitions.slice(0, 3).map((exhibition, index) => {
+                              if (!exhibition?.id) return null;
+                              const resolvedExhibition = partnerExhibitionsById[exhibition.id] ?? null;
+                              const dateLabel = formatGraphqlDateRange(resolvedExhibition);
+                              const exhibitionTitle = resolvedExhibition?.title ?? exhibition.title ?? 'Exhibition';
+                              const exhibitionCity = resolvedExhibition?.city ?? null;
+                              const subtitle = [exhibitionCity, dateLabel].filter(Boolean).join(' • ');
+
+                              return (
+                                <div
+                                  key={`${partner._key ?? resolvedGalleryId ?? galleryName ?? 'partner'}-${exhibition.id}-${index}`}
+                                  className="border border-black/20 px-4 py-3"
+                                >
+                                  <p className="text-sm font-bold uppercase text-black line-clamp-2">{exhibitionTitle}</p>
+                                  {subtitle && (
+                                    <p className="font-mono text-xs text-gray-600 mt-1 line-clamp-2">{subtitle}</p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center text-xs font-mono text-gray-500 uppercase">
+                        <span>View Gallery</span>
+                        <ArrowRight className="w-4 h-4 text-black -ml-4 opacity-0 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                      </div>
+                    </div>
+                  </>
+                );
+
+                return linkHref ? (
+                  shouldUseExternalLink ? (
+                    <a
+                      key={partner._key ?? resolvedGalleryId ?? galleryName ?? 'partner'}
+                      href={linkHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={cardClassName}
+                    >
+                      {CardContent}
+                    </a>
+                  ) : (
+                    <Link
+                      key={partner._key ?? resolvedGalleryId ?? galleryName ?? 'partner'}
+                      to={linkHref}
+                      className={cardClassName}
+                    >
+                      {CardContent}
+                    </Link>
+                  )
+                ) : (
+                  <article
+                    key={partner._key ?? resolvedGalleryId ?? galleryName ?? 'partner'}
+                    className="border-2 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] h-full flex flex-col min-h-[400px]"
+                  >
+                    {CardContent}
+                  </article>
+                );
+              })}
+              
+              {/* CTA Card for New Partners */}
+              <article className="relative border-2 border-dashed border-black overflow-hidden flex flex-col justify-center items-center p-12 min-h-[400px] bg-gradient-to-br from-gray-50 to-white">
+                <div className="text-center">
+                  <div className="mb-4 inline-block bg-art-yellow text-black px-4 py-2 font-mono text-xs uppercase tracking-widest font-bold">
+                    Partner with us
+                  </div>
+                  <h3 className="text-3xl font-black uppercase mb-4 leading-tight">
+                    Promote Your Gallery
+                  </h3>
+                  <p className="text-sm font-mono text-gray-600 mb-8 max-w-sm mx-auto leading-relaxed">
+                    Join leading galleries worldwide in reaching engaged art enthusiasts through our platform.
+                  </p>
+                  <Link
+                    to="/partners/galleries"
+                    className="inline-flex items-center gap-3 border-2 border-black px-6 py-4 font-bold uppercase text-sm bg-white hover:bg-black hover:text-white transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
+                  >
+                    Learn More <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {renderDisplayAds('midPage')}
+
       {featuredStory && (
         <section className="border-y-2 border-black bg-white">
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div className="p-12 md:p-24 flex flex-col justify-between border-b-2 md:border-b-0 md:border-r-2 border-black">
               <div>
                 <span className="font-mono text-art-blue font-bold uppercase tracking-widest text-xs mb-4 block">
-                  Artist Profile
+                  Featured Artist
                 </span>
                 <h2 className="text-5xl md:text-7xl font-serif mb-8 leading-none">
                   {featuredStory.title ?? featuredStory.externalArtist?.name ?? 'Featured Artist'}
@@ -789,20 +847,19 @@ const Home: React.FC = () => {
         </section>
       )}
 
-      <AiTeaser />
-
       {comingSoonEvents.length > 0 && (
         <section className="py-24 border-y-2 border-black bg-art-paper">
           <div className="container mx-auto px-4 md:px-6">
             <SectionHeader title="Coming Soon" linkText="Plan ahead" linkTo="/exhibitions" />
+            <p className="text-sm font-mono text-gray-600 mb-8 max-w-full md:text-justify">Mark your calendar for upcoming exhibitions opening soon. Get notified when they launch.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {comingSoonEvents.map((item) => {
                 const exhibition = item?.exhibition;
                 if (!exhibition?.id) return null;
-                const gallerySlug = buildGallerySlug(exhibition.gallery);
                 const dateLabel = formatExhibitionRange(exhibition);
-                const ctaHref = item.ctaUrl ?? (gallerySlug ? `/galleries/${gallerySlug}` : null);
-                const isExternalCta = isExternalUrl(ctaHref);
+                const appLink = getAppDownloadLink();
+                const ctaHref = item.ctaUrl ?? appLink;
+                const isExternalCta = true; // App links are always external
                 const ctaLabel = item.ctaText ?? 'Get notified';
 
                 const ctaButton = ctaHref ? (
@@ -846,7 +903,7 @@ const Home: React.FC = () => {
                       {dateLabel && (
                         <p className="font-mono text-xs text-gray-500">{dateLabel}</p>
                       )}
-                      <p className="mt-4 text-sm leading-relaxed text-gray-700 line-clamp-4">
+                      <p className="mt-4 font-mono text-xs leading-relaxed text-gray-700 line-clamp-4">
                         {exhibition.description ?? 'Be the first to know when this show opens its doors.'}
                       </p>
                     </div>
@@ -874,6 +931,7 @@ const Home: React.FC = () => {
       {weekendGuide?.slug?.current && (
         <section className="py-24 container mx-auto px-4 md:px-6">
           <SectionHeader title="Weekend Guides" linkText="All Cities" linkTo="/guides" />
+          <p className="text-sm font-mono text-gray-600 mb-8 max-w-2xl">Curated art trails for exploring cities on foot. Perfect for a weekend adventure.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Link
               to={`/guides/${weekendGuide.slug.current}`}
@@ -906,6 +964,8 @@ const Home: React.FC = () => {
       )}
 
       {renderDisplayAds('preFooter')}
+
+      <AiTeaser />
 
       <NewsletterSection />
     </div>

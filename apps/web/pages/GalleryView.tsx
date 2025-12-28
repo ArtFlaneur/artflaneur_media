@@ -340,20 +340,17 @@ const GalleryView: React.FC = () => {
   const contactItems = [
     gallery.fulladdress && {
       icon: MapPin,
-      label: 'Visit',
       value: gallery.fulladdress,
       href: mapsLink,
     },
     gallery.placeurl && {
       icon: Globe,
-      label: 'Website',
       value:
         getDisplayDomain(gallery.placeurl) ?? gallery.placeurl.replace(/^https?:\/\//, '').replace(/\/$/, ''),
       href: normalizeUrl(gallery.placeurl),
     },
   ].filter(Boolean) as Array<{
     icon: typeof MapPin;
-    label: string;
     value: string;
     href?: string;
   }>;
@@ -385,16 +382,16 @@ const GalleryView: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Details sidebar */}
           <aside className="lg:col-span-4 order-2 lg:order-1">
-            <div className="border-2 border-black bg-white p-6 space-y-8 sticky top-24">
-              <div>
-                <h3 className="font-black uppercase text-sm tracking-[0.3em] mb-3">Visit</h3>
-                <div className="space-y-4">
+            <div className="border-2 border-black bg-white p-6 sticky top-24 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <h4 className="font-black uppercase text-lg mb-6 border-b-2 border-black pb-2">Details</h4>
+              <div className="space-y-8">
+                <div>
+                  <div className="space-y-4">
                   {contactItems.length ? (
-                    contactItems.map(({ icon: Icon, label, value, href }) => (
-                      <div key={label} className="flex gap-3">
+                    contactItems.map(({ icon: Icon, value, href }) => (
+                      <div key={href ?? value} className="flex gap-3">
                         <Icon className="w-4 h-4 mt-1" />
                         <div>
-                          <p className="font-mono text-[10px] uppercase text-gray-500">{label}</p>
                           {href ? (
                             <a href={href} target="_blank" rel="noreferrer" className="font-bold hover:underline">
                               {value}
@@ -408,42 +405,43 @@ const GalleryView: React.FC = () => {
                   ) : (
                     <p className="font-mono text-xs text-gray-500">Contact details coming soon.</p>
                   )}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h3 className="font-black uppercase text-sm tracking-[0.3em] mb-3">Hours</h3>
-                {workingHours.length ? (
-                  <ul className="font-mono text-xs space-y-1">
-                    {workingHours.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="font-mono text-xs text-gray-500">
-                    {gallery.openinghours?.trim() ?? 'Opening hours available soon.'}
-                  </p>
-                )}
+                <div>
+                  <h3 className="font-black uppercase text-sm tracking-[0.3em] mb-3">Hours</h3>
+                  {workingHours.length ? (
+                    <ul className="font-mono text-xs space-y-1">
+                      {workingHours.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="font-mono text-xs text-gray-500">
+                      {gallery.openinghours?.trim() ?? 'Opening hours available soon.'}
+                    </p>
+                  )}
 
-                <a
-                  href={appDownloadLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-6 inline-flex items-center justify-between w-full gap-3 px-4 py-3 border border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
-                >
-                  Follow Gallery
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+                  <a
+                    href={appDownloadLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-6 inline-flex items-center justify-between w-full gap-3 px-4 py-3 border border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+                  >
+                    Follow Gallery
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
 
-                <button
-                  type="button"
-                  disabled
-                  className="mt-3 inline-flex items-center justify-between w-full gap-3 px-4 py-3 border border-black font-mono text-xs uppercase tracking-widest opacity-60 cursor-not-allowed"
-                  aria-disabled="true"
-                >
-                  Claim Your Gallery
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+                  <button
+                    type="button"
+                    disabled
+                    className="mt-3 inline-flex items-center justify-between w-full gap-3 px-4 py-3 border border-black font-mono text-xs uppercase tracking-widest opacity-60 cursor-not-allowed"
+                    aria-disabled="true"
+                  >
+                    Claim Your Gallery
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </aside>

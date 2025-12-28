@@ -105,6 +105,30 @@ const deriveCity = (gallery: GraphqlGalleryHit): string | undefined => {
   return segments[segments.length - 2] ?? segments[segments.length - 1]
 }
 
+const normalizeWebsiteUrl = (rawUrl?: string | null): string | undefined => {
+  const trimmed = rawUrl?.trim()
+  if (!trimmed) return undefined
+
+  // Remove whitespace that can sneak into scraped URLs.
+  const compact = trimmed.replace(/\s+/g, '')
+  let candidate = compact
+
+  // Sanity `url` expects an absolute URL. GraphQL sometimes returns `www.example.com`.
+  if (!/^https?:\/\//i.test(candidate)) {
+    if (candidate.startsWith('//')) {
+      candidate = `https:${candidate}`
+    } else {
+      candidate = `https://${candidate.replace(/^\/+/, '')}`
+    }
+  }
+
+  try {
+    return new URL(candidate).toString()
+  } catch {
+    return undefined
+  }
+}
+
 const fetchGraphqlGalleries = async (term: string): Promise<GraphqlGalleryHit[]> => {
   if (!GRAPHQL_ENDPOINT || !GRAPHQL_API_KEY) {
     throw new Error('Configure SANITY_STUDIO_GRAPHQL_ENDPOINT and SANITY_STUDIO_GRAPHQL_API_KEY in apps/studio/.env')
@@ -229,7 +253,7 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
           name: gallery.galleryname,
           city: deriveCity(gallery),
           address: gallery.fulladdress ?? undefined,
-          website: gallery.placeurl ?? undefined,
+          website: normalizeWebsiteUrl(gallery.placeurl),
           workingHours,
         }),
       )

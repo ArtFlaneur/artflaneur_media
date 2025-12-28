@@ -160,7 +160,7 @@ const GalleryExhibitions: React.FC = () => {
                     </div>
 
                     {exhibition.description && (
-                      <p className="text-sm text-gray-700 line-clamp-2">{exhibition.description}</p>
+                      <p className="font-mono text-sm text-gray-700 line-clamp-2">{exhibition.description}</p>
                     )}
 
                     {exhibition.rejection_reason && (

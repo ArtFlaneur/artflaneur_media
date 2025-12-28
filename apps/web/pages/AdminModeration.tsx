@@ -198,7 +198,7 @@ const AdminModeration: React.FC = () => {
               </div>
 
               {exhibition.description && (
-                <p className="text-gray-700 mb-4">{exhibition.description}</p>
+                <p className="font-mono text-gray-700 mb-4">{exhibition.description}</p>
               )}
 
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm">

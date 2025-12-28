@@ -119,7 +119,7 @@ export const Header: React.FC = () => {
             <Link 
               key={item.path} 
               to={item.path}
-              className="flex items-center justify-center flex-1 border-r-2 border-black text-xs font-bold uppercase tracking-wider hover:bg-art-yellow hover:text-black transition-colors relative group"
+              className="flex items-center justify-center flex-1 border-r-2 border-black text-sm font-bold uppercase tracking-wider hover:bg-art-yellow hover:text-black transition-colors relative group whitespace-nowrap"
             >
               {item.label}
               <span className="absolute bottom-0 left-0 w-full h-1 bg-black transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
@@ -141,7 +141,7 @@ export const Header: React.FC = () => {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center px-6 border-r-2 border-black bg-black text-white hover:bg-art-blue transition-colors w-24"
             >
-                <span className="text-xs font-bold uppercase tracking-wide">
+              <span className="text-sm font-bold uppercase tracking-wide">
                     iOS
                 </span>
             </a>
@@ -151,7 +151,7 @@ export const Header: React.FC = () => {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center px-6 bg-black text-white hover:bg-art-blue transition-colors w-28"
             >
-                <span className="text-xs font-bold uppercase tracking-wide">
+              <span className="text-sm font-bold uppercase tracking-wide">
                     Android
                 </span>
             </a>
@@ -313,6 +313,12 @@ export const Footer: React.FC = () => {
                 </div>
             </div>
         </div>
+
+        <div className="container mx-auto px-4 md:px-6 py-6 pb-0">
+          <p className="text-[11px] md:text-xs text-gray-500 font-sans normal-case tracking-normal text-center">
+            Art Flaneur acknowledges the Traditional Owners of the lands on which we live and work, the people of the Kulin and Eora Nations. We pay respect to Elders past and present. Aboriginal and Torres Strait Islander people should be aware that this website may contain images, voices and names of deceased persons.
+          </p>
+        </div>
       </div>
 
       {/* Bottom Bar */}
@@ -324,12 +330,6 @@ export const Footer: React.FC = () => {
                   <Link to="/terms" className="hover:text-white">Terms</Link>
                   <Link to="/cookies" className="hover:text-white">Cookies</Link>
               </div>
-          </div>
-
-          <div className="container mx-auto px-4 md:px-6 pb-6">
-            <p className="text-[11px] md:text-xs text-gray-500 font-sans normal-case tracking-normal">
-              Art Flaneur acknowledges the Traditional Owners of the lands on which we live and work, the people of the Kulin and Eora Nations. We pay respect to Elders past and present. Aboriginal and Torres Strait Islander people should be aware that this website may contain images, voices and names of deceased persons.
-            </p>
           </div>
       </div>
     </footer>

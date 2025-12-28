@@ -147,7 +147,7 @@ const GalleryDashboard: React.FC = () => {
                       {new Date(exhibition.start_date).toLocaleDateString()} - {new Date(exhibition.end_date).toLocaleDateString()}
                     </p>
                     {exhibition.description && (
-                      <p className="text-sm text-gray-700 line-clamp-2">{exhibition.description}</p>
+                      <p className="font-mono text-sm text-gray-700 line-clamp-2">{exhibition.description}</p>
                     )}
                   </div>
                 </div>

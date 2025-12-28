@@ -1,6 +1,7 @@
 import {HomeIcon} from '@sanity/icons'
 import {defineArrayMember, defineField, defineType} from 'sanity'
 import GraphqlExhibitionInput from './review/GraphqlExhibitionInput'
+import GraphqlGalleryInput from './guide/GraphqlGalleryInput'
 
 export const homepageContent = defineType({
   name: 'homepageContent',
@@ -130,6 +131,7 @@ export const homepageContent = defineType({
               name: 'gallery',
               title: 'Gallery',
               type: 'externalGalleryReference',
+              components: {input: GraphqlGalleryInput},
               validation: (Rule) => [Rule.required().error('Select a gallery to spotlight')],
             }),
             defineField({
@@ -143,7 +145,12 @@ export const homepageContent = defineType({
               name: 'highlightedExhibitions',
               title: 'Highlighted Exhibitions',
               type: 'array',
-              of: [defineArrayMember({type: 'externalExhibitionReference'})],
+              of: [
+                defineArrayMember({
+                  type: 'externalExhibitionReference',
+                  components: {input: GraphqlExhibitionInput},
+                }),
+              ],
               validation: (Rule) => [
                 Rule.min(1).error('Add at least one exhibition for this partner'),
                 Rule.max(3).warning('Limit to three exhibitions per gallery partner'),

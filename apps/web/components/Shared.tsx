@@ -91,17 +91,17 @@ export const EntityCard: React.FC<{
         const locationLabel = [gallery.city, gallery.country].filter(Boolean).join(', ');
         const displayWebsite = getDisplayDomain(gallery.website);
         return (
-            <Link to={`/galleries/${gallerySlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 h-full flex flex-col">
+            <Link to={`/galleries/${gallerySlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden border-b-2 border-black">
-                    <SecureImage src={gallery.image} alt={gallery.name} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" />
+                    <SecureImage src={gallery.image} alt={gallery.name} className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700 grayscale group-hover:grayscale-0" />
                     {locationLabel && (
-                        <div className="absolute top-0 left-0 bg-white px-3 py-1 text-xs font-mono font-bold uppercase border-b-2 border-r-2 border-black">
+                        <div className="absolute top-0 left-0 bg-white px-3 py-1 text-xs font-mono font-bold uppercase border-b-2 border-r-2 border-black group-hover:bg-art-blue group-hover:text-white transition-colors">
                             {locationLabel}
                         </div>
                     )}
                 </div>
                 <div className="p-4 flex flex-col flex-grow gap-3">
-                    <h3 className="text-2xl font-black uppercase leading-tight break-words overflow-hidden">{gallery.name}</h3>
+                    <h3 className="text-2xl font-black uppercase leading-tight break-words overflow-hidden group-hover:underline decoration-2 underline-offset-2">{gallery.name}</h3>
                     {displayWebsite && (
                         <p className="text-sm font-mono text-gray-600 truncate">
                             {displayWebsite}
@@ -125,9 +125,9 @@ export const EntityCard: React.FC<{
                 const locationLabel = [exhibition.city, exhibition.country].filter(Boolean).join(', ');
                 const badgeLabel = exhibition.country ?? exhibition.city;
         return (
-            <Link to={`/exhibitions/${exhibitionSlug}`} className="group block border-2 border-black bg-white hover:shadow-[8px_8px_0px_0px_rgba(0,85,212,1)] transition-all duration-200 h-full flex flex-col">
+            <Link to={`/exhibitions/${exhibitionSlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden border-b-2 border-black">
-                    <SecureImage src={exhibition.image} alt={exhibition.title} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" />
+                    <SecureImage src={exhibition.image} alt={exhibition.title} className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700 grayscale group-hover:grayscale-0" />
                     <div className="absolute top-0 right-0 bg-art-yellow px-2 py-1 text-xs font-mono font-bold border-l-2 border-b-2 border-black">
                         {badgeLabel}
                     </div>
@@ -141,7 +141,7 @@ export const EntityCard: React.FC<{
                                                         <span className="min-w-0 truncate">{locationLabel}</span>
                                                     </div>
                                                 )}
-                                                <h3 className="text-xl font-bold uppercase leading-tight">{exhibition.title}</h3>
+                                                <h3 className="text-xl font-bold uppercase leading-tight group-hover:underline decoration-2 underline-offset-2">{exhibition.title}</h3>
                                                 {exhibition.artist && (
                                                     <div className="mt-auto flex items-center gap-2 font-mono text-xs text-gray-500 min-w-0">
                                                         <User className="w-3 h-3 flex-shrink-0" />
@@ -283,11 +283,11 @@ export const NewsletterSection: React.FC = () => {
     };
 
     return (
-        <section className="bg-art-yellow border-t-2 border-black py-20">
+        <section className="bg-art-yellow border-t-2 border-black py-8">
             <div className="container mx-auto px-4 md:px-6">
-                <div className="border-2 border-black bg-white p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] max-w-4xl mx-auto text-center">
-                    <h3 className="text-4xl md:text-5xl font-black uppercase mb-4 tracking-tight">The Art World.<br/>In Your Inbox.</h3>
-                    <p className="font-mono text-gray-600 mb-8 max-w-lg mx-auto">Get our weekly curation of must-see exhibitions, artist interviews, and city guides.</p>
+                <div className="border-2 border-black bg-white p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-2xl mx-auto text-center">
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase mb-2 tracking-tight">The Art World. In Your Inbox.</h3>
+                    <p className="font-mono text-xs text-gray-600 mb-4 max-w-lg mx-auto">Get our weekly curation of must-see exhibitions, artist interviews, and city guides.</p>
                     
                     {status === 'success' ? (
                         <div className="bg-green-50 border-2 border-green-500 p-6 max-w-xl mx-auto">
@@ -329,13 +329,13 @@ export const AiTeaser: React.FC = () => (
     <section className="bg-art-black text-white py-0 border-y-2 border-black overflow-hidden relative">
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-2">
             
-            <div className="p-12 md:p-24 border-b-2 md:border-b-0 md:border-r-2 border-white/20 flex flex-col justify-center">
+            <div className="p-8 sm:p-12 md:p-24 border-b-2 md:border-b-0 md:border-r-2 border-white/20 flex flex-col justify-center">
                 <div className="inline-block bg-art-blue text-white px-3 py-1 font-mono text-xs uppercase mb-6 w-max border border-white">
                     App Feature
                 </div>
-                <h2 className="text-5xl md:text-7xl font-serif mb-6 leading-[0.9]">
+                <h2 className="text-4xl sm:text-5xl md:text-7xl font-serif mb-6 leading-tight md:leading-[0.9]">
                     Your Personal<br/>
-                    <span className="text-transparent stroke-white" style={{WebkitTextStroke: '2px #fff'}}>Art Curator</span>
+                    <span className="text-transparent [-webkit-text-stroke:1px_#fff] md:[-webkit-text-stroke:2px_#fff]">Art Curator</span>
                 </h2>
                 <p className="font-mono text-gray-400 text-sm mb-12 max-w-md leading-relaxed">
                     Not sure what to see? Ask our AI assistant. Get personalized itineraries instantly.
@@ -345,7 +345,7 @@ export const AiTeaser: React.FC = () => (
                         href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-white text-black px-8 py-4 font-bold uppercase tracking-wide hover:bg-art-yellow hover:text-black transition-colors border-2 border-white hover:border-art-yellow text-center"
+                        className="bg-white text-black px-8 py-4 font-bold uppercase tracking-wide hover:bg-art-yellow hover:text-black transition-colors border-2 border-white hover:border-art-yellow text-center w-full sm:w-auto"
                     >
                         App Store
                     </a>
@@ -353,7 +353,7 @@ export const AiTeaser: React.FC = () => (
                         href="https://play.google.com/store/apps/details?id=com.artflaneur"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-transparent text-white px-8 py-4 font-bold uppercase tracking-wide hover:bg-white hover:text-black transition-colors border-2 border-white text-center"
+                        className="bg-transparent text-white px-8 py-4 font-bold uppercase tracking-wide hover:bg-white hover:text-black transition-colors border-2 border-white text-center w-full sm:w-auto"
                     >
                         Google Play
                     </a>
@@ -361,7 +361,7 @@ export const AiTeaser: React.FC = () => (
             </div>
             
             {/* Visual Representation */}
-            <div className="bg-art-paper relative flex items-center justify-center p-12 overflow-hidden">
+            <div className="bg-art-paper relative flex items-center justify-center p-8 sm:p-12 overflow-hidden">
                 <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
                 
                 {/* Chat UI Card */}

@@ -230,9 +230,6 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
   const [countingItems, setCountingItems] = useState(false);
   const [countryMetaReady, setCountryMetaReady] = useState(true);
-
-  type ExhibitionQuickFilter = 'all' | 'featured' | 'openingSoon';
-  const [exhibitionFilter, setExhibitionFilter] = useState<ExhibitionQuickFilter>('all');
   const selectedCountryCode = searchParams.get('country') || '';
   
   // Static list of all countries (must be before selectedCountry)
@@ -258,10 +255,6 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
               ? 'Read exhibition reviews and editorial features from Art Flaneur.'
               : 'Explore Art Flaneur content.',
   });
-
-  useEffect(() => {
-    setExhibitionFilter('all');
-  }, [type]);
 
   useEffect(() => {
     let cancelled = false;
@@ -751,34 +744,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
 
   const cardType: Parameters<typeof EntityCard>[0]['type'] = CARD_TYPE_MAP[type];
 
-  const visibleData = useMemo(() => {
-    if (type !== 'exhibitions') {
-      return data;
-    }
-
-    const now = Math.floor(Date.now() / 1000);
-    const exhibitions = (data as Exhibition[]).slice();
-
-    if (exhibitionFilter === 'featured') {
-      return exhibitions.filter((ex) => {
-        const hasRealImage = Boolean(ex.image) && !ex.image.includes('picsum.photos');
-        const hasDescription = Boolean(ex.description?.trim());
-        return hasRealImage && hasDescription;
-      });
-    }
-
-    if (exhibitionFilter === 'openingSoon') {
-      return exhibitions
-        .filter((ex) => (ex.startEpochSeconds ?? 0) > now)
-        .sort((a, b) => {
-          const aStart = a.startEpochSeconds ?? Number.POSITIVE_INFINITY;
-          const bStart = b.startEpochSeconds ?? Number.POSITIVE_INFINITY;
-          return aStart - bStart;
-        });
-    }
-
-    return exhibitions;
-  }, [data, exhibitionFilter, type]);
+  const visibleData = useMemo(() => data, [data]);
 
   return (
     <div className="min-h-screen bg-art-paper select-none">
@@ -803,38 +769,6 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
 
           {/* Filters */}
           <div className="flex flex-wrap gap-4 font-mono text-xs uppercase font-bold items-center">
-            <button
-              onClick={type === 'exhibitions' ? () => setExhibitionFilter('all') : undefined}
-              className={`${
-                type === 'exhibitions' && exhibitionFilter === 'all'
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-gray-100'
-              } px-4 py-2 border-2 border-black`}
-            >
-              All
-            </button>
-            <button
-              onClick={type === 'exhibitions' ? () => setExhibitionFilter('featured') : undefined}
-              className={`${
-                type === 'exhibitions' && exhibitionFilter === 'featured'
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-gray-100'
-              } px-4 py-2 border-2 border-black`}
-            >
-              Featured
-            </button>
-            {type === 'exhibitions' && (
-              <button
-                onClick={() => setExhibitionFilter('openingSoon')}
-                className={`${
-                  exhibitionFilter === 'openingSoon'
-                    ? 'bg-black text-white'
-                    : 'bg-white text-black hover:bg-gray-100'
-                } px-4 py-2 border-2 border-black`}
-              >
-                Opening Soon
-              </button>
-            )}
             {showCountryFilter && (
               <div className="relative">
                 <select
