@@ -53,6 +53,22 @@ export const guide = defineType({
       validation: (Rule) => [Rule.required().error('Cover image is required for guides')],
     }),
     defineField({
+      name: 'appScreenshot',
+      title: 'App Map Screenshot',
+      type: 'image',
+      group: 'content',
+      options: {hotspot: true},
+      description: 'Screenshot of this trail in the mobile app (shown in sidebar)',
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alt text',
+          description: 'Describe what is shown in the screenshot',
+        }),
+      ],
+    }),
+    defineField({
       name: 'body',
       title: 'Guide Introduction',
       type: 'blockContent',
@@ -69,14 +85,6 @@ export const guide = defineType({
           type: 'object',
           fields: [
             defineField({
-              name: 'title',
-              type: 'string',
-              title: 'Stop Title',
-              validation: (Rule) => [Rule.required().error('Stop title is required')],
-            }),
-            defineField({name: 'summary', type: 'text', title: 'Summary', rows: 3}),
-            defineField({name: 'notes', type: 'text', title: 'Notes', rows: 2}),
-            defineField({
               name: 'externalGallery',
               title: 'GraphQL Gallery',
               type: 'externalGalleryReference',
@@ -86,6 +94,21 @@ export const guide = defineType({
               validation: (Rule) => [
                 Rule.required().error('Select a gallery via the GraphQL lookup for every stop'),
               ],
+            }),
+            defineField({
+              name: 'title',
+              type: 'string',
+              title: 'Stop Title (Optional)',
+              description: 'Leave empty to use gallery name from GraphQL automatically',
+            }),
+            defineField({name: 'summary', type: 'text', title: 'Summary', rows: 3}),
+            defineField({name: 'notes', type: 'text', title: 'Notes', rows: 2}),
+            defineField({
+              name: 'curatorQuote',
+              type: 'text',
+              title: 'Curator Recommendation',
+              description: 'Optional curator insight or recommendation for this stop',
+              rows: 2,
             }),
           ],
         }),

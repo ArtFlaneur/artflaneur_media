@@ -891,6 +891,18 @@ export const GUIDE_QUERY = defineQuery(`*[
   description,
   body,
   ctaText,
+  coverImage {
+    asset->{
+      url
+    },
+    alt
+  },
+  appScreenshot {
+    asset->{
+      url
+    },
+    alt
+  },
   sponsorship {
     enabled,
     type,

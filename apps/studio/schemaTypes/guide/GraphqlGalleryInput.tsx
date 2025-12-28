@@ -256,7 +256,7 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
       {!isConfigured && (
         <Card padding={3} tone="caution" radius={2} border>
           <Text size={1} muted>
-            Добавьте SANITY_STUDIO_GRAPHQL_ENDPOINT и SANITY_STUDIO_GRAPHQL_API_KEY в apps/studio/.env, чтобы искать галереи в каталоге.
+            Add SANITY_STUDIO_GRAPHQL_ENDPOINT and SANITY_STUDIO_GRAPHQL_API_KEY to apps/studio/.env to search galleries in the catalog.
           </Text>
         </Card>
       )}
@@ -267,7 +267,7 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
             <Flex align="center" justify="space-between">
               <Stack space={1}>
                 <Text size={2} weight="bold">
-                  {value.name ?? 'Выбранная галерея'}
+                  {value.name ?? 'Selected gallery'}
                 </Text>
                 <Text size={1} muted>
                   GraphQL ID: {value.id}
@@ -276,12 +276,12 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
               <Button
                 icon={RefreshIcon}
                 mode="ghost"
-                text="Очистить"
+                text="Clear"
                 onClick={handleClear}
                 disabled={readOnly}
               />
             </Flex>
-            <Text size={1}>{value.address ?? 'Адрес не указан'}</Text>
+            <Text size={1}>{value.address ?? 'Address not specified'}</Text>
             {value.city && (
               <Text size={1} muted>
                 {value.city}
@@ -301,7 +301,7 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
         </Card>
       ) : (
         <Text size={1} muted>
-          Свяжите пункт с существующей записью Sanity или найдите её в GraphQL каталоге ниже.
+          Link the stop to an existing Sanity record or find it in the GraphQL catalog below.
         </Text>
       )}
 
@@ -311,13 +311,13 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
             {...elementProps}
             value={query}
             onChange={(event) => setQuery(event.currentTarget.value)}
-            placeholder="Поиск по названию, городу или адресу"
+            placeholder="Search by name, city or address"
             disabled={isSearchingDisabled}
           />
         </Box>
         <Button
           icon={SearchIcon}
-          text="Найти"
+          text="Search"
           tone="primary"
           mode="default"
           disabled={isSearchingDisabled || !query.trim()}
@@ -328,7 +328,7 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
       {loading && (
         <Flex align="center" gap={2}>
           <Spinner />
-          <Text size={1}>Загружаем результаты…</Text>
+          <Text size={1}>Loading results…</Text>
         </Flex>
       )}
 
@@ -358,9 +358,9 @@ const GraphqlGalleryInput = (props: ObjectInputProps<ExternalGalleryValue>) => {
                   {gallery.galleryname}
                 </Text>
                 <Text size={1} muted>
-                  {[deriveCity(gallery), gallery.country].filter(Boolean).join(', ') || 'Локация не указана'}
+                  {[deriveCity(gallery), gallery.country].filter(Boolean).join(', ') || 'Location not specified'}
                 </Text>
-                <Text size={1}>{gallery.fulladdress ?? 'Адрес не указан'}</Text>
+                <Text size={1}>{gallery.fulladdress ?? 'Address not specified'}</Text>
               </Stack>
             </Card>
           ))}

@@ -117,6 +117,7 @@ const GuideView: React.FC = () => {
 
             const stops: GuideStop[] = Array.isArray(guide.stops) ? guide.stops : [];
             const coverImageUrl = guide.coverImage?.asset?.url;
+            const appScreenshotUrl = guide.appScreenshot?.asset?.url;
             const isSponsored = Boolean(guide.sponsorship?.enabled);
             const sponsorLogoUrl = guide.sponsorship?.sponsor?.logo?.asset?.url;
 
@@ -147,15 +148,77 @@ const GuideView: React.FC = () => {
                             </p>
                         )}
                         {guide.ctaText && (
-                            <button className="mt-6 bg-black text-white px-6 py-3 font-mono text-xs uppercase tracking-widest border-2 border-black hover:bg-art-blue transition-colors">
+                            <a 
+                                href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="mt-6 bg-black text-white px-6 py-3 font-mono text-xs uppercase tracking-widest border-2 border-black hover:bg-art-blue transition-colors inline-block"
+                            >
                                 {guide.ctaText}
-                            </button>
+                            </a>
                         )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-screen">
             {/* List / Steps */}
             <div className="lg:col-span-7 p-6 md:p-8">
+                {/* Mobile App Promotion */}
+                <div className="lg:hidden mb-8 flex flex-col items-center bg-white border-2 border-black p-6">
+                    {/* Device Frame + Screenshot */}
+                    <div className="relative mb-6">
+                        {/* Phone Frame */}
+                        <div className="relative w-[200px] h-[400px] bg-black rounded-[2.5rem] p-2.5 shadow-2xl">
+                            {/* Notch */}
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-20 h-5 bg-black rounded-b-2xl z-10"></div>
+                            {/* Screen */}
+                            <div className="relative w-full h-full bg-white rounded-[2rem] overflow-hidden">
+                                {appScreenshotUrl ? (
+                                    <img 
+                                        src={appScreenshotUrl} 
+                                        alt={guide.appScreenshot?.alt || 'App map preview'} 
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                        <MapPin className="w-12 h-12 text-gray-400" />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        {/* Floating Badge */}
+                        <div className="absolute -top-3 -right-3 bg-art-red text-white px-2.5 py-1.5 rounded-full border-4 border-white shadow-lg">
+                            <p className="font-mono text-[10px] uppercase tracking-wider">{stops.length} Stops</p>
+                        </div>
+                    </div>
+
+                    {/* CTA Section */}
+                    <div className="w-full max-w-sm space-y-3">
+                        <h3 className="text-xl font-black uppercase text-center">Navigate with the App</h3>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            <div className="bg-white border-2 border-black p-2 rounded">
+                                <MapPin className="w-5 h-5 mx-auto mb-1" />
+                                <p className="text-[10px] font-mono uppercase">Live Map</p>
+                            </div>
+                            <div className="bg-white border-2 border-black p-2 rounded">
+                                <Plus className="w-5 h-5 mx-auto mb-1" />
+                                <p className="text-[10px] font-mono uppercase">Save</p>
+                            </div>
+                            <div className="bg-white border-2 border-black p-2 rounded">
+                                <ArrowDown className="w-5 h-5 mx-auto mb-1" />
+                                <p className="text-[10px] font-mono uppercase">Offline</p>
+                            </div>
+                        </div>
+                        <a 
+                            href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="block w-full bg-art-blue text-white py-3 px-6 font-mono text-xs uppercase tracking-widest text-center hover:bg-black transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                        >
+                            Download Free App
+                        </a>
+                    </div>
+                </div>
+
                 {guide.body && guide.body.length > 0 && (
                     <div className="mb-8 prose prose-sm max-w-none">
                         <PortableTextRenderer value={guide.body} />
@@ -169,11 +232,12 @@ const GuideView: React.FC = () => {
                                         )}
                                         {stops.map((step, index) => {
                                                                                         const stopImage = step.resolvedExternalGallery?.gallery_img_url ?? coverImageUrl ?? null;
-                                                                                        const stopImageAlt = step.title ?? 'Guide stop visual';
                                                                                         const galleryName =
                                                                                             step.resolvedExternalGallery?.galleryname ??
                                                                                             step.externalGallery?.name ??
                                                                                             null;
+                                                                                        const stopTitle = step.title || galleryName || `Stop ${index + 1}`;
+                                                                                        const stopImageAlt = stopTitle;
                                                                                         const galleryAddress =
                                                                                             step.resolvedExternalGallery?.fulladdress ??
                                                                                             step.externalGallery?.address ??
@@ -181,97 +245,140 @@ const GuideView: React.FC = () => {
                                                                                             'Location TBD';
                                                                                         const galleryId = step.resolvedExternalGallery?.id ?? step.externalGallery?.id ?? null;
                                                                                         const galleryLink = galleryId ? `/galleries/${galleryId}` : null;
+                                                                                        const openingHours = step.resolvedExternalGallery?.openinghours ?? null;
+                                                                                        const curatorQuote = step.curatorQuote ?? null;
                                             return (
                                             <div key={step._key || `stop-${index}`} className="relative pl-8">
                             {/* Number Bubble */}
-                            <div className="absolute -left-[13px] top-0 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-sm font-bold font-mono border-2 border-white ring-2 ring-black">
+                            <div className="absolute -left-[13px] top-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-sm font-bold font-mono border-2 border-white ring-2 ring-black">
                                 {index + 1}
                             </div>
                             
                                 {galleryLink ? (
-                                    <Link to={galleryLink} className="block border-2 border-black bg-white overflow-hidden hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-shadow">
+                                    <Link to={galleryLink} className="group flex gap-3 border-2 border-black bg-white p-3 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
                                                 {stopImage ? (
-                                                                    <div className="aspect-video relative overflow-hidden border-b-2 border-black">
-                                                    <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover" />
+                                                                    <div className="w-24 h-24 flex-shrink-0 border-2 border-black overflow-hidden">
+                                                    <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="aspect-video border-b-2 border-black bg-gray-100 flex items-center justify-center text-xs font-mono tracking-wide text-gray-500">
-                                                                        Visual coming soon
+                                                                    <div className="w-24 h-24 flex-shrink-0 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center">
+                                                                        <MapPin className="w-6 h-6 text-gray-400" />
                                                                     </div>
                                                                 )}
-                                <div className="p-4">
-                                                                        <h3 className="text-lg font-black uppercase mb-1">{step.title || `Stop ${index + 1}`}</h3>
-                                    <p className="text-xs font-mono text-gray-500 mb-2 flex items-center gap-1">
-                                                                            <MapPin className="w-3 h-3" /> {galleryAddress}
-                                    </p>
-                                                                        <p className="text-sm text-gray-700 leading-snug line-clamp-3">{step.summary || step.notes || 'Details coming soon.'}</p>
-                                                                                                {galleryName && (
-                                                                                                    <p className="mt-2 text-[10px] font-mono uppercase tracking-wide text-gray-500">
+                                <div className="flex-1 min-w-0">
+                                                                        <h3 className="text-base font-black uppercase mb-1 truncate group-hover:text-art-blue transition-colors">{stopTitle}</h3>
+                                                                                                {galleryName && step.title && (
+                                                                                                    <p className="text-xs font-mono uppercase tracking-wide text-gray-600 mb-1">
                                                                                                         {galleryName}
                                                                                                     </p>
                                                                                                 )}
+                                    <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                                                                            <MapPin className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{galleryAddress}</span>
+                                    </p>
+                                                                        <p className="text-sm text-gray-700 leading-relaxed mb-2">{step.summary || step.notes || 'Details coming soon.'}</p>
+                                                                        {curatorQuote && (
+                                                                            <p className="text-xs italic text-gray-600 border-l-2 border-art-yellow pl-2 mt-2">
+                                                                                "{curatorQuote}"
+                                                                            </p>
+                                                                        )}
                                 </div>
                                     </Link>
                                 ) : (
-                                    <div className="border-2 border-black bg-white overflow-hidden">
+                                    <div className="flex gap-3 border-2 border-black bg-white p-3">
                                                 {stopImage ? (
-                                                                    <div className="aspect-video relative overflow-hidden border-b-2 border-black">
+                                                                    <div className="w-24 h-24 flex-shrink-0 border-2 border-black overflow-hidden">
                                                     <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover" />
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="aspect-video border-b-2 border-black bg-gray-100 flex items-center justify-center text-xs font-mono tracking-wide text-gray-500">
-                                                                        Visual coming soon
+                                                                    <div className="w-24 h-24 flex-shrink-0 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center">
+                                                                        <MapPin className="w-6 h-6 text-gray-400" />
                                                                     </div>
                                                                 )}
-                                <div className="p-4">
-                                                                        <h3 className="text-lg font-black uppercase mb-1">{step.title || `Stop ${index + 1}`}</h3>
-                                    <p className="text-xs font-mono text-gray-500 mb-2 flex items-center gap-1">
-                                                                            <MapPin className="w-3 h-3" /> {galleryAddress}
-                                    </p>
-                                                                        <p className="text-sm text-gray-700 leading-snug line-clamp-3">{step.summary || step.notes || 'Details coming soon.'}</p>
-                                                                                                {galleryName && (
-                                                                                                    <p className="mt-2 text-[10px] font-mono uppercase tracking-wide text-gray-500">
+                                <div className="flex-1 min-w-0">
+                                                                        <h3 className="text-base font-black uppercase mb-1 truncate">{stopTitle}</h3>
+                                                                                                {galleryName && step.title && (
+                                                                                                    <p className="text-xs font-mono uppercase tracking-wide text-gray-600 mb-1">
                                                                                                         {galleryName}
                                                                                                     </p>
                                                                                                 )}
+                                    <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                                                                            <MapPin className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{galleryAddress}</span>
+                                    </p>
+                                                                        <p className="text-sm text-gray-700 leading-relaxed mb-2">{step.summary || step.notes || 'Details coming soon.'}</p>
+                                                                        {curatorQuote && (
+                                                                            <p className="text-xs italic text-gray-600 border-l-2 border-art-yellow pl-2 mt-2">
+                                                                                "{curatorQuote}"
+                                                                            </p>
+                                                                        )}
                                 </div>
                                     </div>
                                 )}
                             
                                                         {index < stops.length - 1 && (
-                                <div className="absolute left-4 bottom-[-20px] text-black">
-                                    <ArrowDown className="w-5 h-5" />
-                                </div>
+                                <>
+                                    <div className="absolute -left-[5px] bottom-[-24px] w-2 h-2 border-r-2 border-b-2 border-black transform rotate-45"></div>
+                                </>
                             )}
                         </div>
                     )})}
                 </div>
             </div>
 
-            {/* Map (Sticky Sidebar) */}
-            <div className="lg:col-span-5 border-l-2 border-black relative bg-gray-100 hidden lg:block">
-                 <div className="sticky top-20 h-[calc(100vh-80px)] w-full">
-                     {/* Placeholder for Map Integration */}
-                     <div className="absolute inset-0 bg-gray-200">
-                        <div className="w-full h-full opacity-30" style={{backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="bg-white border-2 border-black px-4 py-2 font-mono text-xs uppercase font-bold">Interactive Map Component</span>
+            {/* App Promotion Sidebar */}
+            <div className="lg:col-span-5 border-l-2 border-black relative bg-white hidden lg:block">
+                 <div className="sticky top-20 h-[calc(100vh-80px)] w-full flex flex-col items-center justify-center p-8">
+                     {/* Device Frame + Screenshot */}
+                     <div className="relative mb-8">
+                        {/* Phone Frame */}
+                        <div className="relative w-[220px] h-[440px] bg-black rounded-[2.5rem] p-2.5 shadow-2xl">
+                            {/* Notch */}
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-5 bg-black rounded-b-2xl z-10"></div>
+                            {/* Screen */}
+                            <div className="relative w-full h-full bg-white rounded-[2rem] overflow-hidden">
+                                {appScreenshotUrl ? (
+                                    <img 
+                                        src={appScreenshotUrl} 
+                                        alt={guide.appScreenshot?.alt || 'App map preview'} 
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                        <MapPin className="w-12 h-12 text-gray-400" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        {/* Fake Pins */}
-                        <div className="absolute top-1/3 left-1/3 w-8 h-8 bg-art-red rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white font-bold text-xs">1</div>
-                        <div className="absolute top-1/2 right-1/4 w-8 h-8 bg-black rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white font-bold text-xs">2</div>
+                        {/* Floating Badge */}
+                        <div className="absolute -top-3 -right-3 bg-art-red text-white px-2.5 py-1.5 rounded-full border-4 border-white shadow-lg">
+                            <p className="font-mono text-[10px] uppercase tracking-wider">{stops.length} Stops</p>
+                        </div>
                      </div>
-                     
-                     <div className="absolute bottom-8 left-8 right-8 bg-white border-2 border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                         <div className="flex justify-between items-center">
-                             <div>
-                                <h4 className="font-bold uppercase text-sm">Save this trail</h4>
-                                <p className="text-xs font-mono text-gray-500">Download for offline access</p>
-                             </div>
-                             <button className="bg-black text-white p-2 hover:bg-art-blue transition-colors">
-                                 <Plus className="w-4 h-4" />
-                             </button>
-                         </div>
+
+                     {/* CTA Section */}
+                     <div className="w-full max-w-sm space-y-4">
+                        <h3 className="text-2xl font-black uppercase text-center">Navigate with the App</h3>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            <div className="bg-white border-2 border-black p-2 rounded">
+                                <MapPin className="w-5 h-5 mx-auto mb-1" />
+                                <p className="text-[10px] font-mono uppercase">Live Map</p>
+                            </div>
+                            <div className="bg-white border-2 border-black p-2 rounded">
+                                <Plus className="w-5 h-5 mx-auto mb-1" />
+                                <p className="text-[10px] font-mono uppercase">Save</p>
+                            </div>
+                            <div className="bg-white border-2 border-black p-2 rounded">
+                                <ArrowDown className="w-5 h-5 mx-auto mb-1" />
+                                <p className="text-[10px] font-mono uppercase">Offline</p>
+                            </div>
+                        </div>
+                        <a 
+                            href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="block w-full bg-art-blue text-white py-4 px-6 font-mono text-sm uppercase tracking-widest text-center hover:bg-black transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+                        >
+                            Download Art Flaneur App
+                        </a>
                      </div>
                  </div>
             </div>

@@ -222,7 +222,7 @@ const GraphqlArtistInput = (props: ObjectInputProps) => {
       {!isConfigured && (
         <Card padding={3} tone="caution" radius={2} border>
           <Text size={1} muted>
-            Добавьте SANITY_STUDIO_GRAPHQL_ENDPOINT и SANITY_STUDIO_GRAPHQL_API_KEY в apps/studio/.env, чтобы подключить глобальный каталог художников.
+            Add SANITY_STUDIO_GRAPHQL_ENDPOINT and SANITY_STUDIO_GRAPHQL_API_KEY to apps/studio/.env to connect the global artist catalog.
           </Text>
         </Card>
       )}
@@ -233,13 +233,13 @@ const GraphqlArtistInput = (props: ObjectInputProps) => {
             <Flex align="center" justify="space-between">
               <Stack space={1}>
                 <Text size={2} weight="bold">
-                  {selectedArtist.name ?? 'Выбранный художник'}
+                  {selectedArtist.name ?? 'Selected artist'}
                 </Text>
                 <Text size={1} muted>
                   GraphQL ID: {selectedArtist.id}
                 </Text>
               </Stack>
-              <Button icon={RefreshIcon} mode="ghost" text="Очистить" onClick={handleClear} disabled={readOnly} />
+              <Button icon={RefreshIcon} mode="ghost" text="Clear" onClick={handleClear} disabled={readOnly} />
             </Flex>
             {selectedArtist.country && (
               <Text size={1} muted>
@@ -253,7 +253,7 @@ const GraphqlArtistInput = (props: ObjectInputProps) => {
         </Card>
       ) : (
         <Text size={1} muted>
-          Найдите художника в GraphQL каталоге и привяжите историю к живой карточке.
+          Find an artist in the GraphQL catalog and link the story to a live card.
         </Text>
       )}
 
@@ -261,12 +261,12 @@ const GraphqlArtistInput = (props: ObjectInputProps) => {
         <TextInput
           value={query}
           onChange={(event) => setQuery(event.currentTarget.value)}
-          placeholder="Поиск по имени, стране или описанию"
+          placeholder="Search by name, country or description"
           disabled={!isConfigured || readOnly}
         />
         <Button
           icon={SearchIcon}
-          text="Найти"
+          text="Search"
           tone="primary"
           disabled={!isConfigured || readOnly || !query.trim()}
           onClick={handleSearch}
@@ -276,7 +276,7 @@ const GraphqlArtistInput = (props: ObjectInputProps) => {
       {loading && (
         <Flex align="center" gap={2}>
           <Spinner />
-          <Text size={1}>Загружаем результаты…</Text>
+          <Text size={1}>Loading results…</Text>
         </Flex>
       )}
 
@@ -301,12 +301,12 @@ const GraphqlArtistInput = (props: ObjectInputProps) => {
             >
               <Stack space={1}>
                 <Text size={2} weight="semibold">
-                  {artist.name ?? 'Без названия'}
+                  {artist.name ?? 'Untitled'}
                 </Text>
                 <Text size={1} muted>
                   {[artist.country, artist.birth_year ? `b. ${artist.birth_year}` : undefined]
                     .filter(Boolean)
-                    .join(' • ') || 'Нет данных'}
+                    .join(' • ') || 'No data'}
                 </Text>
                 {artist.description && (
                   <Text size={1} muted>
