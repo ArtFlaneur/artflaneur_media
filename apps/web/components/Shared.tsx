@@ -6,13 +6,13 @@ import SecureImage from './SecureImage';
 import { getDisplayDomain } from '../lib/formatters';
 
 export const SectionHeader: React.FC<{ title: string; linkText?: string; linkTo?: string }> = ({ title, linkText, linkTo }) => (
-  <div className="flex justify-between items-end mb-8 border-b-2 border-black pb-4">
+  <div className="flex justify-between items-end mb-8 border-b-2 border-current pb-4">
     <div className="flex items-center gap-2 md:gap-4">
         <div className="w-3 h-3 md:w-4 md:h-4 bg-art-red"></div>
-        <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tight text-black">{title}</h2>
+        <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tight">{title}</h2>
     </div>
     {linkText && linkTo && (
-      <Link to={linkTo} className="hidden md:flex items-center text-xs font-mono uppercase tracking-widest gap-2 hover:bg-black hover:text-white px-3 py-1 transition-all border border-transparent hover:border-black">
+      <Link to={linkTo} className="hidden md:flex items-center text-xs font-mono uppercase tracking-widest gap-2 hover:bg-white hover:text-black px-3 py-1 transition-all border border-current">
         [{linkText}] <ArrowRight className="w-3 h-3" />
       </Link>
     )}

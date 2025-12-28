@@ -47,11 +47,11 @@ export const review = defineType({
       validation: (Rule) => [Rule.required().error('A lead image is required before publishing')],
     }),
     defineField({
-      name: 'galleryImages',
-      title: 'Exhibition Gallery',
+      name: 'heroSlider',
+      title: 'Hero Slider Images',
       type: 'array',
       group: 'content',
-      description: 'Upload installation views that power the review hero slider',
+      description: 'Add 2-8 images for the hero slider on homepage and review page. If empty, only mainImage will be shown.',
       of: [
         defineArrayMember({
           type: 'image',
@@ -61,16 +61,14 @@ export const review = defineType({
               name: 'alt',
               type: 'string',
               title: 'Alt text',
-              validation: (Rule) => [Rule.required().error('Provide alt text for every slide')],
+              validation: (Rule) => [Rule.required().error('Provide alt text for every image')],
             }),
             defineField({name: 'caption', type: 'string', title: 'Caption'}),
-            defineField({name: 'credit', type: 'string', title: 'Photo credit'}),
           ],
         }),
       ],
       validation: (Rule) => [
-        Rule.min(1).warning('Add at least one additional image to unlock the carousel'),
-        Rule.max(8).warning('Limit to eight slides to keep the page fast'),
+        Rule.max(8).warning('Limit to 8 images to keep the page fast'),
       ],
     }),
     defineField({

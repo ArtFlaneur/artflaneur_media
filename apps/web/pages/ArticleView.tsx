@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Facebook, Twitter, Linkedin, MapPin, Clock, Ticket, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '../components/Shared';
+import PortableTextRenderer from '../components/PortableTextRenderer';
 import { client } from '../sanity/lib/client';
 import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
 import { BlockContent } from '../sanity/types';
@@ -95,13 +96,13 @@ const formatExhibitionWindow = (
     if (startLabel === endLabel) {
       return {
         primary: startLabel,
-        secondary: describeDuration(start, end),
+        secondary: null,
       };
     }
 
     return {
       primary: `${startLabel} – ${endLabel}`,
-      secondary: describeDuration(start, end),
+      secondary: null,
     };
   }
 
@@ -350,43 +351,46 @@ const ArticleView: React.FC = () => {
 
   const sponsorBadge = useMemo(() => getSponsorBadge(review), [review]);
   const article = useMemo(() => (review ? mapReviewToArticle(review) : null), [review]);
-  const gallerySlides = useMemo<GallerySlide[]>(() => {
-    const slides = (review?.galleryImages ?? [])
-      .map((image) => ({
-        url: image?.asset?.url ?? '',
-        alt: image?.alt ?? review?.title ?? 'Exhibition view',
-        caption: image?.caption,
-        credit: image?.credit,
-      }))
-      .filter((slide) => Boolean(slide.url));
-
-    if (slides.length) {
-      return slides;
+  
+  // Use heroSlider if available, otherwise fallback to mainImage
+  const heroSlides = useMemo(() => {
+    const slides = [];
+    
+    // First, try to use heroSlider images
+    if (review?.heroSlider?.length) {
+      slides.push(...review.heroSlider.map(img => ({
+        url: img?.asset?.url ?? '',
+        alt: img?.alt ?? review?.title ?? 'Exhibition view',
+        caption: img?.caption,
+      })).filter(slide => slide.url));
     }
-
-    if (article?.image) {
-      return [
-        {
-          url: article.image,
-          alt: article.title ?? 'Exhibition view',
-        },
-      ];
+    
+    // If no heroSlider images, use mainImage
+    if (!slides.length && article?.image) {
+      slides.push({
+        url: article.image,
+        alt: article.title ?? 'Review image',
+      });
     }
+    
+    return slides;
+  }, [review, article]);
 
-    return [];
-  }, [article?.image, article?.title, review?.galleryImages, review?.title]);
-  const slideCount = gallerySlides.length;
-  const currentSlide = gallerySlides[activeSlide] ?? gallerySlides[0];
+  const slideCount = heroSlides.length;
+  const currentSlide = heroSlides[activeSlide] ?? heroSlides[0];
 
   const handleNextSlide = useCallback(() => {
-    if (!slideCount) return;
-    setActiveSlide((prev) => (prev + 1) % slideCount);
+    if (slideCount > 1) {
+      setActiveSlide((prev) => (prev + 1) % slideCount);
+    }
   }, [slideCount]);
 
   const handlePrevSlide = useCallback(() => {
-    if (!slideCount) return;
-    setActiveSlide((prev) => (prev - 1 + slideCount) % slideCount);
+    if (slideCount > 1) {
+      setActiveSlide((prev) => (prev - 1 + slideCount) % slideCount);
+    }
   }, [slideCount]);
+
   const articleBody = review ? portableTextToPlain(review.body) : '';
   const galleryMeta = useMemo(() => extractGalleryMeta(review), [review]);
   const location = galleryMeta.name ? `${galleryMeta.name}${galleryMeta.city ? `, ${galleryMeta.city}` : ''}` : 'Gallery Location';
@@ -474,6 +478,12 @@ const ArticleView: React.FC = () => {
     review,
   ]);
 
+  const exhibitionTitle = review?.resolvedExternalExhibition?.title ?? review?.externalExhibition?.title ?? null;
+
+  const openTodayStatus = todaysScheduleLine
+    ? stripDayLabel(normalizeHoursText(todaysScheduleLine)).split(':')[0].trim()
+    : null;
+
   const curatorList: LinkedDocument[] = [];
 
   const authorProfilePath = article?.author
@@ -531,7 +541,7 @@ const ArticleView: React.FC = () => {
       )}
       {/* Brutalist Header */}
       <div className="border-b-2 border-black bg-white">
-          <div className="container mx-auto px-4 md:px-6 pt-16 pb-12">
+          <div className="container mx-auto px-4 md:px-6 pt-8 pb-6">
             {sponsorBadge && (
               <div
                 className="mb-6 inline-flex items-center gap-3 px-4 py-2 border-2 border-black uppercase text-xs font-mono tracking-widest"
@@ -611,12 +621,14 @@ const ArticleView: React.FC = () => {
       {/* Hero Gallery */}
       <div className="border-b-2 border-black">
         <div className="w-full h-[50vh] md:h-[70vh] relative overflow-hidden bg-black">
-          {gallerySlides.map((slide, index) => (
+          {heroSlides.map((slide, index) => (
             <img
               key={`${slide.url}-${index}`}
               src={slide.url}
               alt={slide.alt}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                index === activeSlide ? 'opacity-100' : 'opacity-0'
+              }`}
             />
           ))}
           {slideCount > 1 && (
@@ -638,11 +650,13 @@ const ArticleView: React.FC = () => {
                 <ChevronRight className="w-5 h-5" />
               </button>
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                {gallerySlides.map((_, idx) => (
+                {heroSlides.map((_, idx) => (
                   <button
                     key={`dot-${idx}`}
                     type="button"
-                    className={`w-3 h-3 border border-white rounded-full ${idx === activeSlide ? 'bg-white' : 'bg-transparent opacity-70'}`}
+                    className={`w-3 h-3 border border-white rounded-full ${
+                      idx === activeSlide ? 'bg-white' : 'bg-transparent opacity-70'
+                    }`}
                     onClick={() => setActiveSlide(idx)}
                     aria-label={`Go to slide ${idx + 1}`}
                   />
@@ -651,168 +665,78 @@ const ArticleView: React.FC = () => {
             </>
           )}
         </div>
-        {currentSlide && (currentSlide.caption || currentSlide.credit) && (
-          <div className="border-t-2 border-black bg-white px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs font-mono uppercase tracking-[0.3em]">
-            <span>{currentSlide.caption ?? 'Installation view'}</span>
-            {currentSlide.credit && <span className="text-gray-500 normal-case tracking-normal">Photo: {currentSlide.credit}</span>}
+        {currentSlide?.caption && (
+          <div className="border-t-2 border-black bg-white px-4 py-3 text-xs font-mono uppercase tracking-[0.3em]">
+            <span>{currentSlide.caption}</span>
           </div>
         )}
       </div>
-
-      {exhibitionOverview && (
-        <div className="container mx-auto px-4 md:px-6 -mt-10 relative z-10">
-          <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-6 md:p-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="font-mono text-xs uppercase tracking-[0.3em] text-gray-500">Exhibition Overview</p>
-                <h2 className="text-2xl md:text-3xl font-black uppercase leading-tight mt-2">
-                  {exhibitionOverview.title}
-                </h2>
-                <p className="text-sm md:text-base text-gray-600 mt-1">
-                  {exhibitionOverview.galleryName}
-                  {exhibitionOverview.galleryCity ? ` • ${exhibitionOverview.galleryCity}` : ''}
-                </p>
-              </div>
-              <div className="flex flex-col md:items-end gap-1 font-mono text-xs uppercase tracking-widest">
-                <span>{exhibitionOverview.dates.primary}</span>
-                {exhibitionOverview.dates.secondary && (
-                  <span className="text-gray-500">{exhibitionOverview.dates.secondary}</span>
-                )}
-              </div>
-            </div>
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-2">Artists</p>
-                {exhibitionOverview.artists.length ? (
-                  <p className="text-sm md:text-base leading-relaxed">
-                    {exhibitionOverview.artists.join(', ')}
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-500">Artist details coming soon.</p>
-                )}
-              </div>
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-gray-500 mb-2">Admission</p>
-                <p className="text-sm md:text-base leading-relaxed">
-                  {exhibitionOverview.admission ?? 'Admission details available via the venue.'}
-                </p>
-              </div>
-              <div className="flex flex-col gap-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-gray-500">Plan a visit</p>
-                {exhibitionOverview.website && exhibitionOverview.websiteLabel ? (
-                  <a
-                    href={exhibitionOverview.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center border-2 border-black px-4 py-2 text-xs font-mono uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
-                  >
-                    Visit {exhibitionOverview.websiteLabel}
-                  </a>
-                ) : (
-                  <p className="text-sm text-gray-500">Gallery link coming soon.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             
             {/* Sidebar / Info */}
-            <div className="lg:col-span-3 order-2 lg:order-1">
+            <div className="lg:col-span-4 order-2 lg:order-1">
                  <div className="sticky top-32 p-6 border-2 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                      <h4 className="font-black uppercase text-lg mb-6 border-b-2 border-black pb-2">Details</h4>
                      <div className="space-y-6 font-mono text-sm">
+                         {/* Exhibition Title and Dates */}
+                         {exhibitionTitle && (
+                           <div className="pb-4 border-b border-gray-200">
+                             <p className="font-bold text-base leading-tight mb-2">{exhibitionTitle}</p>
+                             <div className="text-xs text-gray-600">
+                               <span className="font-bold">{exhibitionTimeline.primary}</span>
+                               {exhibitionTimeline.secondary && (
+                                 <span className="block text-gray-500">{exhibitionTimeline.secondary}</span>
+                               )}
+                             </div>
+                           </div>
+                         )}
+                         
+                         {/* Gallery Name */}
                          <div className="flex items-start gap-3">
                              <MapPin className="w-4 h-4 mt-1" />
-                             <div>
-                                 <p className="font-bold">{location}</p>
-                                 <p className="text-gray-500 text-xs">{galleryAddress ?? 'Address available soon'}</p>
+                             <div className="flex-1">
+                                 <p className="font-bold">{hostGalleryName ?? location}</p>
                                  {galleryWebsite && galleryWebsiteLabel && (
                                    <a
                                      href={galleryWebsite}
                                      target="_blank"
                                      rel="noreferrer"
-                                     className="text-art-blue underline text-[10px]"
+                                     className="inline-flex items-center justify-center border-2 border-black px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest hover:bg-black hover:text-white transition-colors mt-2"
                                    >
-                                     {galleryWebsiteLabel}
+                                     Visit
                                    </a>
                                  )}
+                                 <p className="text-gray-500 text-xs mt-2">{galleryAddress ?? 'Address available soon'}</p>
                              </div>
                          </div>
-                         <div className="flex items-start gap-3">
-                             <CalendarDays className="w-4 h-4 mt-1" />
-                             <div>
-                                 <p className="font-bold">{exhibitionTimeline.primary}</p>
-                                 {exhibitionTimeline.secondary && (
-                                   <p className="text-gray-500 text-xs">{exhibitionTimeline.secondary}</p>
-                                 )}
-                             </div>
-                         </div>
+                         
+                         {/* Open Today Status */}
                          <div className="flex items-start gap-3">
                              <Clock className="w-4 h-4 mt-1" />
                              <div>
                                 <p className="font-bold">
-                                  {openTodayLabel ? `Open today: ${openTodayLabel}` : 'Opening hours available soon'}
+                                  {openTodayStatus ? `Open today: ${openTodayStatus}` : openTodayLabel ? `Open today: ${openTodayLabel}` : 'Opening hours available soon'}
                                 </p>
-                                {weeklyHoursPreviewFormatted.length > 0 ? (
-                                  <p className="text-gray-500 text-[11px] leading-relaxed whitespace-pre-line">
-                                    {weeklyHoursPreviewFormatted.join('\n')}
-                                    {showHoursEllipsis && '\n…'}
-                                  </p>
-                                ) : null}
                              </div>
                          </div>
-                         <div className="flex items-start gap-3">
-                             <Ticket className="w-4 h-4 mt-1" />
-                             <div>
-                                <p className="font-bold">{admissionDetails ?? 'Entry details available via the venue'}</p>
-                                {hostGalleryName && (
-                                  <p className="text-gray-500 text-xs">Hosted by {hostGalleryName}</p>
-                                )}
-                             </div>
-                         </div>
-                         <div className="border-t border-gray-200 pt-4 space-y-4">
+                         
+                         {/* Artist */}
+                         <div className="border-t border-gray-200 pt-4">
                            <div>
-                             <p className="font-bold uppercase text-xs tracking-widest mb-1">Artist{artistList.length > 1 ? 's' : ''}</p>
+                             <p className="font-bold uppercase text-xs tracking-widest mb-2">Artist{artistList.length > 1 ? 's' : ''}</p>
                              {artistList.length ? (
-                               <div className="flex flex-wrap gap-2 text-xs font-mono">
+                               <div className="flex flex-wrap gap-2 text-base font-mono">
                                  {artistList.map((artist) => {
-                                   const path = getReferencePath('/artists', artist);
                                    const label = artist?.name ?? 'Unknown artist';
-                                   return path ? (
-                                     <Link key={artist._id} to={path} className="underline decoration-dotted hover:text-art-blue">
-                                       {label}
-                                     </Link>
-                                   ) : (
+                                   return (
                                      <span key={artist._id}>{label}</span>
                                    );
                                  })}
                                </div>
                              ) : (
                                <p className="text-gray-500 text-xs">Artist details coming soon.</p>
-                             )}
-                           </div>
-                           <div>
-                             <p className="font-bold uppercase text-xs tracking-widest mb-1">Curator{curatorList.length > 1 ? 's' : ''}</p>
-                             {curatorList.length ? (
-                               <div className="flex flex-wrap gap-2 text-xs font-mono">
-                                 {curatorList.map((curator) => {
-                                   const path = getReferencePath('/curators', curator);
-                                   const label = curator?.name ?? 'Unknown curator';
-                                   return path ? (
-                                     <Link key={curator._id} to={path} className="underline decoration-dotted hover:text-art-blue">
-                                       {label}
-                                     </Link>
-                                   ) : (
-                                     <span key={curator._id}>{label}</span>
-                                   );
-                                 })}
-                               </div>
-                             ) : (
-                               <p className="text-gray-500 text-xs">Curator to be announced.</p>
                              )}
                            </div>
                          </div>
@@ -835,28 +759,7 @@ const ArticleView: React.FC = () => {
                      <p className="font-serif text-2xl md:text-3xl leading-relaxed text-black mb-8 italic">
                         {article.subtitle}
                     </p>
-                    <div className="font-sans font-light text-lg leading-loose space-y-6 text-gray-800">
-            <p className="first-letter:text-6xl first-letter:font-black first-letter:mr-3 first-letter:float-left first-letter:leading-[0.8] whitespace-pre-line">
-              {articleBody ||
-                "The gallery is silent, save for the faint hum of the air conditioning. It is here, in this vacuum of noise, that the work speaks loudest. The exhibition brings together twenty years of practice, revealing a consistency of thought that is remarkably rare in today's frenetic art market."}
-            </p>
-                        <p>
-                            Walking through the space, one is struck by the scale. Not just physical scale, but the scale of ambition. The artist attempts to map the unmappable: the fleeting nature of memory, the digital decay of our online lives, and the persistence of physical matter.
-                        </p>
-                        <blockquote className="border-l-4 border-art-blue pl-6 my-12 bg-gray-100 p-8 border-y-2 border-r-2 border-gray-200">
-                            <p className="font-black uppercase text-xl not-italic mb-2">"Art is not a mirror to hold up to society, but a hammer with which to shape it."</p>
-                        </blockquote>
-                        <p>
-                            In the second room, the tone shifts. The stark white walls are replaced by a dimly lit environment where video works play in an endless loop. It suggests a trap, a cycle from which we cannot escape. Yet, there is beauty in the repetition.
-                        </p>
-            <div className="my-12 border-2 border-black p-2">
-              <img src="https://picsum.photos/600/600?random=88" alt="Detail view" className="w-full grayscale hover:grayscale-0 transition-all" />
-                             <p className="font-mono text-xs text-gray-500 mt-2 uppercase">Fig 1. Installation View, 2024</p>
-                        </div>
-                        <p>
-                            Ultimately, this retrospective is a triumph. It demands patience from the viewer, asking us to slow down our consumption of images and truly look. In an age of infinite scroll, this act of looking feels like a radical political act.
-                        </p>
-                    </div>
+                    <PortableTextRenderer value={review?.body} />
                 </div>
             </div>
         </div>

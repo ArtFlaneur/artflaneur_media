@@ -53,8 +53,7 @@ const Ticker: React.FC = () => {
             .map((msg) => `• ${msg.message}`);
 
           if (activeMessages.length > 0) {
-            // Дублируем сообщения для бесшовной анимации
-            setMessages([...activeMessages, ...activeMessages]);
+            setMessages(activeMessages);
           }
       } catch (error) {
         console.error('Error fetching ticker messages:', error);
@@ -66,10 +65,17 @@ const Ticker: React.FC = () => {
 
   return (
     <div className="bg-art-blue text-white py-2 overflow-hidden border-b border-white relative z-50">
-      <div className="whitespace-nowrap animate-marquee flex gap-8 items-center font-mono text-xs tracking-widest uppercase">
-        {messages.map((message, index) => (
-          <span key={index}>{message}</span>
-        ))}
+      <div className="flex animate-marquee">
+        <div className="whitespace-nowrap flex gap-8 items-center font-mono text-xs tracking-widest uppercase">
+          {messages.map((message, index) => (
+            <span key={index}>{message}</span>
+          ))}
+        </div>
+        <div className="whitespace-nowrap flex gap-8 items-center font-mono text-xs tracking-widest uppercase">
+          {messages.map((message, index) => (
+            <span key={`dup-${index}`}>{message}</span>
+          ))}
+        </div>
       </div>
     </div>
   );

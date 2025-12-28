@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { MapPin, ArrowDown, Plus } from 'lucide-react';
 import { fetchGalleryById, type GraphqlGallery } from '../lib/graphql';
 import { client } from '../sanity/lib/client';
 import { GUIDE_QUERY } from '../sanity/lib/queries';
 import type { GUIDE_QUERYResult, ExternalGalleryReference } from '../sanity/types';
+import PortableTextRenderer from '../components/PortableTextRenderer';
+import SecureImage from '../components/SecureImage';
  
 type SanityGuideStop = NonNullable<NonNullable<GUIDE_QUERYResult['stops']>[number]>;
 type RawGuideStop = Omit<SanityGuideStop, 'externalGallery'> & {
@@ -153,15 +155,20 @@ const GuideView: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-screen">
             {/* List / Steps */}
-            <div className="lg:col-span-7 p-8 md:p-12">
-                <div className="relative border-l-2 border-black ml-4 md:ml-8 space-y-16">
+            <div className="lg:col-span-7 p-6 md:p-8">
+                {guide.body && guide.body.length > 0 && (
+                    <div className="mb-8 prose prose-sm max-w-none">
+                        <PortableTextRenderer value={guide.body} />
+                    </div>
+                )}
+                <div className="relative border-l-2 border-black ml-4 md:ml-6 space-y-8">
                                         {stops.length === 0 && (
-                                            <div className="pl-12">
+                                            <div className="pl-8">
                                                 <p className="font-mono text-sm text-gray-500">Stops coming soon.</p>
                                             </div>
                                         )}
                                         {stops.map((step, index) => {
-                                                                                        const stopImage = coverImageUrl ?? null;
+                                                                                        const stopImage = step.resolvedExternalGallery?.gallery_img_url ?? coverImageUrl ?? null;
                                                                                         const stopImageAlt = step.title ?? 'Guide stop visual';
                                                                                         const galleryName =
                                                                                             step.resolvedExternalGallery?.galleryname ??
@@ -172,40 +179,68 @@ const GuideView: React.FC = () => {
                                                                                             step.externalGallery?.address ??
                                                                                             guide.city ??
                                                                                             'Location TBD';
+                                                                                        const galleryId = step.resolvedExternalGallery?.id ?? step.externalGallery?.id ?? null;
+                                                                                        const galleryLink = galleryId ? `/galleries/${galleryId}` : null;
                                             return (
-                                            <div key={step._key || `stop-${index}`} className="relative pl-12">
+                                            <div key={step._key || `stop-${index}`} className="relative pl-8">
                             {/* Number Bubble */}
-                            <div className="absolute -left-[17px] top-0 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-bold font-mono border-2 border-white ring-2 ring-black">
+                            <div className="absolute -left-[13px] top-0 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-sm font-bold font-mono border-2 border-white ring-2 ring-black">
                                 {index + 1}
                             </div>
                             
-                                <div className="border-2 border-black bg-white p-0 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-shadow">
+                                {galleryLink ? (
+                                    <Link to={galleryLink} className="block border-2 border-black bg-white overflow-hidden hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-shadow">
                                                 {stopImage ? (
-                                                                    <div className="aspect-square relative overflow-hidden border-b-2 border-black">
-                                                    <img src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover" />
+                                                                    <div className="aspect-video relative overflow-hidden border-b-2 border-black">
+                                                    <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover" />
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="aspect-square border-b-2 border-black bg-gray-100 flex items-center justify-center text-xs font-mono tracking-wide text-gray-500">
+                                                                    <div className="aspect-video border-b-2 border-black bg-gray-100 flex items-center justify-center text-xs font-mono tracking-wide text-gray-500">
                                                                         Visual coming soon
                                                                     </div>
                                                                 )}
-                                <div className="p-6">
-                                                                        <h3 className="text-2xl font-black uppercase mb-2">{step.title || `Stop ${index + 1}`}</h3>
-                                    <p className="text-sm font-mono text-gray-500 mb-4 flex items-center gap-2">
+                                <div className="p-4">
+                                                                        <h3 className="text-lg font-black uppercase mb-1">{step.title || `Stop ${index + 1}`}</h3>
+                                    <p className="text-xs font-mono text-gray-500 mb-2 flex items-center gap-1">
                                                                             <MapPin className="w-3 h-3" /> {galleryAddress}
                                     </p>
-                                                                        <p className="text-gray-800 leading-relaxed">{step.summary || step.notes || 'Details coming soon.'}</p>
+                                                                        <p className="text-sm text-gray-700 leading-snug line-clamp-3">{step.summary || step.notes || 'Details coming soon.'}</p>
                                                                                                 {galleryName && (
-                                                                                                    <p className="mt-4 text-xs font-mono uppercase tracking-wide text-gray-500">
+                                                                                                    <p className="mt-2 text-[10px] font-mono uppercase tracking-wide text-gray-500">
                                                                                                         {galleryName}
                                                                                                     </p>
                                                                                                 )}
                                 </div>
-                            </div>
+                                    </Link>
+                                ) : (
+                                    <div className="border-2 border-black bg-white overflow-hidden">
+                                                {stopImage ? (
+                                                                    <div className="aspect-video relative overflow-hidden border-b-2 border-black">
+                                                    <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="aspect-video border-b-2 border-black bg-gray-100 flex items-center justify-center text-xs font-mono tracking-wide text-gray-500">
+                                                                        Visual coming soon
+                                                                    </div>
+                                                                )}
+                                <div className="p-4">
+                                                                        <h3 className="text-lg font-black uppercase mb-1">{step.title || `Stop ${index + 1}`}</h3>
+                                    <p className="text-xs font-mono text-gray-500 mb-2 flex items-center gap-1">
+                                                                            <MapPin className="w-3 h-3" /> {galleryAddress}
+                                    </p>
+                                                                        <p className="text-sm text-gray-700 leading-snug line-clamp-3">{step.summary || step.notes || 'Details coming soon.'}</p>
+                                                                                                {galleryName && (
+                                                                                                    <p className="mt-2 text-[10px] font-mono uppercase tracking-wide text-gray-500">
+                                                                                                        {galleryName}
+                                                                                                    </p>
+                                                                                                )}
+                                </div>
+                                    </div>
+                                )}
                             
                                                         {index < stops.length - 1 && (
-                                <div className="absolute left-6 bottom-[-40px] text-black">
-                                    <ArrowDown className="w-6 h-6" />
+                                <div className="absolute left-4 bottom-[-20px] text-black">
+                                    <ArrowDown className="w-5 h-5" />
                                 </div>
                             )}
                         </div>

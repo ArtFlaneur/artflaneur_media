@@ -586,6 +586,43 @@ export async function fetchGalleryById(id: string): Promise<GraphqlGallery | nul
   return data.getGalleryById ? enrichGallery(data.getGalleryById) : null;
 }
 
+export async function fetchGalleryByName(name: string): Promise<GraphqlGallery | null> {
+  const trimmed = name?.trim();
+  if (!trimmed) return null;
+
+  try {
+    const exact = await fetchGalleries({
+      limit: 5,
+      filter: {
+        galleryname: {
+          eq: trimmed,
+        },
+      },
+    });
+
+    const exactHit = exact.items?.[0] ?? null;
+    if (exactHit) return exactHit;
+  } catch (err) {
+    console.warn('GraphQL gallery lookup (eq) failed', err);
+  }
+
+  try {
+    const contains = await fetchGalleries({
+      limit: 5,
+      filter: {
+        galleryname: {
+          contains: trimmed,
+        },
+      },
+    });
+
+    return contains.items?.[0] ?? null;
+  } catch (err) {
+    console.warn('GraphQL gallery lookup (contains) failed', err);
+    return null;
+  }
+}
+
 export async function fetchExhibitionsByGallery(
   galleryId: string,
   limit = 12

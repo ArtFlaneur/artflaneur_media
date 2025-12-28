@@ -67,6 +67,15 @@ export const REVIEW_QUERY = defineQuery(`*[
     },
     alt
   },
+  heroSlider[]{
+    _key,
+    asset->{
+      _id,
+      url
+    },
+    alt,
+    caption
+  },
   galleryImages[]{
     _key,
     asset->{
@@ -77,7 +86,19 @@ export const REVIEW_QUERY = defineQuery(`*[
     caption,
     credit
   },
-  body,
+  body[]{
+    ...,
+    _type == "image" => {
+      _key,
+      _type,
+      asset->{
+        _id,
+        url
+      },
+      alt,
+      caption
+    }
+  },
   rating,
   author->{
     _id,
@@ -481,7 +502,7 @@ export const ARTIST_STORY_BY_GRAPHQL_ID_QUERY = defineQuery(`*[
 // Homepage content query
 export const HOMEPAGE_QUERY = defineQuery(`*[
   _type == "homepageContent"
-  && !(_id in path("drafts.**"))
+  && _id == "homepageContent"
 ][0] {
   _id,
   title,
@@ -497,6 +518,13 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
           url
         },
         alt
+      },
+      heroSlider[]{
+        asset->{
+          url
+        },
+        alt,
+        caption
       },
       author->{
         _id,
@@ -596,11 +624,7 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
     ctaUrl,
     gallery{
       id,
-      name,
-      city,
-      address,
-      website,
-      workingHours
+      name
     },
     sponsor->{
       _id,
@@ -618,15 +642,7 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
     highlightedExhibitions[]{
       _key,
       id,
-      title,
-      startDate,
-      endDate,
-      description,
-      gallery{
-        id,
-        name,
-        city
-      }
+      title
     }
   },
   cityPicks[]{
@@ -788,7 +804,7 @@ export const SITE_SETTINGS_QUERY = defineQuery(`*[
 
 export const HOMEPAGE_TICKER_QUERY = defineQuery(`*[
   _type == "homepageContent"
-  && !(_id in path("drafts.**"))
+  && _id == "homepageContent"
 ][0] {
   tickerMarquee{
     messages[]{
@@ -873,6 +889,7 @@ export const GUIDE_QUERY = defineQuery(`*[
   title,
   city,
   description,
+  body,
   ctaText,
   sponsorship {
     enabled,

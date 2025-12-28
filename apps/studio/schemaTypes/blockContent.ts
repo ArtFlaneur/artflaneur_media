@@ -96,6 +96,26 @@ export const blockContent = defineType({
       type: 'keyInsights',
       title: 'Key Insights',
     }),
+    defineArrayMember({
+      type: 'image',
+      title: 'Image',
+      options: {hotspot: true},
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+          description: 'Required for SEO and accessibility',
+          validation: (Rule) => [Rule.required().error('Alt text is required for accessibility')],
+        }),
+        defineField({
+          name: 'caption',
+          type: 'string',
+          title: 'Caption',
+          description: 'Optional caption displayed below the image',
+        }),
+      ],
+    }),
     // You can add additional types here. Note that you can't use
     // primitive types such as 'string' and 'number' in the same array
     // as a block type.

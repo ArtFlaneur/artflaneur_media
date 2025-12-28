@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { SectionHeader, ArticleCard, NewsletterSection, AiTeaser } from '../components/Shared';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { client } from '../sanity/lib/client';
 import { HOMEPAGE_QUERY, LATEST_REVIEWS_QUERY } from '../sanity/lib/queries';
 import { HOMEPAGE_QUERYResult, LATEST_REVIEWS_QUERYResult } from '../sanity/types';
 import { Article, ContentType } from '../types';
+import { fetchExhibitionById, fetchGalleryById, fetchGalleryByName, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
 
 type HomepageData = NonNullable<HOMEPAGE_QUERYResult>;
 type HeroSection = NonNullable<HomepageData['heroSection']>;
@@ -30,6 +31,14 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
 
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleDateString('en-US', DATE_FORMAT) : undefined;
+
+const formatGraphqlDateRange = (exhibition?: GraphqlExhibition | null) => {
+  if (!exhibition) return null;
+  const start = formatDate(exhibition.datefrom ?? undefined);
+  const end = formatDate(exhibition.dateto ?? undefined);
+  if (start && end) return `${start} — ${end}`;
+  return start || end || null;
+};
 
 const hasSlug = (review: ReviewSource | undefined | null): review is ReviewWithSlug =>
   Boolean(review?.slug?.current);
@@ -97,8 +106,12 @@ const getPickImage = (doc?: {
 
 const isExternalUrl = (value?: string | null) => (value ? /^https?:/i.test(value) : false);
 
+const normalizeLookupKey = (value: string) => value.trim().toLowerCase();
+
 const Home: React.FC = () => {
   const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null);
+  const [featuredReviewData, setFeaturedReviewData] = useState<FeaturedReviewNode | null>(null);
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [latestReviews, setLatestReviews] = useState<Article[]>([]);
   const [featuredStory, setFeaturedStory] = useState<FeaturedArtistStory | null>(null);
   const [weekendGuide, setWeekendGuide] = useState<WeekendGuide | null>(null);
@@ -107,6 +120,8 @@ const Home: React.FC = () => {
   const [cityPicks, setCityPicks] = useState<CityPick[]>([]);
   const [comingSoonEvents, setComingSoonEvents] = useState<ComingSoonItem[]>([]);
   const [displayAds, setDisplayAds] = useState<DisplayAd[]>([]);
+  const [partnerGalleriesByKey, setPartnerGalleriesByKey] = useState<Record<string, GraphqlGallery>>({});
+  const [partnerExhibitionsById, setPartnerExhibitionsById] = useState<Record<string, GraphqlExhibition>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -133,6 +148,7 @@ const Home: React.FC = () => {
           ? heroCandidate
           : filteredLatest[0];
 
+        setFeaturedReviewData(heroReview ?? null);
         setFeaturedArticle(heroReview ? mapReviewToArticle(heroReview) : null);
         setLatestReviews(filteredLatest.length ? filteredLatest.map(mapReviewToArticle) : []);
         setFeaturedStory(homepageData?.featuredArtistStory ?? null);
@@ -170,8 +186,143 @@ const Home: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const resolvePartnerData = async () => {
+      const partners = featuredGalleries ?? [];
+      if (!partners.length) {
+        setPartnerGalleriesByKey({});
+        setPartnerExhibitionsById({});
+        return;
+      }
+
+      const uniqueGalleryEntries = new Map<
+        string,
+        {
+          key: string;
+          galleryName?: string;
+          galleryId?: string;
+        }
+      >();
+
+      partners.forEach((partner) => {
+        const galleryName = partner?.gallery?.name?.trim() ?? '';
+        const galleryId = partner?.gallery?.id?.trim() ?? '';
+        if (galleryName) {
+          const key = `name:${normalizeLookupKey(galleryName)}`;
+          if (!uniqueGalleryEntries.has(key)) {
+            uniqueGalleryEntries.set(key, {key, galleryName});
+          }
+          return;
+        }
+        if (galleryId) {
+          const key = `id:${galleryId}`;
+          if (!uniqueGalleryEntries.has(key)) {
+            uniqueGalleryEntries.set(key, {key, galleryId});
+          }
+        }
+      });
+
+      const galleryResults = await Promise.all(
+        Array.from(uniqueGalleryEntries.values()).map(async (entry) => {
+          try {
+            if (entry.galleryName) {
+              const gallery = await fetchGalleryByName(entry.galleryName);
+              return gallery ? { key: entry.key, gallery } : null;
+            }
+
+            const gallery = entry.galleryId ? await fetchGalleryById(entry.galleryId) : null;
+            return gallery ? { key: entry.key, gallery } : null;
+          } catch (err) {
+            console.warn('Failed to resolve partner gallery', entry.key, err);
+            return null;
+          }
+        }),
+      );
+
+      const galleriesByKey: Record<string, GraphqlGallery> = {};
+      galleryResults.forEach((result) => {
+        if (!result) return;
+        galleriesByKey[result.key] = result.gallery;
+      });
+
+      const exhibitionIds = Array.from(
+        new Set(
+          partners
+            .flatMap((partner) => partner?.highlightedExhibitions ?? [])
+            .map((exhibition) => exhibition?.id ?? '')
+            .filter(Boolean),
+        ),
+      );
+
+      const exhibitionResults = await Promise.all(
+        exhibitionIds.map(async (id) => {
+          try {
+            const exhibition = await fetchExhibitionById(id);
+            return exhibition ? { id, exhibition } : null;
+          } catch (err) {
+            console.warn('Failed to resolve partner exhibition', id, err);
+            return null;
+          }
+        }),
+      );
+
+      const exhibitionsById: Record<string, GraphqlExhibition> = {};
+      exhibitionResults.forEach((result) => {
+        if (!result) return;
+        exhibitionsById[result.id] = result.exhibition;
+      });
+
+      if (!isMounted) return;
+      setPartnerGalleriesByKey(galleriesByKey);
+      setPartnerExhibitionsById(exhibitionsById);
+    };
+
+    resolvePartnerData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [featuredGalleries]);
+
   const heroArticle = featuredArticle;
   const featuredArtistSlug = buildArtistSlug(featuredStory?.externalArtist);
+
+  const heroSlides = React.useMemo(() => {
+    const slides = [];
+    
+    // First, try to use heroSlider images
+    if (featuredReviewData?.heroSlider?.length) {
+      slides.push(...featuredReviewData.heroSlider.map(img => ({
+        url: img?.asset?.url ?? '',
+        alt: img?.alt ?? featuredArticle?.title ?? 'Exhibition view',
+        caption: img?.caption,
+      })).filter(slide => slide.url));
+    }
+    
+    // If no heroSlider images, use mainImage
+    if (!slides.length && featuredArticle?.image) {
+      slides.push({
+        url: featuredArticle.image,
+        alt: featuredArticle.title ?? 'Review image',
+      });
+    }
+    
+    return slides;
+  }, [featuredReviewData, featuredArticle]);
+
+  const handleNextSlide = useCallback(() => {
+    if (heroSlides.length > 1) {
+      setHeroSlideIndex((prev) => (prev + 1) % heroSlides.length);
+    }
+  }, [heroSlides.length]);
+
+  const handlePrevSlide = useCallback(() => {
+    if (heroSlides.length > 1) {
+      setHeroSlideIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    }
+  }, [heroSlides.length]);
 
   const renderDisplayAds = (placement: DisplayAd['placement']) => {
     const banners = displayAds.filter((ad) => ad?.placement === placement);
@@ -240,7 +391,7 @@ const Home: React.FC = () => {
             
             {/* Feature Badge - всегда поверх изображения */}
       <div className="absolute top-0 left-0 bg-art-red text-white px-4 py-2 text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10">
-        {loading ? 'Syncing Latest Feature' : 'Feature of the Week'}
+        {loading ? 'Syncing Latest Review' : 'Review of the Week'}
       </div>
             
             {/* Right: Content Grid - показывается первым на мобильных */}
@@ -261,7 +412,7 @@ const Home: React.FC = () => {
                             {heroArticle.subtitle}
                         </p>
             <Link to={`/reviews/${heroArticle.slug}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
-                            Read Full Story <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                            Read Full Review <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                         </Link>
                       </>
                     ) : (
@@ -280,12 +431,54 @@ const Home: React.FC = () => {
 
             {/* Left: Featured Image (Big Block) - показывается вторым на мобильных */}
             <div className="lg:col-span-7 border-b-2 lg:border-b-0 lg:border-r-2 border-black relative group overflow-hidden h-[50vh] lg:h-auto order-2 lg:order-1">
-                {heroArticle ? (
-                  <img 
-                    src={heroArticle.image} 
-                    alt={heroArticle.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 grayscale group-hover:grayscale-0"
-                  />
+                {heroSlides.length > 0 ? (
+                  <>
+                    {heroSlides.map((slide, index) => (
+                      <img
+                        key={`${slide.url}-${index}`}
+                        src={slide.url}
+                        alt={slide.alt}
+                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 grayscale group-hover:grayscale-0 ${
+                          index === heroSlideIndex 
+                            ? 'opacity-100 scale-100' 
+                            : 'opacity-0 scale-105'
+                        }`}
+                      />
+                    ))}
+                    {heroSlides.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handlePrevSlide}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-black border-2 border-black rounded-full p-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Previous slide"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleNextSlide}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-black border-2 border-black rounded-full p-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Next slide"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                          {heroSlides.map((_, idx) => (
+                            <button
+                              key={`dot-${idx}`}
+                              type="button"
+                              className={`w-2.5 h-2.5 border border-white rounded-full transition-all ${
+                                idx === heroSlideIndex ? 'bg-white scale-110' : 'bg-transparent opacity-60'
+                              }`}
+                              onClick={() => setHeroSlideIndex(idx)}
+                              aria-label={`Go to slide ${idx + 1}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </>
                 ) : (
                   <div className="absolute inset-0 bg-gray-200 animate-pulse" />
                 )}
@@ -298,90 +491,66 @@ const Home: React.FC = () => {
         <section className="py-24 border-y-2 border-black bg-black text-white">
           <div className="container mx-auto px-4 md:px-6">
             <SectionHeader title="Editor's Picks by City" linkText="All City Guides" linkTo="/guides" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {cityPicks.map((city) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cityPicks.slice(0, 6).map((city) => {
                 const picks = city?.picks ?? [];
                 const heroUrl = city?.heroImage?.asset?.url ?? '';
                 const hasHero = Boolean(heroUrl);
                 const fallbackPick = picks.find((pick) => buildContentPath(pick?.document));
                 const fallbackPickHref = fallbackPick?.document ? buildContentPath(fallbackPick.document) : null;
                 const cityCtaHref = city?.ctaUrl ?? fallbackPickHref;
-                const cityCtaText = city?.ctaText ?? 'Open city digest';
+                const cityCtaText = city?.ctaText ?? 'Explore';
                 return (
                   <article
                     key={city._key ?? city.city}
-                    className="relative border-2 border-white overflow-hidden min-h-[420px]"
+                    className="relative border-2 border-white overflow-hidden h-[380px] group"
                   >
                     {hasHero ? (
                       <img
                         src={heroUrl}
                         alt={city.heroImage?.alt ?? `${city.city} skyline`}
-                        className="absolute inset-0 w-full h-full object-cover opacity-70"
+                        className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
                       />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black opacity-70" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent" />
-                    <div className="relative z-10 h-full flex flex-col justify-between p-8">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                    <div className="relative z-10 h-full flex flex-col justify-end p-6">
                       <div>
-                        <p className="font-mono text-xs uppercase tracking-[0.3em] text-art-yellow">{city.tagline ?? 'Curated city brief'}</p>
-                        <h3 className="text-4xl font-black uppercase mt-3">{city.city ?? 'City'}</h3>
+                        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-art-yellow mb-2">
+                          {city.tagline ?? 'City Guide'}
+                        </p>
+                        <h3 className="text-3xl font-black uppercase mb-3">{city.city ?? 'City'}</h3>
                         {city.sponsor?.logo?.asset?.url && (
-                          <div className="mt-4 flex items-center gap-3 text-xs font-mono uppercase tracking-widest text-gray-300">
+                          <div className="mb-4 flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-gray-300">
                             <span>Presented by</span>
-                            <img src={city.sponsor.logo.asset.url} alt={city.sponsor.logo.alt ?? city.sponsor.name ?? 'Sponsor'} className="h-6 object-contain" />
+                            <img 
+                              src={city.sponsor.logo.asset.url} 
+                              alt={city.sponsor.logo.alt ?? city.sponsor.name ?? 'Sponsor'} 
+                              className="h-5 object-contain" 
+                            />
                           </div>
                         )}
-                      </div>
-                      <div className="space-y-4 mt-8">
-                        {picks.map((pick) => {
-                          if (!pick?.document) return null;
-                          const href = buildContentPath(pick.document);
-                          if (!href) return null;
-                          const thumb = getPickImage(pick.document);
-                          return (
-                            <Link
-                              key={pick._key ?? pick.document._id}
-                              to={href}
-                              className="flex items-center gap-4 border-2 border-white/30 bg-white/10 hover:bg-white/20 transition-colors p-3"
+                        {cityCtaHref ? (
+                          isExternalUrl(cityCtaHref) ? (
+                            <a
+                              href={cityCtaHref}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest border-2 border-white px-4 py-2 hover:bg-white hover:text-black transition-colors"
                             >
-                              {thumb ? (
-                                <img src={thumb} alt={pick.document.title ?? 'City pick'} className="w-16 h-16 object-cover border border-white" />
-                              ) : (
-                                <div className="w-16 h-16 border border-dashed border-white flex items-center justify-center text-[10px] font-mono uppercase text-white/70">
-                                  No image
-                                </div>
-                              )}
-                              <div>
-                                <p className="text-xs font-mono uppercase tracking-widest text-gray-300">{pick.document._type === 'guide' ? 'Guide' : 'Review'}</p>
-                                <p className="font-serif text-xl">{pick.document.title ?? 'Untitled'}</p>
-                                {pick.document.excerpt && (
-                                  <p className="text-xs text-gray-300 line-clamp-2">{pick.document.excerpt}</p>
-                                )}
-                              </div>
+                              {cityCtaText} <ArrowRight className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            <Link
+                              to={cityCtaHref}
+                              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest border-2 border-white px-4 py-2 hover:bg-white hover:text-black transition-colors"
+                            >
+                              {cityCtaText} <ArrowRight className="w-3 h-3" />
                             </Link>
-                          );
-                        })}
+                          )
+                        ) : null}
                       </div>
-                      {cityCtaHref ? (
-                        isExternalUrl(cityCtaHref) ? (
-                          <a
-                            href={cityCtaHref}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-6 inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.4em]"
-                          >
-                            {cityCtaText} <ArrowRight className="w-4 h-4" />
-                          </a>
-                        ) : (
-                          <Link
-                            to={cityCtaHref}
-                            className="mt-6 inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.4em]"
-                          >
-                            {cityCtaText} <ArrowRight className="w-4 h-4" />
-                          </Link>
-                        )
-                      ) : null}
                     </div>
                   </article>
                 );
@@ -418,10 +587,19 @@ const Home: React.FC = () => {
             <SectionHeader title="Gallery Partners" linkText="Promote your gallery" linkTo="/advertise" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {featuredGalleries.map((partner) => {
-                if (!partner?.gallery?.id) return null;
-                const gallerySlug = buildGallerySlug(partner.gallery);
+                const galleryName = partner?.gallery?.name?.trim() ?? '';
+                const galleryId = partner?.gallery?.id?.trim() ?? '';
+                const lookupKey = galleryName ? `name:${normalizeLookupKey(galleryName)}` : galleryId ? `id:${galleryId}` : null;
+                const resolvedGallery = lookupKey ? partnerGalleriesByKey[lookupKey] : undefined;
+                const resolvedGalleryName = resolvedGallery?.galleryname ?? galleryName;
+                const resolvedGalleryId = resolvedGallery?.id ?? galleryId;
+                const gallerySlug = buildGallerySlug({
+                  id: resolvedGalleryId,
+                  name: resolvedGalleryName,
+                });
                 const exhibitions = partner.highlightedExhibitions ?? [];
-                const fallbackCta = gallerySlug ? `/galleries/${gallerySlug}` : partner.gallery.website ?? null;
+                const resolvedWebsite = resolvedGallery?.placeurl ?? null;
+                const fallbackCta = gallerySlug ? `/galleries/${gallerySlug}` : resolvedWebsite ?? null;
                 const ctaHref = partner.ctaUrl ?? fallbackCta;
                 const isExternalCta = isExternalUrl(ctaHref);
 
@@ -447,16 +625,16 @@ const Home: React.FC = () => {
 
                 return (
                   <article
-                    key={partner._key ?? partner.gallery.id}
+                    key={partner._key ?? resolvedGalleryId ?? galleryName ?? 'partner'}
                     className="border-2 border-black bg-art-paper p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-4 mb-4">
                         <div>
                           <p className="font-mono text-xs uppercase tracking-widest text-gray-600">Paid Partner</p>
-                          <h3 className="text-2xl font-black uppercase leading-tight">{partner.gallery.name}</h3>
-                          {partner.gallery.city && (
-                            <p className="font-mono text-xs text-gray-500">{partner.gallery.city}</p>
+                          <h3 className="text-2xl font-black uppercase leading-tight">{resolvedGalleryName || 'Gallery Partner'}</h3>
+                          {resolvedGallery?.city && (
+                            <p className="font-mono text-xs text-gray-500">{resolvedGallery.city}</p>
                           )}
                         </div>
                         {partner.sponsor?.logo?.asset?.url && (
@@ -473,15 +651,20 @@ const Home: React.FC = () => {
                       <div className="mt-6 space-y-4">
                         {exhibitions.map((exhibition, index) => {
                           if (!exhibition?.id) return null;
-                          const dateLabel = formatExhibitionRange(exhibition);
+                          const resolvedExhibition = partnerExhibitionsById[exhibition.id] ?? null;
+                          const dateLabel = formatGraphqlDateRange(resolvedExhibition);
+                          const exhibitionTitle = resolvedExhibition?.title ?? exhibition.title ?? 'Exhibition';
+                          const exhibitionCity = resolvedExhibition?.city ?? null;
                           return (
                             <div
-                              key={`${partner._key ?? partner.gallery.id}-${exhibition.id}-${index}`}
+                              key={`${partner._key ?? resolvedGalleryId ?? galleryName ?? 'partner'}-${exhibition.id}-${index}`}
                               className="border-2 border-black/30 bg-white px-4 py-3"
                             >
-                              <p className="text-sm font-bold uppercase">{exhibition.title ?? 'Exhibition'}</p>
-                              {exhibition.gallery?.city && (
-                                <p className="font-mono text-[11px] text-gray-500">{exhibition.gallery.city}</p>
+                              <p className="text-sm font-bold uppercase">{exhibitionTitle}</p>
+                              {exhibitionCity && (
+                                <p className="font-mono text-[11px] text-gray-500">
+                                  {exhibitionCity}
+                                </p>
                               )}
                               {dateLabel && (
                                 <p className="font-mono text-[11px] text-gray-400">{dateLabel}</p>

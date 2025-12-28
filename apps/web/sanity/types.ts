@@ -348,6 +348,20 @@ export type BlockContent = Array<{
   caption?: string;
   _type: "image";
   _key: string;
+} | {
+  asset?: {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+  };
+  media?: unknown;
+  hotspot?: SanityImageHotspot;
+  crop?: SanityImageCrop;
+  alt?: string;
+  caption?: string;
+  _type: "image";
+  _key: string;
 }>;
 
 export type GeopointRadius = {
@@ -638,22 +652,6 @@ export type Review = {
     alt?: string;
     _type: "image";
   };
-  galleryImages?: Array<{
-    asset?: {
-      _ref: string;
-      _type: "reference";
-      _weak?: boolean;
-      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-    };
-    media?: unknown;
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    alt?: string;
-    caption?: string;
-    credit?: string;
-    _type: "image";
-    _key: string;
-  }>;
   body?: BlockContent;
   rating?: number;
   publishStatus?: "draft" | "inReview" | "needsRevision" | "approved" | "scheduled" | "published" | "archived";
@@ -1107,16 +1105,7 @@ export type REVIEW_QUERYResult = {
     } | null;
     alt: string | null;
   } | null;
-  galleryImages: Array<{
-    _key: string;
-    asset: {
-      _id: string;
-      url: string | null;
-    } | null;
-    alt: string | null;
-    caption: string | null;
-    credit: string | null;
-  }> | null;
+  galleryImages: null;
   body: BlockContent | null;
   rating: number | null;
   author: {
@@ -1316,7 +1305,7 @@ export type ARTIST_STORY_BY_GRAPHQL_ID_QUERYResult = {
   }> | null;
 } | null;
 // Variable: HOMEPAGE_QUERY
-// Query: *[  _type == "homepageContent"  && !(_id in path("drafts.**"))][0] {  _id,  title,  heroSection{    featuredReview->{      _id,      title,      slug,      "excerpt": coalesce(summary, excerpt),      publishedAt,      mainImage{        asset->{          url        },        alt      },      author->{        _id,        name,        photo{          asset->{            url          }        }      }    },    weeklyStory->{      _id,      title,      slug,      "excerpt": summary,      portrait{        asset->{          url        },        alt      },      externalArtist{        id,        name,        country,        description,        birthYear,        deathYear,        wikipediaUrl      }    }  },  latestReviews[]->{    _id,    title,    slug,    "excerpt": coalesce(summary, excerpt),    publishedAt,    mainImage{      asset->{        url      },      alt    },    author->{      _id,      name,      photo{        asset->{          url        }      }    }  },  featuredArtistStory->{    _id,    title,    slug,    portrait{      asset->{        url      },      alt    },    externalArtist{      id,      name,      country,      description,      birthYear,      deathYear,      wikipediaUrl    }  },  spotlightExhibitions[]{    _key,    badge,    featureCopy,    ctaText,    exhibition{      id,      title,      startDate,      endDate,      gallery{        id,        name,        city      }    }  },  featuredGalleries[]{    _key,    featureCopy,    ctaText,    ctaUrl,    gallery{      id,      name,      city,      address,      website,      workingHours    },    sponsor->{      _id,      name,      logo{        asset->{          url        },        alt      },      brandColor{        hex      }    },    highlightedExhibitions[]{      _key,      id,      title,      startDate,      endDate,      description,      gallery{        id,        name,        city      }    }  },  cityPicks[]{    _key,    city,    tagline,    ctaText,    ctaUrl,    heroImage{      asset->{        url      },      alt    },    sponsor->{      _id,      name,      logo{        asset->{          url        },        alt      }    },    picks[]{      _key,      "document": @->{        _id,        _type,        title,        slug,        "excerpt": coalesce(summary, description),        mainImage{          asset->{            url          },          alt        },        coverImage{          asset->{            url          },          alt        },        publishedAt      }    }  },  weekendGuide->{    _id,    title,    slug,    city,    description,    ctaText,    coverImage{      asset->{        url      },      alt    },    sponsorship {      enabled,      type,      badgePlacement,      customDisclaimer,      sponsor->{        _id,        name,        logo{          asset->{            url          },          alt        }      }    }  },  tickerMarquee{    messages[]{      _key,      message,      status    }  },  aiChatbotTeaser{    headline,    description,    ctaText  },  newsletterSignup{    headline,    description,    placeholder,    submitText  },  comingSoon[]{    _key,    urgencyLabel,    ctaText,    ctaUrl,    sponsor->{      _id,      name,      logo{        asset->{          url        },        alt      }    },    exhibition{      id,      title,      description,      startDate,      endDate,      gallery{        id,        name,        city,        address      }    }  },  displayAds[]{    _key,    placement,    label,    headline,    body,    ctaText,    ctaUrl,    backgroundColor,    image{      asset->{        url      },      alt    }  }}
+// Query: *[  _type == "homepageContent"  && _id == "homepageContent"][0] {  _id,  title,  heroSection{    featuredReview->{      _id,      title,      slug,      "excerpt": coalesce(summary, excerpt),      publishedAt,      mainImage{        asset->{          url        },        alt      },      author->{        _id,        name,        photo{          asset->{            url          }        }      }    },    weeklyStory->{      _id,      title,      slug,      "excerpt": summary,      portrait{        asset->{          url        },        alt      },      externalArtist{        id,        name,        country,        description,        birthYear,        deathYear,        wikipediaUrl      }    }  },  latestReviews[]->{    _id,    title,    slug,    "excerpt": coalesce(summary, excerpt),    publishedAt,    mainImage{      asset->{        url      },      alt    },    author->{      _id,      name,      photo{        asset->{          url        }      }    }  },  featuredArtistStory->{    _id,    title,    slug,    portrait{      asset->{        url      },      alt    },    externalArtist{      id,      name,      country,      description,      birthYear,      deathYear,      wikipediaUrl    }  },  spotlightExhibitions[]{    _key,    badge,    featureCopy,    ctaText,    exhibition{      id,      title,      startDate,      endDate,      gallery{        id,        name,        city      }    }  },  featuredGalleries[]{    _key,    featureCopy,    ctaText,    ctaUrl,    gallery{      id,      name    },    sponsor->{      _id,      name,      logo{        asset->{          url        },        alt      },      brandColor{        hex      }    },    highlightedExhibitions[]{      _key,      id,      title    }  },  cityPicks[]{    _key,    city,    tagline,    ctaText,    ctaUrl,    heroImage{      asset->{        url      },      alt    },    sponsor->{      _id,      name,      logo{        asset->{          url        },        alt      }    },    picks[]{      _key,      "document": @->{        _id,        _type,        title,        slug,        "excerpt": coalesce(summary, description),        mainImage{          asset->{            url          },          alt        },        coverImage{          asset->{            url          },          alt        },        publishedAt      }    }  },  weekendGuide->{    _id,    title,    slug,    city,    description,    ctaText,    coverImage{      asset->{        url      },      alt    },    sponsorship {      enabled,      type,      badgePlacement,      customDisclaimer,      sponsor->{        _id,        name,        logo{          asset->{            url          },          alt        }      }    }  },  tickerMarquee{    messages[]{      _key,      message,      status    }  },  aiChatbotTeaser{    headline,    description,    ctaText  },  newsletterSignup{    headline,    description,    placeholder,    submitText  },  comingSoon[]{    _key,    urgencyLabel,    ctaText,    ctaUrl,    sponsor->{      _id,      name,      logo{        asset->{          url        },        alt      }    },    exhibition{      id,      title,      description,      startDate,      endDate,      gallery{        id,        name,        city,        address      }    }  },  displayAds[]{    _key,    placement,    label,    headline,    body,    ctaText,    ctaUrl,    backgroundColor,    image{      asset->{        url      },      alt    }  }}
 export type HOMEPAGE_QUERYResult = {
   _id: string;
   title: string | null;
@@ -1432,10 +1421,6 @@ export type HOMEPAGE_QUERYResult = {
     gallery: {
       id: string | null;
       name: string | null;
-      city: string | null;
-      address: string | null;
-      website: string | null;
-      workingHours: string | null;
     } | null;
     sponsor: {
       _id: string;
@@ -1454,14 +1439,6 @@ export type HOMEPAGE_QUERYResult = {
       _key: string;
       id: string | null;
       title: string | null;
-      startDate: string | null;
-      endDate: string | null;
-      description: string | null;
-      gallery: {
-        id: string | null;
-        name: string | null;
-        city: string | null;
-      } | null;
     }> | null;
   }> | null;
   cityPicks: Array<{
@@ -1633,7 +1610,7 @@ export type SITE_SETTINGS_QUERYResult = {
   } | null;
 } | null;
 // Variable: HOMEPAGE_TICKER_QUERY
-// Query: *[  _type == "homepageContent"  && !(_id in path("drafts.**"))][0] {  tickerMarquee{    messages[]{      _key,      message,      status    }  }}
+// Query: *[  _type == "homepageContent"  && _id == "homepageContent"][0] {  tickerMarquee{    messages[]{      _key,      message,      status    }  }}
 export type HOMEPAGE_TICKER_QUERYResult = {
   tickerMarquee: {
     messages: Array<{
@@ -1804,9 +1781,9 @@ declare module "@sanity/client" {
     "*[\n  _type == \"artist\"\n] | order(name asc) [$offset...$end] {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  }\n}": PAGINATED_ARTISTS_QUERYResult;
     "*[\n  _type == \"artist\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  bio,\n  birthYear,\n  country,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  website,\n  social,\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...10] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    gallery->{\n      name,\n      city\n    }\n  }\n}": ARTIST_QUERYResult;
     "*[\n  _type == \"artistStory\"\n  && externalArtist.id == $artistId\n  && publishStatus == \"published\"\n] | order(_updatedAt desc) [0] {\n  _id,\n  title,\n  summary,\n  biography,\n  portrait{\n    asset->{\n      url\n    },\n    alt\n  },\n  externalArtist{\n    id,\n    name\n  },\n  author->{\n    _id,\n    name,\n    slug\n  },\n  appCta{\n    text,\n    deeplink\n  },\n  sponsorship{\n    enabled,\n    type,\n    customDisclaimer,\n    badgePlacement,\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        },\n        alt\n      },\n      brandColor{\n        hex\n      }\n    }\n  },\n  multimediaSections[]{\n    _key,\n    title,\n    description,\n    videoUrl,\n    ctaText,\n    ctaUrl,\n    fallbackImage{\n      asset->{\n        url\n      },\n      alt,\n      caption\n    }\n  },\n  artworkGallery[]{\n    _key,\n    asset->{\n      url\n    },\n    alt,\n    caption,\n    title,\n    year\n  }\n}": ARTIST_STORY_BY_GRAPHQL_ID_QUERYResult;
-    "*[\n  _type == \"homepageContent\"\n  && !(_id in path(\"drafts.**\"))\n][0] {\n  _id,\n  title,\n  heroSection{\n    featuredReview->{\n      _id,\n      title,\n      slug,\n      \"excerpt\": coalesce(summary, excerpt),\n      publishedAt,\n      mainImage{\n        asset->{\n          url\n        },\n        alt\n      },\n      author->{\n        _id,\n        name,\n        photo{\n          asset->{\n            url\n          }\n        }\n      }\n    },\n    weeklyStory->{\n      _id,\n      title,\n      slug,\n      \"excerpt\": summary,\n      portrait{\n        asset->{\n          url\n        },\n        alt\n      },\n      externalArtist{\n        id,\n        name,\n        country,\n        description,\n        birthYear,\n        deathYear,\n        wikipediaUrl\n      }\n    }\n  },\n  latestReviews[]->{\n    _id,\n    title,\n    slug,\n    \"excerpt\": coalesce(summary, excerpt),\n    publishedAt,\n    mainImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      photo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  featuredArtistStory->{\n    _id,\n    title,\n    slug,\n    portrait{\n      asset->{\n        url\n      },\n      alt\n    },\n    externalArtist{\n      id,\n      name,\n      country,\n      description,\n      birthYear,\n      deathYear,\n      wikipediaUrl\n    }\n  },\n  spotlightExhibitions[]{\n    _key,\n    badge,\n    featureCopy,\n    ctaText,\n    exhibition{\n      id,\n      title,\n      startDate,\n      endDate,\n      gallery{\n        id,\n        name,\n        city\n      }\n    }\n  },\n  featuredGalleries[]{\n    _key,\n    featureCopy,\n    ctaText,\n    ctaUrl,\n    gallery{\n      id,\n      name,\n      city,\n      address,\n      website,\n      workingHours\n    },\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        },\n        alt\n      },\n      brandColor{\n        hex\n      }\n    },\n    highlightedExhibitions[]{\n      _key,\n      id,\n      title,\n      startDate,\n      endDate,\n      description,\n      gallery{\n        id,\n        name,\n        city\n      }\n    }\n  },\n  cityPicks[]{\n    _key,\n    city,\n    tagline,\n    ctaText,\n    ctaUrl,\n    heroImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        },\n        alt\n      }\n    },\n    picks[]{\n      _key,\n      \"document\": @->{\n        _id,\n        _type,\n        title,\n        slug,\n        \"excerpt\": coalesce(summary, description),\n        mainImage{\n          asset->{\n            url\n          },\n          alt\n        },\n        coverImage{\n          asset->{\n            url\n          },\n          alt\n        },\n        publishedAt\n      }\n    }\n  },\n  weekendGuide->{\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    ctaText,\n    coverImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    sponsorship {\n      enabled,\n      type,\n      badgePlacement,\n      customDisclaimer,\n      sponsor->{\n        _id,\n        name,\n        logo{\n          asset->{\n            url\n          },\n          alt\n        }\n      }\n    }\n  },\n  tickerMarquee{\n    messages[]{\n      _key,\n      message,\n      status\n    }\n  },\n  aiChatbotTeaser{\n    headline,\n    description,\n    ctaText\n  },\n  newsletterSignup{\n    headline,\n    description,\n    placeholder,\n    submitText\n  },\n  comingSoon[]{\n    _key,\n    urgencyLabel,\n    ctaText,\n    ctaUrl,\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        },\n        alt\n      }\n    },\n    exhibition{\n      id,\n      title,\n      description,\n      startDate,\n      endDate,\n      gallery{\n        id,\n        name,\n        city,\n        address\n      }\n    }\n  },\n  displayAds[]{\n    _key,\n    placement,\n    label,\n    headline,\n    body,\n    ctaText,\n    ctaUrl,\n    backgroundColor,\n    image{\n      asset->{\n        url\n      },\n      alt\n    }\n  }\n}": HOMEPAGE_QUERYResult;
+    "*[\n  _type == \"homepageContent\"\n  && _id == \"homepageContent\"\n][0] {\n  _id,\n  title,\n  heroSection{\n    featuredReview->{\n      _id,\n      title,\n      slug,\n      \"excerpt\": coalesce(summary, excerpt),\n      publishedAt,\n      mainImage{\n        asset->{\n          url\n        },\n        alt\n      },\n      author->{\n        _id,\n        name,\n        photo{\n          asset->{\n            url\n          }\n        }\n      }\n    },\n    weeklyStory->{\n      _id,\n      title,\n      slug,\n      \"excerpt\": summary,\n      portrait{\n        asset->{\n          url\n        },\n        alt\n      },\n      externalArtist{\n        id,\n        name,\n        country,\n        description,\n        birthYear,\n        deathYear,\n        wikipediaUrl\n      }\n    }\n  },\n  latestReviews[]->{\n    _id,\n    title,\n    slug,\n    \"excerpt\": coalesce(summary, excerpt),\n    publishedAt,\n    mainImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    author->{\n      _id,\n      name,\n      photo{\n        asset->{\n          url\n        }\n      }\n    }\n  },\n  featuredArtistStory->{\n    _id,\n    title,\n    slug,\n    portrait{\n      asset->{\n        url\n      },\n      alt\n    },\n    externalArtist{\n      id,\n      name,\n      country,\n      description,\n      birthYear,\n      deathYear,\n      wikipediaUrl\n    }\n  },\n  spotlightExhibitions[]{\n    _key,\n    badge,\n    featureCopy,\n    ctaText,\n    exhibition{\n      id,\n      title,\n      startDate,\n      endDate,\n      gallery{\n        id,\n        name,\n        city\n      }\n    }\n  },\n  featuredGalleries[]{\n    _key,\n    featureCopy,\n    ctaText,\n    ctaUrl,\n    gallery{\n      id,\n      name\n    },\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        },\n        alt\n      },\n      brandColor{\n        hex\n      }\n    },\n    highlightedExhibitions[]{\n      _key,\n      id,\n      title\n    }\n  },\n  cityPicks[]{\n    _key,\n    city,\n    tagline,\n    ctaText,\n    ctaUrl,\n    heroImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        },\n        alt\n      }\n    },\n    picks[]{\n      _key,\n      \"document\": @->{\n        _id,\n        _type,\n        title,\n        slug,\n        \"excerpt\": coalesce(summary, description),\n        mainImage{\n          asset->{\n            url\n          },\n          alt\n        },\n        coverImage{\n          asset->{\n            url\n          },\n          alt\n        },\n        publishedAt\n      }\n    }\n  },\n  weekendGuide->{\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    ctaText,\n    coverImage{\n      asset->{\n        url\n      },\n      alt\n    },\n    sponsorship {\n      enabled,\n      type,\n      badgePlacement,\n      customDisclaimer,\n      sponsor->{\n        _id,\n        name,\n        logo{\n          asset->{\n            url\n          },\n          alt\n        }\n      }\n    }\n  },\n  tickerMarquee{\n    messages[]{\n      _key,\n      message,\n      status\n    }\n  },\n  aiChatbotTeaser{\n    headline,\n    description,\n    ctaText\n  },\n  newsletterSignup{\n    headline,\n    description,\n    placeholder,\n    submitText\n  },\n  comingSoon[]{\n    _key,\n    urgencyLabel,\n    ctaText,\n    ctaUrl,\n    sponsor->{\n      _id,\n      name,\n      logo{\n        asset->{\n          url\n        },\n        alt\n      }\n    },\n    exhibition{\n      id,\n      title,\n      description,\n      startDate,\n      endDate,\n      gallery{\n        id,\n        name,\n        city,\n        address\n      }\n    }\n  },\n  displayAds[]{\n    _key,\n    placement,\n    label,\n    headline,\n    body,\n    ctaText,\n    ctaUrl,\n    backgroundColor,\n    image{\n      asset->{\n        url\n      },\n      alt\n    }\n  }\n}": HOMEPAGE_QUERYResult;
     "*[\n  _type == \"siteSettings\"\n][0] {\n  _id,\n  title,\n  description,\n  keywords,\n  logo {\n    asset->{\n      url\n    }\n  },\n  social\n}": SITE_SETTINGS_QUERYResult;
-    "*[\n  _type == \"homepageContent\"\n  && !(_id in path(\"drafts.**\"))\n][0] {\n  tickerMarquee{\n    messages[]{\n      _key,\n      message,\n      status\n    }\n  }\n}": HOMEPAGE_TICKER_QUERYResult;
+    "*[\n  _type == \"homepageContent\"\n  && _id == \"homepageContent\"\n][0] {\n  tickerMarquee{\n    messages[]{\n      _key,\n      message,\n      status\n    }\n  }\n}": HOMEPAGE_TICKER_QUERYResult;
     "*[\n  _type == \"author\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  role,\n  bio,\n  photo {\n    asset->{\n      url\n    }\n  },\n  social\n}": AUTHORS_QUERYResult;
     "*[\n  _type == \"guide\"\n] | order(_createdAt desc) {\n  _id,\n  slug,\n  title,\n  city,\n  description,\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  ctaText,\n  sponsorship {\n    enabled,\n    type,\n    badgePlacement,\n    customDisclaimer,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      }\n    }\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    notes,\n    externalGallery {\n      _type,\n      id,\n      name,\n      city,\n      address,\n      website\n    }\n  }\n}": GUIDES_QUERYResult;
     "*[\n  _type == \"guide\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  city,\n  description,\n  ctaText,\n  sponsorship {\n    enabled,\n    type,\n    badgePlacement,\n    customDisclaimer,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      }\n    }\n  },\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    notes,\n    externalGallery {\n      _type,\n      id,\n      name,\n      city,\n      address,\n      website\n    }\n  }\n}": GUIDE_QUERYResult;
