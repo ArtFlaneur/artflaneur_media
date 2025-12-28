@@ -294,3 +294,38 @@ export const getAuditLog = async (
 
   return { data, error };
 };
+
+export interface GalleryClaimRequestInput {
+  galleryExternalId: string;
+  galleryName?: string;
+  galleryCity?: string;
+  galleryCountry?: string;
+  applicantEmail: string;
+  applicantName?: string;
+  applicantPhone?: string;
+  message?: string;
+}
+
+export const submitGalleryClaimRequest = async (
+  input: GalleryClaimRequestInput
+): Promise<{ data: { requestId: string } | null; error: Error | null }> => {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase.functions.invoke('gallery-claim-request', {
+    body: {
+      galleryExternalId: input.galleryExternalId,
+      galleryName: input.galleryName,
+      galleryCity: input.galleryCity,
+      galleryCountry: input.galleryCountry,
+      applicantEmail: input.applicantEmail,
+      applicantName: input.applicantName,
+      applicantPhone: input.applicantPhone,
+      message: input.message,
+    },
+  });
+
+  if (error) return { data: null, error };
+  if (!data?.requestId) return { data: null, error: new Error('Claim request was submitted but no request id was returned.') };
+
+  return { data: { requestId: String(data.requestId) }, error: null };
+};

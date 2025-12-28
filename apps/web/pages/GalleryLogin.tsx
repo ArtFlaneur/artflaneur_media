@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signIn, signUp, createGalleryForUser } from '../lib/supabase';
+import { signIn, signUp, createGalleryForUser, submitGalleryClaimRequest } from '../lib/supabase';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus, MapPin } from 'lucide-react';
 import { searchGalleries, GraphqlGallery } from '../lib/graphql';
@@ -44,6 +44,17 @@ const GalleryLogin: React.FC = () => {
   const [galleryDetails, setGalleryDetails] = useState<NewGalleryForm>(initialGalleryState);
   const [gallerySource, setGallerySource] = useState<GallerySource>(null);
 
+  const claimGalleryId = searchParams.get('claimGalleryId')?.trim() || '';
+  const claimGalleryName = searchParams.get('claimGalleryName')?.trim() || '';
+  const claimGalleryCity = searchParams.get('claimGalleryCity')?.trim() || '';
+  const claimGalleryCountry = searchParams.get('claimGalleryCountry')?.trim() || '';
+  const isClaimFlow = Boolean(claimGalleryId);
+
+  const [claimApplicantName, setClaimApplicantName] = useState('');
+  const [claimApplicantPhone, setClaimApplicantPhone] = useState('');
+  const [claimMessage, setClaimMessage] = useState('');
+  const [claimSubmitted, setClaimSubmitted] = useState(false);
+
   React.useEffect(() => {
     const requestedMode = searchParams.get('mode')?.toLowerCase();
     if (requestedMode === 'signup' || requestedMode === 'register') {
@@ -51,6 +62,39 @@ const GalleryLogin: React.FC = () => {
       setStep('gallery-select');
     }
   }, [searchParams]);
+
+  const handleClaimSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!claimGalleryId) {
+      setError('Missing gallery identifier. Please use the Claim link from a gallery page.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error: claimError } = await submitGalleryClaimRequest({
+        galleryExternalId: claimGalleryId,
+        galleryName: claimGalleryName,
+        galleryCity: claimGalleryCity,
+        galleryCountry: claimGalleryCountry,
+        applicantEmail: email,
+        applicantName: claimApplicantName,
+        applicantPhone: claimApplicantPhone,
+        message: claimMessage,
+      });
+
+      if (claimError) throw claimError;
+
+      setClaimSubmitted(true);
+      setError('✅ Your request has been received. Please check your email for confirmation.');
+    } catch (err: any) {
+      setError(err?.message || 'Failed to submit your claim request.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateGalleryField = (field: keyof NewGalleryForm, value: string) => {
     setGalleryDetails((prev) => ({ ...prev, [field]: value }));
@@ -184,6 +228,131 @@ const GalleryLogin: React.FC = () => {
     ? [galleryDetails.city, galleryDetails.country].filter(Boolean).join(', ')
     : '';
 
+  if (isClaimFlow) {
+    const claimLocation = [claimGalleryCity, claimGalleryCountry].filter(Boolean).join(', ');
+
+    return (
+      <div className="min-h-screen bg-art-paper flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full">
+          <div className="bg-white shadow-xl rounded-sm p-8">
+            <h1 className="font-serif text-3xl text-center mb-2">Claim Your Gallery</h1>
+            <p className="text-center text-gray-600 text-sm mb-8">
+              Submit your request. We review claims manually.
+            </p>
+
+            <div className="mb-6 rounded border border-gray-200 bg-gray-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-gray-500 font-mono">Gallery</p>
+              <p className="text-lg font-medium font-mono">{claimGalleryName || 'Selected gallery'}</p>
+              {claimLocation ? <p className="text-sm text-gray-600 font-mono">{claimLocation}</p> : null}
+              <p className="mt-2 text-[11px] text-gray-500 font-mono">ID: {claimGalleryId}</p>
+            </div>
+
+            {error && (
+              <div
+                className={`mb-4 p-3 rounded ${
+                  error.includes('✅')
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                <p className="text-sm font-mono">{error}</p>
+              </div>
+            )}
+
+            {!claimSubmitted ? (
+              <form onSubmit={handleClaimSubmit} className="space-y-4 font-mono">
+                <div>
+                  <label htmlFor="claim_name" className="mb-1 block text-sm font-medium text-gray-700">
+                    Your name
+                  </label>
+                  <input
+                    id="claim_name"
+                    type="text"
+                    value={claimApplicantName}
+                    onChange={(e) => setClaimApplicantName(e.target.value)}
+                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none"
+                    placeholder="Full name"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="claim_email" className="mb-1 block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    id="claim_email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none"
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="claim_phone" className="mb-1 block text-sm font-medium text-gray-700">
+                    Phone (optional)
+                  </label>
+                  <input
+                    id="claim_phone"
+                    type="tel"
+                    value={claimApplicantPhone}
+                    onChange={(e) => setClaimApplicantPhone(e.target.value)}
+                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none"
+                    placeholder="+1 555 000 000"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="claim_message" className="mb-1 block text-sm font-medium text-gray-700">
+                    Message (optional)
+                  </label>
+                  <textarea
+                    id="claim_message"
+                    value={claimMessage}
+                    onChange={(e) => setClaimMessage(e.target.value)}
+                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none min-h-[100px]"
+                    placeholder="Tell us your role / link to the gallery website / anything helpful"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {loading ? 'Submitting…' : 'Submit claim request'}
+                </button>
+
+                <button
+                  type="button"
+                  className="w-full border border-black py-2 rounded hover:bg-gray-50"
+                  onClick={() => navigate('/gallery-login')}
+                >
+                  Back to login
+                </button>
+              </form>
+            ) : (
+              <div className="font-mono">
+                <p className="text-sm text-gray-700">
+                  We’ve received your request. We’ll review it and get back to you.
+                </p>
+                <button
+                  type="button"
+                  className="mt-4 w-full border border-black py-2 rounded hover:bg-gray-50"
+                  onClick={() => navigate('/')}
+                >
+                  Return to site
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-art-paper flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">
@@ -191,7 +360,7 @@ const GalleryLogin: React.FC = () => {
           <h1 className="font-serif text-3xl text-center mb-2">
             Gallery Dashboard
           </h1>
-          <p className="text-center text-gray-600 text-sm mb-8">
+          <p className="text-center text-gray-600 text-sm mb-8 font-mono">
             {mode === 'login'
               ? 'Sign in to manage your gallery'
               : step === 'gallery-select'
@@ -232,7 +401,7 @@ const GalleryLogin: React.FC = () => {
                 </div>
               )}
 
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
+              <form onSubmit={handleAuthSubmit} className="space-y-4 font-mono">
                 <div>
                   <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
                     Email
@@ -452,7 +621,7 @@ const GalleryLogin: React.FC = () => {
           <div className="mt-6 text-center">
             <button
               onClick={() => handleModeToggle(mode === 'login' ? 'signup' : 'login')}
-              className="text-sm text-gray-600 hover:text-black"
+              className="text-sm text-gray-600 hover:text-black font-mono"
             >
               {mode === 'login'
                 ? "Don't have an account? Sign up"
@@ -462,7 +631,7 @@ const GalleryLogin: React.FC = () => {
         </div>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-gray-600 hover:text-black">
+          <a href="/" className="text-sm text-gray-600 hover:text-black font-mono">
             ← Back to Art Flaneur
           </a>
         </div>

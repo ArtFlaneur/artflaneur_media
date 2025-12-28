@@ -12,6 +12,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      gallery_claim_requests: {
+        Row: {
+          id: string;
+          created_at: string;
+          gallery_external_id: string;
+          gallery_name: string | null;
+          gallery_city: string | null;
+          gallery_country: string | null;
+          applicant_email: string;
+          applicant_name: string | null;
+          applicant_phone: string | null;
+          message: string | null;
+          status: string;
+          reviewed_at: string | null;
+          reviewer_note: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          gallery_external_id: string;
+          gallery_name?: string | null;
+          gallery_city?: string | null;
+          gallery_country?: string | null;
+          applicant_email: string;
+          applicant_name?: string | null;
+          applicant_phone?: string | null;
+          message?: string | null;
+          status?: string;
+          reviewed_at?: string | null;
+          reviewer_note?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          gallery_external_id?: string;
+          gallery_name?: string | null;
+          gallery_city?: string | null;
+          gallery_country?: string | null;
+          applicant_email?: string;
+          applicant_name?: string | null;
+          applicant_phone?: string | null;
+          message?: string | null;
+          status?: string;
+          reviewed_at?: string | null;
+          reviewer_note?: string | null;
+        };
+        Relationships: [];
+      };
       galleries: {
         Row: {
           id: string;

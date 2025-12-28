@@ -1,0 +1,3 @@
+# Public endpoint: claim requests are allowed without Supabase Auth.
+# This avoids 401 on CORS preflight (OPTIONS) and on unauthenticated POST.
+verify_jwt = false

@@ -235,6 +235,18 @@ const GalleryView: React.FC = () => {
   const heroImage = useMemo(() => buildHeroImage(gallery), [gallery]);
   const locationLabel = useMemo(() => [gallery?.city, gallery?.country].filter(Boolean).join(', '), [gallery]);
 
+  const claimGalleryUrl = useMemo(() => {
+    if (!galleryId) return '/gallery-login?mode=register';
+
+    const params = new URLSearchParams();
+    params.set('mode', 'register');
+    params.set('claimGalleryId', galleryId);
+    if (gallery?.galleryname) params.set('claimGalleryName', gallery.galleryname);
+    if (gallery?.city) params.set('claimGalleryCity', gallery.city);
+    if (gallery?.country) params.set('claimGalleryCountry', gallery.country);
+    return `/gallery-login?${params.toString()}`;
+  }, [gallery?.city, gallery?.country, gallery?.galleryname, galleryId]);
+
   const { currentAndFutureExhibitions, pastExhibitions } = useMemo(() => {
     const now = Math.floor(Date.now() / 1000);
 
@@ -432,15 +444,13 @@ const GalleryView: React.FC = () => {
                     <ExternalLink className="w-4 h-4" />
                   </a>
 
-                  <button
-                    type="button"
-                    disabled
-                    className="mt-3 inline-flex items-center justify-between w-full gap-3 px-4 py-3 border border-black font-mono text-xs uppercase tracking-widest opacity-60 cursor-not-allowed"
-                    aria-disabled="true"
+                  <Link
+                    to={claimGalleryUrl}
+                    className="mt-3 inline-flex items-center justify-between w-full gap-3 px-4 py-3 border border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
                   >
                     Claim Your Gallery
                     <ExternalLink className="w-4 h-4" />
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
