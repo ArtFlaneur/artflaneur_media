@@ -87,47 +87,5 @@ serve(async (req) => {
     return json(500, { error: "Insert succeeded but request id is missing" });
   }
 
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  const fromEmail = Deno.env.get("CLAIM_FROM_EMAIL") || "Art Flaneur <no-reply@artflaneur.com>";
-
-  if (!resendApiKey) {
-    // Still return success for the claim itself; email delivery is configured separately.
-    return json(200, { requestId, email: "skipped_missing_RESEND_API_KEY" });
-  }
-
-  const subject = "We received your gallery claim request";
-  const safeGalleryLabel =
-    payload.galleryName?.trim() || `Gallery ID: ${galleryExternalId}`;
-
-  const html = `
-    <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; line-height: 1.5;">
-      <p>Hi${payload.applicantName?.trim() ? ` ${payload.applicantName.trim()}` : ""},</p>
-      <p>We received your request to claim <strong>${safeGalleryLabel}</strong>.</p>
-      <p>Your request ID: <strong>${requestId}</strong></p>
-      <p>We review requests manually and will contact you once approved.</p>
-      <hr />
-      <p style="font-size: 12px; color: #555;">If you didn't make this request, you can ignore this email.</p>
-    </div>
-  `;
-
-  const emailResp = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [applicantEmail],
-      subject,
-      html,
-    }),
-  });
-
-  if (!emailResp.ok) {
-    const details = await emailResp.text().catch(() => "");
-    return json(200, { requestId, email: "failed", emailError: details || emailResp.statusText });
-  }
-
-  return json(200, { requestId, email: "sent" });
+  return json(200, { requestId });
 });

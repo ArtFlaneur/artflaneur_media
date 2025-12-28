@@ -43,6 +43,7 @@ const GalleryLogin: React.FC = () => {
   };
   const [galleryDetails, setGalleryDetails] = useState<NewGalleryForm>(initialGalleryState);
   const [gallerySource, setGallerySource] = useState<GallerySource>(null);
+  const [selectedGalleryId, setSelectedGalleryId] = useState<string>('');
 
   const claimGalleryId = searchParams.get('claimGalleryId')?.trim() || '';
   const claimGalleryName = searchParams.get('claimGalleryName')?.trim() || '';
@@ -88,7 +89,6 @@ const GalleryLogin: React.FC = () => {
       if (claimError) throw claimError;
 
       setClaimSubmitted(true);
-      setError('✅ Your request has been received. Please check your email for confirmation.');
     } catch (err: any) {
       setError(err?.message || 'Failed to submit your claim request.');
     } finally {
@@ -126,6 +126,32 @@ const GalleryLogin: React.FC = () => {
           throw new Error('Gallery name is required.');
         }
 
+        // EXISTING gallery → claim request (manual approval)
+        if (gallerySource === 'existing') {
+          const { error: claimError } = await submitGalleryClaimRequest({
+            galleryExternalId: selectedGalleryId,
+            galleryName: galleryDetails.name.trim(),
+            galleryCity: galleryDetails.city?.trim() || undefined,
+            galleryCountry: galleryDetails.country?.trim() || undefined,
+            applicantEmail: email,
+            applicantName: undefined,
+            applicantPhone: undefined,
+            message: `Registered via signup form. Password provided.`,
+          });
+          if (claimError) throw claimError;
+
+          setError('✅ Your claim request has been submitted. We will review it and contact you by email.');
+          setGallerySource(null);
+          setGalleryDetails(initialGalleryState);
+          setSelectedGalleryId('');
+          setEmail('');
+          setPassword('');
+          setStep('auth');
+          setMode('login');
+          return;
+        }
+
+        // NEW gallery → create user + gallery immediately
         const { data: authData, error: signUpError } = await signUp(email, password);
         if (signUpError) throw signUpError;
 
@@ -154,7 +180,7 @@ const GalleryLogin: React.FC = () => {
         });
         if (galleryError) throw galleryError;
 
-        setError('Gallery linked! Check your email to confirm your account, then you can log in.');
+        setError('Gallery created! Check your email to confirm your account, then you can log in.');
         setGallerySource(null);
         setGalleryDetails(initialGalleryState);
         setEmail('');
@@ -200,6 +226,7 @@ const GalleryLogin: React.FC = () => {
       openingHours: '',
       imageUrl: gallery.gallery_img_url ?? ''
     });
+    setSelectedGalleryId(gallery.id ?? '');
     setGallerySource('existing');
     setStep('auth');
     setMode('signup');
@@ -234,119 +261,128 @@ const GalleryLogin: React.FC = () => {
     return (
       <div className="min-h-screen bg-art-paper flex items-center justify-center p-6">
         <div className="max-w-2xl w-full">
-          <div className="bg-white shadow-xl rounded-sm p-8">
-            <h1 className="font-serif text-3xl text-center mb-2">Claim Your Gallery</h1>
-            <p className="text-center text-gray-600 text-sm mb-8">
-              Submit your request. We review claims manually.
-            </p>
-
-            <div className="mb-6 rounded border border-gray-200 bg-gray-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-gray-500 font-mono">Gallery</p>
-              <p className="text-lg font-medium font-mono">{claimGalleryName || 'Selected gallery'}</p>
-              {claimLocation ? <p className="text-sm text-gray-600 font-mono">{claimLocation}</p> : null}
-              <p className="mt-2 text-[11px] text-gray-500 font-mono">ID: {claimGalleryId}</p>
+          <div className="border-2 border-black bg-white">
+            <div className="border-b-2 border-black bg-white p-6">
+              <h1 className="font-black uppercase text-2xl tracking-wider mb-2">Claim Your Gallery</h1>
+              <p className="font-mono text-xs uppercase tracking-wide text-gray-600">
+                Submit request · Manual review process
+              </p>
             </div>
 
-            {error && (
-              <div
-                className={`mb-4 p-3 rounded ${
-                  error.includes('✅')
-                    ? 'bg-green-50 text-green-800 border border-green-200'
-                    : 'bg-red-50 text-red-800 border border-red-200'
-                }`}
-              >
-                <p className="text-sm font-mono">{error}</p>
-              </div>
-            )}
+            <div className="border-b-2 border-black bg-gray-50 p-6">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">Gallery</p>
+              <p className="font-black text-xl uppercase">{claimGalleryName || 'Selected gallery'}</p>
+              {claimLocation ? <p className="font-mono text-sm text-gray-600 mt-1">{claimLocation}</p> : null}
+              <p className="font-mono text-[10px] text-gray-400 mt-2">ID: {claimGalleryId}</p>
+            </div>
 
-            {!claimSubmitted ? (
-              <form onSubmit={handleClaimSubmit} className="space-y-4 font-mono">
-                <div>
-                  <label htmlFor="claim_name" className="mb-1 block text-sm font-medium text-gray-700">
-                    Your name
-                  </label>
-                  <input
-                    id="claim_name"
-                    type="text"
-                    value={claimApplicantName}
-                    onChange={(e) => setClaimApplicantName(e.target.value)}
-                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none"
-                    placeholder="Full name"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="claim_email" className="mb-1 block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    id="claim_email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none"
-                    placeholder="you@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="claim_phone" className="mb-1 block text-sm font-medium text-gray-700">
-                    Phone (optional)
-                  </label>
-                  <input
-                    id="claim_phone"
-                    type="tel"
-                    value={claimApplicantPhone}
-                    onChange={(e) => setClaimApplicantPhone(e.target.value)}
-                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none"
-                    placeholder="+1 555 000 000"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="claim_message" className="mb-1 block text-sm font-medium text-gray-700">
-                    Message (optional)
-                  </label>
-                  <textarea
-                    id="claim_message"
-                    value={claimMessage}
-                    onChange={(e) => setClaimMessage(e.target.value)}
-                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none min-h-[100px]"
-                    placeholder="Tell us your role / link to the gallery website / anything helpful"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 disabled:opacity-50"
+            <div className="p-6">
+              {error && (
+                <div
+                  className={`mb-6 border-2 p-4 ${
+                    error.includes('✅')
+                      ? 'bg-green-50 border-green-600'
+                      : 'bg-red-50 border-red-600'
+                  }`}
                 >
-                  {loading ? 'Submitting…' : 'Submit claim request'}
-                </button>
+                  <p className="font-mono text-xs uppercase tracking-wide">{error}</p>
+                </div>
+              )}
 
-                <button
-                  type="button"
-                  className="w-full border border-black py-2 rounded hover:bg-gray-50"
-                  onClick={() => navigate('/gallery-login')}
-                >
-                  Back to login
-                </button>
-              </form>
-            ) : (
-              <div className="font-mono">
-                <p className="text-sm text-gray-700">
-                  We’ve received your request. We’ll review it and get back to you.
-                </p>
-                <button
-                  type="button"
-                  className="mt-4 w-full border border-black py-2 rounded hover:bg-gray-50"
-                  onClick={() => navigate('/')}
-                >
-                  Return to site
-                </button>
-              </div>
-            )}
+              {!claimSubmitted ? (
+                <form onSubmit={handleClaimSubmit} className="space-y-5">
+                  <div>
+                    <label htmlFor="claim_name" className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                      Your name
+                    </label>
+                    <input
+                      id="claim_name"
+                      type="text"
+                      value={claimApplicantName}
+                      onChange={(e) => setClaimApplicantName(e.target.value)}
+                      className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                      placeholder="Full name"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="claim_email" className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                      Email *
+                    </label>
+                    <input
+                      id="claim_email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="claim_phone" className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                      Phone
+                    </label>
+                    <input
+                      id="claim_phone"
+                      type="tel"
+                      value={claimApplicantPhone}
+                      onChange={(e) => setClaimApplicantPhone(e.target.value)}
+                      className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                      placeholder="+1 555 000 000"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="claim_message" className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                      Message
+                    </label>
+                    <textarea
+                      id="claim_message"
+                      value={claimMessage}
+                      onChange={(e) => setClaimMessage(e.target.value)}
+                      className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 min-h-[120px]"
+                      placeholder="Tell us your role / link to the gallery website / anything helpful"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-black text-white py-4 font-mono text-xs uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                  >
+                    {loading ? 'Submitting…' : 'Submit claim request'}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="w-full border-2 border-black py-4 font-mono text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors"
+                    onClick={() => navigate('/gallery-login')}
+                  >
+                    Back to login
+                  </button>
+                </form>
+              ) : (
+                <div>
+                  <div className="border-2 border-green-600 bg-green-50 p-6 mb-6">
+                    <p className="font-mono text-xs uppercase tracking-wide text-green-900">
+                      Request submitted successfully
+                    </p>
+                    <p className="font-mono text-sm text-gray-700 mt-2">
+                      We'll review it and get back to you by email.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="w-full border-2 border-black py-4 font-mono text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors"
+                    onClick={() => navigate('/')}
+                  >
+                    Return to site
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -356,282 +392,288 @@ const GalleryLogin: React.FC = () => {
   return (
     <div className="min-h-screen bg-art-paper flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">
-        <div className="bg-white shadow-xl rounded-sm p-8">
-          <h1 className="font-serif text-3xl text-center mb-2">
-            Gallery Dashboard
-          </h1>
-          <p className="text-center text-gray-600 text-sm mb-8 font-mono">
-            {mode === 'login'
-              ? 'Sign in to manage your gallery'
-              : step === 'gallery-select'
-                ? 'Step 1 of 2 · Tell us about your gallery'
-                : 'Step 2 of 2 · Create your gallery account'}
-          </p>
+        <div className="border-2 border-black bg-white">
+          <div className="border-b-2 border-black bg-white p-6">
+            <h1 className="font-black uppercase text-2xl tracking-wider mb-2">
+              Gallery Dashboard
+            </h1>
+            <p className="font-mono text-xs uppercase tracking-wide text-gray-600">
+              {mode === 'login'
+                ? 'Sign in to manage your gallery'
+                : step === 'gallery-select'
+                  ? 'Step 1 of 2 · Tell us about your gallery'
+                  : 'Step 2 of 2 · Create your gallery account'}
+            </p>
+          </div>
 
-          {error && (
-            <div className={`mb-4 p-3 rounded ${
-              error.includes('Check your email') || error.includes('created') || error.includes('linked')
-                ? 'bg-green-50 text-green-800 border border-green-200' 
-                : 'bg-red-50 text-red-800 border border-red-200'
-            }`}>
-              <p className="text-sm">{error}</p>
-            </div>
-          )}
-
-          {step === 'auth' ? (
-            <>
-              {mode === 'signup' && gallerySource && (
-                <div className="mb-6 flex items-start justify-between rounded border border-gray-200 bg-gray-50 p-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
-                      {gallerySource === 'existing' ? 'Existing gallery' : 'New gallery'}
-                    </p>
-                    <p className="text-lg font-medium">{galleryDetails.name || 'Unnamed gallery'}</p>
-                    {selectedGalleryLocation && (
-                      <p className="text-sm text-gray-600">{selectedGalleryLocation}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="text-sm font-medium text-black underline"
-                    onClick={() => setStep('gallery-select')}
-                  >
-                    Change
-                  </button>
-                </div>
-              )}
-
-              <form onSubmit={handleAuthSubmit} className="space-y-4 font-mono">
-                <div>
-                  <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none"
-                    placeholder="gallery@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="w-full rounded border border-gray-300 px-4 py-2 focus:border-black focus:outline-none"
-                    placeholder="••••••••"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-black py-3 text-sm font-medium uppercase tracking-wide text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create Account'}
-                </button>
-              </form>
-            </>
-          ) : (
-            /* Step 1: Gallery Selection */
-            <div className="space-y-6">
-              {/* Mode Toggle */}
-              <div className="flex gap-2 border-b border-gray-200">
-                <button
-                  onClick={() => setGalleryMode('search')}
-                  className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                    galleryMode === 'search'
-                      ? 'border-b-2 border-black text-black'
-                      : 'text-gray-500 hover:text-black'
-                  }`}
-                >
-                  <Search className="w-4 h-4 inline mr-2" />
-                  Find My Gallery
-                </button>
-                <button
-                  onClick={() => setGalleryMode('create')}
-                  className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                    galleryMode === 'create'
-                      ? 'border-b-2 border-black text-black'
-                      : 'text-gray-500 hover:text-black'
-                  }`}
-                >
-                  <Plus className="w-4 h-4 inline mr-2" />
-                  Create New Gallery
-                </button>
+          <div className="p-6">
+            {error && (
+              <div className={`mb-6 border-2 p-4 ${
+                error.includes('Check your email') || error.includes('created') || error.includes('linked') || error.includes('✅')
+                  ? 'bg-green-50 border-green-600' 
+                  : 'bg-red-50 border-red-600'
+              }`}>
+                <p className="font-mono text-xs uppercase tracking-wide">{error}</p>
               </div>
+            )}
 
-              {galleryMode === 'search' ? (
-                /* Search Existing Gallery */
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearchGallery()}
-                      placeholder="Search by gallery name, city, or email..."
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                    />
-                    <button
-                      onClick={handleSearchGallery}
-                      disabled={searching || !searchQuery.trim()}
-                      className="px-6 py-2 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50"
-                    >
-                      {searching ? 'Searching...' : 'Search'}
-                    </button>
-                  </div>
-
-                  {searchResults.length > 0 && (
-                    <div className="border border-gray-200 rounded divide-y max-h-96 overflow-y-auto">
-                      {searchResults.map((gallery) => (
-                        <div key={gallery.id} className="p-4 hover:bg-gray-50 flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-lg">{gallery.galleryname}</h3>
-                            {(gallery.city || gallery.country) && (
-                              <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                                <MapPin className="w-4 h-4" />
-                                {[gallery.city, gallery.country].filter(Boolean).join(', ')}
-                              </p>
-                            )}
-                            {gallery.fulladdress && (
-                              <p className="text-xs text-gray-500 mt-1">{gallery.fulladdress}</p>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => handleExistingGallerySelection(gallery)}
-                            disabled={loading}
-                            className="ml-4 px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
-                          >
-                            Use this gallery
-                          </button>
-                        </div>
-                      ))}
+            {step === 'auth' ? (
+              <>
+                {mode === 'signup' && gallerySource && (
+                  <div className="mb-6 border-2 border-black bg-gray-50 p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-1">
+                          {gallerySource === 'existing' ? 'Existing gallery' : 'New gallery'}
+                        </p>
+                        <p className="font-black text-lg uppercase">{galleryDetails.name || 'Unnamed gallery'}</p>
+                        {selectedGalleryLocation && (
+                          <p className="font-mono text-sm text-gray-600 mt-1">{selectedGalleryLocation}</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="font-mono text-xs uppercase tracking-wide underline hover:no-underline"
+                        onClick={() => setStep('gallery-select')}
+                      >
+                        Change
+                      </button>
                     </div>
-                  )}
-                </div>
-              ) : (
-                /* Create New Gallery */
-                <form onSubmit={handlePrepareNewGallery} className="space-y-4">
+                  </div>
+                )}
+
+                <form onSubmit={handleAuthSubmit} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gallery Name *
+                    <label htmlFor="email" className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                      Email
                     </label>
                     <input
-                      type="text"
-                      value={galleryDetails.name}
-                      onChange={(e) => updateGalleryField('name', e.target.value)}
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                      placeholder="Your Gallery Name"
+                      className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                      placeholder="gallery@example.com"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        City *
-                      </label>
-                      <input
-                        type="text"
-                        value={galleryDetails.city}
-                        onChange={(e) => updateGalleryField('city', e.target.value)}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                        placeholder="City"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Country *
-                      </label>
-                      <input
-                        type="text"
-                        value={galleryDetails.country}
-                        onChange={(e) => updateGalleryField('country', e.target.value)}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                        placeholder="Country"
-                      />
-                    </div>
-                  </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Address *
+                    <label htmlFor="password" className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                      Password
                     </label>
-                    <textarea
-                      value={galleryDetails.address}
-                      onChange={(e) => updateGalleryField('address', e.target.value)}
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
-                      rows={2}
-                      className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                      placeholder="Street address, postal code"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Opening Hours
-                    </label>
-                    <input
-                      type="text"
-                      value={galleryDetails.openingHours}
-                      onChange={(e) => updateGalleryField('openingHours', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                      placeholder="e.g., Tue-Sat 10:00-18:00"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gallery Image URL
-                    </label>
-                    <input
-                      type="url"
-                      value={galleryDetails.imageUrl}
-                      onChange={(e) => updateGalleryField('imageUrl', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                      placeholder="https://..."
+                      minLength={6}
+                      className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                      placeholder="••••••••"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-black text-white py-3 font-medium uppercase text-sm tracking-wide hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-black py-4 font-mono text-xs uppercase tracking-widest text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Save Gallery Details
+                    {loading ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create Account'}
                   </button>
                 </form>
-              )}
-            </div>
-          )}
+              </>
+            ) : (
+              /* Step 1: Gallery Selection */
+              <div className="space-y-6">
+                {/* Mode Toggle */}
+                <div className="flex border-2 border-black">
+                  <button
+                    onClick={() => setGalleryMode('search')}
+                    className={`flex-1 py-4 font-mono text-xs uppercase tracking-widest transition-colors ${
+                      galleryMode === 'search'
+                        ? 'bg-black text-white'
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                  >
+                    <Search className="w-4 h-4 inline mr-2" />
+                    Find My Gallery
+                  </button>
+                  <button
+                    onClick={() => setGalleryMode('create')}
+                    className={`flex-1 py-4 font-mono text-xs uppercase tracking-widest transition-colors border-l-2 border-black ${
+                      galleryMode === 'create'
+                        ? 'bg-black text-white'
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                  >
+                    <Plus className="w-4 h-4 inline mr-2" />
+                    Create New Gallery
+                  </button>
+                </div>
 
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => handleModeToggle(mode === 'login' ? 'signup' : 'login')}
-              className="text-sm text-gray-600 hover:text-black font-mono"
-            >
-              {mode === 'login'
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
-            </button>
+                {galleryMode === 'search' ? (
+                  /* Search Existing Gallery */
+                  <div className="space-y-4">
+                    <div className="flex gap-0">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearchGallery()}
+                        placeholder="Search by gallery name, city, or email..."
+                        className="flex-1 border-2 border-black border-r-0 px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                      />
+                      <button
+                        onClick={handleSearchGallery}
+                        disabled={searching || !searchQuery.trim()}
+                        className="px-6 py-3 bg-black text-white border-2 border-black font-mono text-xs uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50"
+                      >
+                        {searching ? 'Searching...' : 'Search'}
+                      </button>
+                    </div>
+
+                    {searchResults.length > 0 && (
+                      <div className="border-2 border-black divide-y-2 divide-black max-h-96 overflow-y-auto">
+                        {searchResults.map((gallery) => (
+                          <div key={gallery.id} className="p-4 hover:bg-gray-50 flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-black uppercase text-base">{gallery.galleryname}</h3>
+                              {(gallery.city || gallery.country) && (
+                                <p className="font-mono text-xs text-gray-600 flex items-center gap-1 mt-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {[gallery.city, gallery.country].filter(Boolean).join(', ')}
+                                </p>
+                              )}
+                              {gallery.fulladdress && (
+                                <p className="font-mono text-[10px] text-gray-500 mt-1">{gallery.fulladdress}</p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleExistingGallerySelection(gallery)}
+                              disabled={loading}
+                              className="ml-4 px-4 py-2 bg-black text-white font-mono text-[10px] uppercase tracking-wider hover:bg-gray-800 disabled:opacity-50 border-2 border-black"
+                            >
+                              Select
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Create New Gallery */
+                  <form onSubmit={handlePrepareNewGallery} className="space-y-5">
+                    <div>
+                      <label className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                        Gallery Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={galleryDetails.name}
+                        onChange={(e) => updateGalleryField('name', e.target.value)}
+                        required
+                        className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                        placeholder="Your Gallery Name"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                          City *
+                        </label>
+                        <input
+                          type="text"
+                          value={galleryDetails.city}
+                          onChange={(e) => updateGalleryField('city', e.target.value)}
+                          required
+                          className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                          placeholder="City"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                          Country *
+                        </label>
+                        <input
+                          type="text"
+                          value={galleryDetails.country}
+                          onChange={(e) => updateGalleryField('country', e.target.value)}
+                          required
+                          className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                          placeholder="Country"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                        Full Address *
+                      </label>
+                      <textarea
+                        value={galleryDetails.address}
+                        onChange={(e) => updateGalleryField('address', e.target.value)}
+                        required
+                        rows={2}
+                        className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                        placeholder="Street address, postal code"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                        Opening Hours
+                      </label>
+                      <input
+                        type="text"
+                        value={galleryDetails.openingHours}
+                        onChange={(e) => updateGalleryField('openingHours', e.target.value)}
+                        className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                        placeholder="e.g., Tue-Sat 10:00-18:00"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-mono text-[10px] uppercase tracking-widest text-gray-500 mb-2">
+                        Gallery Image URL
+                      </label>
+                      <input
+                        type="url"
+                        value={galleryDetails.imageUrl}
+                        onChange={(e) => updateGalleryField('imageUrl', e.target.value)}
+                        className="w-full border-2 border-black px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                        placeholder="https://..."
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-black text-white py-4 font-mono text-xs uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Save Gallery Details
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
+
+            <div className="mt-6 pt-6 border-t-2 border-black text-center">
+              <button
+                onClick={() => handleModeToggle(mode === 'login' ? 'signup' : 'login')}
+                className="font-mono text-xs uppercase tracking-wide hover:underline"
+              >
+                {mode === 'login'
+                  ? "Don't have an account? Sign up"
+                  : 'Already have an account? Sign in'}
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-gray-600 hover:text-black font-mono">
+          <a href="/" className="font-mono text-xs uppercase tracking-wide hover:underline">
             ← Back to Art Flaneur
           </a>
         </div>
