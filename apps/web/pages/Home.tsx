@@ -45,6 +45,13 @@ const formatGraphqlDateRange = (exhibition?: GraphqlExhibition | null) => {
 const hasSlug = (review: ReviewSource | undefined | null): review is ReviewWithSlug =>
   Boolean(review?.slug?.current);
 
+const getHeroSlider = (review: ReviewSource | null) => {
+  if (!review) return [];
+  if (!('heroSlider' in (review as any))) return [];
+  const slider = (review as any).heroSlider;
+  return Array.isArray(slider) ? slider : [];
+};
+
 const slugifyName = (value: string) =>
   value
     .toLowerCase()
@@ -112,7 +119,7 @@ const normalizeLookupKey = (value: string) => value.trim().toLowerCase();
 
 const Home: React.FC = () => {
   const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null);
-  const [featuredReviewData, setFeaturedReviewData] = useState<FeaturedReviewNode | null>(null);
+  const [featuredReviewData, setFeaturedReviewData] = useState<ReviewSource | null>(null);
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [latestReviews, setLatestReviews] = useState<Article[]>([]);
   const [featuredStory, setFeaturedStory] = useState<FeaturedArtistStory | null>(null);
@@ -297,8 +304,9 @@ const Home: React.FC = () => {
     const slides = [];
     
     // First, try to use heroSlider images
-    if (featuredReviewData?.heroSlider?.length) {
-      slides.push(...featuredReviewData.heroSlider.map(img => ({
+    const heroSlider = getHeroSlider(featuredReviewData);
+    if (heroSlider.length) {
+      slides.push(...heroSlider.map((img: any) => ({
         url: img?.asset?.url ?? '',
         alt: img?.alt ?? featuredArticle?.title ?? 'Exhibition view',
         caption: img?.caption,

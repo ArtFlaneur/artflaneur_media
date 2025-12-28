@@ -7,7 +7,10 @@ import { useSeo } from '../lib/useSeo';
 const SiteSeo: React.FC = () => {
   const location = useLocation();
 
-  const canonicalUrl = useMemo(() => getDefaultCanonicalUrl(), [location.pathname, location.hash]);
+  const IOS_APP_URL = 'https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783';
+  const ANDROID_APP_URL = 'https://play.google.com/store/apps/details?id=com.artflaneur';
+
+  const canonicalUrl = useMemo(() => getDefaultCanonicalUrl(), [location.pathname, location.search]);
 
   const jsonLd = useMemo(
     () => ({
@@ -24,6 +27,20 @@ const SiteSeo: React.FC = () => {
           name: DEFAULT_SITE_NAME,
           url: 'https://www.artflaneur.com.au/',
           description: DEFAULT_DESCRIPTION,
+        },
+        {
+          '@type': 'SoftwareApplication',
+          name: 'Art Flaneur',
+          operatingSystem: 'iOS, Android',
+          applicationCategory: 'TravelApplication',
+          url: 'https://www.artflaneur.com.au/',
+          downloadUrl: [IOS_APP_URL, ANDROID_APP_URL],
+          publisher: {
+            '@type': 'Organization',
+            name: 'Art Flaneur Global Pty Ltd',
+            url: 'https://www.artflaneur.com.au/',
+          },
+          sameAs: [IOS_APP_URL, ANDROID_APP_URL],
         },
       ],
     }),

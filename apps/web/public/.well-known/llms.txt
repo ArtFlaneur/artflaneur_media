@@ -2,15 +2,19 @@
 
 This file mirrors /llms.txt.
 
+App listings:
+- iOS: https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783
+- Android: https://play.google.com/store/apps/details?id=com.artflaneur
+
 Primary site:
 - https://www.artflaneur.com.au/
 
 Key sections:
-- https://www.artflaneur.com.au/#/reviews
-- https://www.artflaneur.com.au/#/exhibitions
-- https://www.artflaneur.com.au/#/galleries
-- https://www.artflaneur.com.au/#/artists
-- https://www.artflaneur.com.au/#/guides
+- https://www.artflaneur.com.au/reviews
+- https://www.artflaneur.com.au/exhibitions
+- https://www.artflaneur.com.au/galleries
+- https://www.artflaneur.com.au/artists
+- https://www.artflaneur.com.au/guides
 
 Sitemap:
 - https://www.artflaneur.com.au/sitemap.xml

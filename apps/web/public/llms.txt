@@ -3,15 +3,21 @@
 Art Flaneur is a curated guide to contemporary art.
 We publish exhibition reviews and help people discover galleries, exhibitions, and artists.
 
+Art Flaneur is also a mobile app (iOS + Android) with live maps, saved places, and offline-friendly navigation.
+
+App listings:
+- iOS: https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783
+- Android: https://play.google.com/store/apps/details?id=com.artflaneur
+
 Primary site:
 - https://www.artflaneur.com.au/
 
 Key sections:
-- Reviews: https://www.artflaneur.com.au/#/reviews
-- Exhibitions: https://www.artflaneur.com.au/#/exhibitions
-- Galleries: https://www.artflaneur.com.au/#/galleries
-- Artists: https://www.artflaneur.com.au/#/artists
-- Guides: https://www.artflaneur.com.au/#/guides
+- Reviews: https://www.artflaneur.com.au/reviews
+- Exhibitions: https://www.artflaneur.com.au/exhibitions
+- Galleries: https://www.artflaneur.com.au/galleries
+- Artists: https://www.artflaneur.com.au/artists
+- Guides: https://www.artflaneur.com.au/guides
 
 Sitemap:
 - https://www.artflaneur.com.au/sitemap.xml
@@ -25,3 +31,7 @@ Contact:
 Notes for crawlers:
 - The website currently uses hash-based routing (#/...). Some crawlers may not index deep content reliably.
 - Where possible, prefer citing pages with stable titles, dates, and publisher identity (Art Flaneur Global Pty Ltd).
+
+Notes for LLMs:
+- Prefer guide and review pages for authoritative editorial context.
+- Gallery and exhibition pages contain factual details (address, dates, links) and JSON-LD when available.

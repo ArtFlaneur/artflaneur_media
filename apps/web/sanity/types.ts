@@ -1020,7 +1020,7 @@ export type AllSanitySchemaTypes = SiteSettings | HomepageContent | LandingPage 
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ../web/pages/SearchResults.tsx
 // Variable: SEARCH_QUERY
-// Query: {  "reviews": *[_type == "review"] {    _id,    title,    slug,    excerpt,    publishStatus,    mainImage {      asset->{ url }    },    publishedAt,    author->{ _id, name, photo { asset->{ url } } }  },  "guides": *[_type == "guide"] {    _id,    title,    slug,    city,    description,    coverImage {      asset->{ url }    }  },  "ambassadors": *[_type == "author"] {    _id,    name,    slug,    role,    bio,    photo {      asset->{ url }    }  }}
+// Query: {  "reviews": *[_type == "review"] {    _id,    title,    slug,    excerpt,    publishStatus,    mainImage {      asset->{ url }    },    publishedAt,    author->{ _id, name, photo { asset->{ url } } }  },  "guides": *[_type == "guide"] {    _id,    title,    slug,    city,    description,    publishStatus,    coverImage {      asset->{ url }    }  },  "ambassadors": *[_type == "author"] {    _id,    name,    slug,    role,    bio,    photo {      asset->{ url }    }  }}
 export type SEARCH_QUERYResult = {
   reviews: Array<{
     _id: string;
@@ -1050,6 +1050,7 @@ export type SEARCH_QUERYResult = {
     slug: Slug | null;
     city: string | null;
     description: null;
+    publishStatus: "approved" | "archived" | "draft" | "inReview" | "needsRevision" | "published" | "scheduled" | null;
     coverImage: {
       asset: {
         url: string | null;
@@ -1735,13 +1736,13 @@ export type AUTHORS_QUERYResult = Array<{
   } | null;
 }>;
 // Variable: GUIDES_QUERY
-// Query: *[  _type == "guide"] | order(_createdAt desc) {  _id,  slug,  title,  city,  description,  coverImage {    asset->{      url    },    alt  },  ctaText,  sponsorship {    enabled,    type,    badgePlacement,    customDisclaimer,    sponsor->{      _id,      name,      logo {        asset->{          url        },        alt      }    }  },  stops[] {    _key,    title,    summary,    notes,    externalGallery {      _type,      id,      name,      city,      address,      website    }  }}
+// Query: *[  _type == "guide"  && publishStatus == "published"] | order(_createdAt desc) {  _id,  slug,  title,  city,  "description": summary,  coverImage {    asset->{      url    },    alt  },  ctaText,  sponsorship {    enabled,    type,    badgePlacement,    customDisclaimer,    sponsor->{      _id,      name,      logo {        asset->{          url        },        alt      }    }  },  stops[] {    _key,    title,    summary,    notes,    curatorQuote,    externalGallery {      _type,      id,      name,      city,      address,      website    }  }}
 export type GUIDES_QUERYResult = Array<{
   _id: string;
   slug: Slug | null;
   title: string | null;
   city: string | null;
-  description: null;
+  description: string | null;
   coverImage: {
     asset: {
       url: string | null;
@@ -1770,6 +1771,7 @@ export type GUIDES_QUERYResult = Array<{
     title: string | null;
     summary: string | null;
     notes: string | null;
+    curatorQuote: string | null;
     externalGallery: {
       _type: "externalGalleryReference";
       id: string | null;
@@ -1781,14 +1783,28 @@ export type GUIDES_QUERYResult = Array<{
   }> | null;
 }>;
 // Variable: GUIDE_QUERY
-// Query: *[  _type == "guide"  && slug.current == $slug][0] {  _id,  title,  city,  description,  body,  ctaText,  coverImage {    asset->{      url    },    alt  },  appScreenshot {    asset->{      url    },    alt  },  sponsorship {    enabled,    type,    badgePlacement,    customDisclaimer,    sponsor->{      _id,      name,      logo {        asset->{          url        },        alt      }    }  },  coverImage {    asset->{      url    },    alt  },  stops[] {    _key,    title,    summary,    notes,    externalGallery {      _type,      id,      name,      city,      address,      website    }  }}
+// Query: *[  _type == "guide"  && publishStatus == "published"  && slug.current == $slug][0] {  _id,  title,  city,  "description": summary,  body,  ctaText,  publishStatus,  publishedAt,  author->{    _id,    name,    slug,    role  },  seo{    metaTitle,    metaDescription,    keywords  },  schemaMarkup,  coverImage {    asset->{      url    },    alt  },  appScreenshot {    asset->{      url    },    alt  },  sponsorship {    enabled,    type,    badgePlacement,    customDisclaimer,    sponsor->{      _id,      name,      logo {        asset->{          url        },        alt      }    }  },  coverImage {    asset->{      url    },    alt  },  stops[] {    _key,    title,    summary,    notes,    curatorQuote,    externalGallery {      _type,      id,      name,      city,      address,      website    }  }}
 export type GUIDE_QUERYResult = {
   _id: string;
   title: string | null;
   city: string | null;
-  description: null;
+  description: string | null;
   body: BlockContent | null;
   ctaText: string | null;
+  publishStatus: "approved" | "archived" | "draft" | "inReview" | "needsRevision" | "published" | "scheduled" | null;
+  publishedAt: string | null;
+  author: {
+    _id: string;
+    name: string | null;
+    slug: Slug | null;
+    role: "author" | "chiefEditor" | "editor" | null;
+  } | null;
+  seo: {
+    metaTitle: string | null;
+    metaDescription: string | null;
+    keywords: Array<string> | null;
+  } | null;
+  schemaMarkup: string | null;
   coverImage: {
     asset: {
       url: string | null;
@@ -1822,6 +1838,7 @@ export type GUIDE_QUERYResult = {
     title: string | null;
     summary: string | null;
     notes: string | null;
+    curatorQuote: string | null;
     externalGallery: {
       _type: "externalGalleryReference";
       id: string | null;
@@ -1868,7 +1885,7 @@ export type CURATOR_QUERYResult = null;
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    "{\n  \"reviews\": *[_type == \"review\"] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishStatus,\n    mainImage {\n      asset->{ url }\n    },\n    publishedAt,\n    author->{ _id, name, photo { asset->{ url } } }\n  },\n  \"guides\": *[_type == \"guide\"] {\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    coverImage {\n      asset->{ url }\n    }\n  },\n  \"ambassadors\": *[_type == \"author\"] {\n    _id,\n    name,\n    slug,\n    role,\n    bio,\n    photo {\n      asset->{ url }\n    }\n  }\n}": SEARCH_QUERYResult;
+    "{\n  \"reviews\": *[_type == \"review\"] {\n    _id,\n    title,\n    slug,\n    excerpt,\n    publishStatus,\n    mainImage {\n      asset->{ url }\n    },\n    publishedAt,\n    author->{ _id, name, photo { asset->{ url } } }\n  },\n  \"guides\": *[_type == \"guide\"] {\n    _id,\n    title,\n    slug,\n    city,\n    description,\n    publishStatus,\n    coverImage {\n      asset->{ url }\n    }\n  },\n  \"ambassadors\": *[_type == \"author\"] {\n    _id,\n    name,\n    slug,\n    role,\n    bio,\n    photo {\n      asset->{ url }\n    }\n  }\n}": SEARCH_QUERYResult;
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...10] {\n  _id,\n  title,\n  slug,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating,\n  externalExhibition {\n    _type,\n    id,\n    title,\n    startDate,\n    endDate,\n    artist,\n    description,\n    eventType,\n    exhibitionType,\n    gallery {\n      id,\n      name,\n      city,\n      address,\n      website,\n      openingHours,\n      allowed,\n      specialEvent,\n      eventType\n    }\n  }\n}": REVIEWS_QUERYResult;
     "*[\n  _type == \"review\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  heroSlider[]{\n    _key,\n    asset->{\n      _id,\n      url\n    },\n    alt,\n    caption\n  },\n  galleryImages[]{\n    _key,\n    asset->{\n      _id,\n      url\n    },\n    alt,\n    caption,\n    credit\n  },\n  body[]{\n    ...,\n    _type == \"image\" => {\n      _key,\n      _type,\n      asset->{\n        _id,\n        url\n      },\n      alt,\n      caption\n    }\n  },\n  rating,\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    },\n    bio\n  },\n  externalExhibition {\n    _type,\n    id,\n    title,\n    startDate,\n    endDate,\n    artist,\n    description,\n    eventType,\n    exhibitionType,\n    gallery {\n      id,\n      name,\n      city,\n      address,\n      website,\n      openingHours,\n      allowed,\n      specialEvent,\n      eventType\n    }\n  },\n  relatedReviews[]->{\n    _id,\n    title,\n    slug,\n    \"excerpt\": coalesce(summary, excerpt),\n    mainImage {\n      asset->{\n        url\n      }\n    },\n    author->{\n      _id,\n      name\n    }\n  },\n  ctaText,\n  appCta,\n  sponsorship {\n    enabled,\n    type,\n    customDisclaimer,\n    badgePlacement,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      },\n      defaultBadgeTemplate,\n      brandColor {\n        hex\n      }\n    }\n  },\n  publishedAt\n}": REVIEW_QUERYResult;
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...$limit] {\n  _id,\n  title,\n  slug,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": LATEST_REVIEWS_QUERYResult;
@@ -1885,8 +1902,8 @@ declare module "@sanity/client" {
     "*[\n  _type == \"siteSettings\"\n][0] {\n  _id,\n  title,\n  description,\n  keywords,\n  logo {\n    asset->{\n      url\n    }\n  },\n  social\n}": SITE_SETTINGS_QUERYResult;
     "*[\n  _type == \"homepageContent\"\n  && _id == \"homepageContent\"\n][0] {\n  tickerMarquee{\n    messages[]{\n      _key,\n      message,\n      status\n    }\n  }\n}": HOMEPAGE_TICKER_QUERYResult;
     "*[\n  _type == \"author\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  role,\n  bio,\n  photo {\n    asset->{\n      url\n    }\n  },\n  social\n}": AUTHORS_QUERYResult;
-    "*[\n  _type == \"guide\"\n] | order(_createdAt desc) {\n  _id,\n  slug,\n  title,\n  city,\n  description,\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  ctaText,\n  sponsorship {\n    enabled,\n    type,\n    badgePlacement,\n    customDisclaimer,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      }\n    }\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    notes,\n    externalGallery {\n      _type,\n      id,\n      name,\n      city,\n      address,\n      website\n    }\n  }\n}": GUIDES_QUERYResult;
-    "*[\n  _type == \"guide\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  city,\n  description,\n  body,\n  ctaText,\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  appScreenshot {\n    asset->{\n      url\n    },\n    alt\n  },\n  sponsorship {\n    enabled,\n    type,\n    badgePlacement,\n    customDisclaimer,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      }\n    }\n  },\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    notes,\n    externalGallery {\n      _type,\n      id,\n      name,\n      city,\n      address,\n      website\n    }\n  }\n}": GUIDE_QUERYResult;
+    "*[\n  _type == \"guide\"\n  && publishStatus == \"published\"\n] | order(_createdAt desc) {\n  _id,\n  slug,\n  title,\n  city,\n  \"description\": summary,\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  ctaText,\n  sponsorship {\n    enabled,\n    type,\n    badgePlacement,\n    customDisclaimer,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      }\n    }\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    notes,\n    curatorQuote,\n    externalGallery {\n      _type,\n      id,\n      name,\n      city,\n      address,\n      website\n    }\n  }\n}": GUIDES_QUERYResult;
+    "*[\n  _type == \"guide\"\n  && publishStatus == \"published\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  city,\n  \"description\": summary,\n  body,\n  ctaText,\n  publishStatus,\n  publishedAt,\n  author->{\n    _id,\n    name,\n    slug,\n    role\n  },\n  seo{\n    metaTitle,\n    metaDescription,\n    keywords\n  },\n  schemaMarkup,\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  appScreenshot {\n    asset->{\n      url\n    },\n    alt\n  },\n  sponsorship {\n    enabled,\n    type,\n    badgePlacement,\n    customDisclaimer,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      }\n    }\n  },\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    notes,\n    curatorQuote,\n    externalGallery {\n      _type,\n      id,\n      name,\n      city,\n      address,\n      website\n    }\n  }\n}": GUIDE_QUERYResult;
     "*[\n  _type == \"author\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  email,\n  role,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"posts\": *[_type == \"review\" && references(^._id)] | order(publishedAt desc) [0...10] {\n    _id,\n    title,\n    slug,\n    publishedAt,\n    \"excerpt\": coalesce(summary, excerpt),\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    }\n  }\n}": AUTHOR_QUERYResult;
     "*[\n  _type == \"curator\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    gallery->{\n      name,\n      city\n    }\n  }\n}": CURATOR_QUERYResult;
   }

@@ -835,12 +835,13 @@ export const AUTHORS_QUERY = defineQuery(`*[
 // Guides query
 export const GUIDES_QUERY = defineQuery(`*[
   _type == "guide"
+  && publishStatus == "published"
 ] | order(_createdAt desc) {
   _id,
   slug,
   title,
   city,
-  description,
+  "description": summary,
   coverImage {
     asset->{
       url
@@ -869,6 +870,7 @@ export const GUIDES_QUERY = defineQuery(`*[
     title,
     summary,
     notes,
+    curatorQuote,
     externalGallery {
       _type,
       id,
@@ -883,14 +885,29 @@ export const GUIDES_QUERY = defineQuery(`*[
 // Guide query (single)
 export const GUIDE_QUERY = defineQuery(`*[
   _type == "guide"
+  && publishStatus == "published"
   && slug.current == $slug
 ][0] {
   _id,
   title,
   city,
-  description,
+  "description": summary,
   body,
   ctaText,
+  publishStatus,
+  publishedAt,
+  author->{
+    _id,
+    name,
+    slug,
+    role
+  },
+  seo{
+    metaTitle,
+    metaDescription,
+    keywords
+  },
+  schemaMarkup,
   coverImage {
     asset->{
       url
@@ -930,6 +947,7 @@ export const GUIDE_QUERY = defineQuery(`*[
     title,
     summary,
     notes,
+    curatorQuote,
     externalGallery {
       _type,
       id,

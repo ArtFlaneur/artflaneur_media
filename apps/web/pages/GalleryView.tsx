@@ -292,7 +292,7 @@ const GalleryView: React.FC = () => {
           '@context': 'https://schema.org',
           '@type': 'ArtGallery',
           name: gallery.galleryname,
-          url: `https://www.artflaneur.com.au/#/galleries/${gallery.id}`,
+          url: `https://www.artflaneur.com.au/galleries/${gallery.id}`,
           image: heroImage,
           sameAs: gallery.placeurl ? [gallery.placeurl] : undefined,
           address: gallery.fulladdress

@@ -1,9 +1,30 @@
 import React from 'react';
-import { BlockContent } from '../sanity/types';
+import imageUrlBuilder from '@sanity/image-url';
+
+import { sanityConfig } from '../sanity/lib/client';
 
 interface PortableTextRendererProps {
-  value?: BlockContent | null;
+  value?: Array<Record<string, any>> | null;
 }
+
+const urlBuilder = imageUrlBuilder({
+  projectId: sanityConfig.projectId,
+  dataset: sanityConfig.dataset,
+});
+
+const resolveImageUrl = (block: Record<string, any>): string | null => {
+  const directUrl = block?.asset?.url;
+  if (typeof directUrl === 'string' && directUrl.length) return directUrl;
+
+  const assetRef = block?.asset?._ref;
+  if (typeof assetRef !== 'string' || !assetRef.length) return null;
+
+  try {
+    return urlBuilder.image({ asset: { _ref: assetRef, _type: 'reference' } }).width(1600).fit('max').url();
+  } catch {
+    return null;
+  }
+};
 
 const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) => {
   if (!value?.length) {
@@ -15,7 +36,7 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
       {value.map((block, blockIndex) => {
         // Render image blocks
         if (block._type === 'image') {
-          const imageUrl = block.asset?.url;
+          const imageUrl = resolveImageUrl(block);
           const alt = block.alt || 'Article image';
           const caption = block.caption;
 
@@ -42,6 +63,7 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
         if (block._type === 'block') {
           const style = block.style || 'normal';
           const children = block.children || [];
+          const markDefs = Array.isArray(block.markDefs) ? block.markDefs : [];
           
           // Render text content with marks
           const renderChildren = () => {
@@ -59,15 +81,18 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
               }
 
               // Find and render links
-              const linkMark = child.marks?.find((mark: any) => 
-                typeof mark === 'object' && mark._type === 'link'
-              );
+              const linkKey = Array.isArray(child.marks)
+                ? child.marks.find((mark: any) => typeof mark === 'string' && mark !== 'strong' && mark !== 'em')
+                : null;
+              const linkDef = linkKey
+                ? markDefs.find((def: any) => def && typeof def === 'object' && def._key === linkKey && def._type === 'link')
+                : null;
 
-              if (linkMark && typeof linkMark === 'object' && 'href' in linkMark) {
+              if (linkDef && typeof linkDef.href === 'string' && linkDef.href.length) {
                 text = (
                   <a 
                     key={`${block._key}-child-${childIndex}`}
-                    href={linkMark.href as string} 
+                    href={linkDef.href}
                     className="text-art-blue underline hover:text-art-red transition-colors"
                     target="_blank"
                     rel="noopener noreferrer"

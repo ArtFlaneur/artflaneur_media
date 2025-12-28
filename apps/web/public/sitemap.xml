@@ -1,85 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!--
-    Art Flaneur sitemap
-
-    Important:
-    - The web app currently uses hash-based routing (#/...). Some crawlers ignore fragments.
-    - This sitemap includes the primary navigation and hub pages.
-    - For full SEO coverage, consider server-rendered/prerendered entity URLs.
+    Generated sitemap (minimal mode).
+    Missing Sanity env vars; only hub pages are included.
+    Set SANITY_PROJECT_ID and SANITY_DATASET in the build environment to include detail pages.
   -->
-
   <url>
     <loc>https://www.artflaneur.com.au/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-
-  <!-- Primary navigation (hash routes) -->
   <url>
-    <loc>https://www.artflaneur.com.au/#/reviews</loc>
+    <loc>https://www.artflaneur.com.au/reviews</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/#/exhibitions</loc>
+    <loc>https://www.artflaneur.com.au/exhibitions</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/#/galleries</loc>
+    <loc>https://www.artflaneur.com.au/galleries</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/#/artists</loc>
+    <loc>https://www.artflaneur.com.au/artists</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/#/guides</loc>
+    <loc>https://www.artflaneur.com.au/guides</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
-
-  <!-- Utility/static pages -->
   <url>
-    <loc>https://www.artflaneur.com.au/#/about</loc>
+    <loc>https://www.artflaneur.com.au/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/#/partners/galleries</loc>
+    <loc>https://www.artflaneur.com.au/mission</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/#/partners/events</loc>
+    <loc>https://www.artflaneur.com.au/partners/galleries</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <!-- Legal -->
-  <url>
-    <loc>https://www.artflaneur.com.au/#/privacy</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
+    <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/#/terms</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  <url>
-    <loc>https://www.artflaneur.com.au/#/cookies</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-
-  <!-- App / dashboard entrypoints -->
-  <url>
-    <loc>https://www.artflaneur.com.au/#/gallery-login</loc>
+    <loc>https://www.artflaneur.com.au/partners/events</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.artflaneur.com.au/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://www.artflaneur.com.au/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://www.artflaneur.com.au/cookies</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
   </url>
 </urlset>

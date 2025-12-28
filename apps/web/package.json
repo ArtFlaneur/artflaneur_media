@@ -9,7 +9,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "sitemap": "node scripts/generate-sitemap.mjs",
+    "build": "node scripts/generate-sitemap.mjs && tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },

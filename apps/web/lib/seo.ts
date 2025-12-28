@@ -47,9 +47,8 @@ const setLinkRel = (rel: string, href: string) => {
 };
 
 export const getDefaultCanonicalUrl = (): string => {
-  // In HashRouter, the hash is part of the user-facing URL. Keep it in canonical to avoid
-  // advertising non-working server paths.
-  return `${window.location.origin}${window.location.pathname}${window.location.hash}`;
+  // With BrowserRouter, canonical should be the clean path + query string.
+  return `${window.location.origin}${window.location.pathname}${window.location.search}`;
 };
 
 const setJsonLd = (id: string, payload: SeoInput['jsonLd']) => {

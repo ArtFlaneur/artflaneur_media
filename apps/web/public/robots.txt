@@ -1,6 +1,6 @@
 # Art Flaneur robots.txt
-# Note: This site currently uses hash-based routing for most public pages.
-# Hash fragments (#/...) are not sent to the server, so robots rules cannot target them.
+# Note: Public routes use clean paths (BrowserRouter).
+# Ensure your host is configured to serve index.html for all non-file routes.
 
 User-agent: *
 Disallow: /admin

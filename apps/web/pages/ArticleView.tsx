@@ -207,7 +207,7 @@ const getReferencePath = (basePath: string, doc?: LinkedDocument | null) => {
   return handle ? `${basePath}/${handle}` : undefined;
 };
 
-const portableTextToPlain = (body?: BlockContent | null) => {
+const portableTextToPlain = (body?: Array<Record<string, any>> | null) => {
   if (!body?.length) return '';
   return body
     .map((block) =>

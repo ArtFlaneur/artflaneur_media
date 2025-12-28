@@ -8,6 +8,7 @@ import { GUIDE_QUERY } from '../sanity/lib/queries';
 import type { GUIDE_QUERYResult, ExternalGalleryReference } from '../sanity/types';
 import PortableTextRenderer from '../components/PortableTextRenderer';
 import SecureImage from '../components/SecureImage';
+import { useSeo } from '../lib/useSeo';
  
 type SanityGuideStop = NonNullable<NonNullable<GUIDE_QUERYResult['stops']>[number]>;
 type RawGuideStop = Omit<SanityGuideStop, 'externalGallery'> & {
@@ -123,6 +124,70 @@ const GuideView: React.FC = () => {
             const appScreenshotUrl = guide.appScreenshot?.asset?.url;
             const isSponsored = Boolean(guide.sponsorship?.enabled);
             const sponsorLogoUrl = guide.sponsorship?.sponsor?.logo?.asset?.url;
+
+                        const seoTitle = (guide.seo?.metaTitle || guide.title || 'City Guide').trim();
+                        const fullSeoTitle = seoTitle.toLowerCase().includes('art flaneur') ? seoTitle : `${seoTitle} | Art Flaneur`;
+                        const fallbackDescription = [
+                            typeof guide.description === 'string' ? guide.description.trim() : null,
+                            guide.city ? `Curated art trail in ${guide.city}.` : null,
+                            stops.length ? `${stops.length} stops.` : null,
+                            'Plan your visit and discover galleries with Art Flaneur.',
+                        ]
+                            .filter(Boolean)
+                            .join(' ')
+                            .trim();
+
+                        const seoDescription = (guide.seo?.metaDescription || fallbackDescription).trim();
+                        const canonicalUrl = `https://www.artflaneur.com.au/guides/${id ?? ''}`;
+
+                        const parsedSchemaMarkup = (() => {
+                            if (!guide.schemaMarkup?.trim()) return null;
+                            try {
+                                return JSON.parse(guide.schemaMarkup) as Record<string, unknown> | Array<Record<string, unknown>>;
+                            } catch {
+                                return null;
+                            }
+                        })();
+
+                        const guideJsonLd = {
+                            '@context': 'https://schema.org',
+                            '@type': 'Article',
+                            headline: guide.title || 'City Guide',
+                            description: seoDescription,
+                            image: coverImageUrl || undefined,
+                            datePublished: guide.publishedAt || undefined,
+                            mainEntityOfPage: canonicalUrl,
+                            about: guide.city
+                                ? {
+                                        '@type': 'City',
+                                        name: guide.city,
+                                    }
+                                : undefined,
+                            author: guide.author?.name
+                                ? {
+                                        '@type': 'Person',
+                                        name: guide.author.name,
+                                    }
+                                : {
+                                        '@type': 'Organization',
+                                        name: 'Art Flaneur Global Pty Ltd',
+                                        url: 'https://www.artflaneur.com.au/',
+                                    },
+                            publisher: {
+                                '@type': 'Organization',
+                                name: 'Art Flaneur Global Pty Ltd',
+                                url: 'https://www.artflaneur.com.au/',
+                            },
+                        };
+
+                        useSeo({
+                            title: fullSeoTitle,
+                            description: seoDescription,
+                            imageUrl: coverImageUrl || appScreenshotUrl || undefined,
+                            canonicalUrl,
+                            ogType: 'article',
+                            jsonLd: parsedSchemaMarkup ? [guideJsonLd, parsedSchemaMarkup as any] : guideJsonLd,
+                        });
 
   return (
     <div className="bg-white">

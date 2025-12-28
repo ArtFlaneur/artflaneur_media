@@ -52,6 +52,7 @@ type GuideDoc = {
   city?: string | null;
   description?: string | null;
   coverImage?: ImageField;
+  publishStatus?: string | null;
 };
 
 type AmbassadorDoc = {
@@ -145,6 +146,7 @@ const SEARCH_QUERY = defineQuery(`{
     slug,
     city,
     description,
+    publishStatus,
     coverImage {
       asset->{ url }
     }
@@ -222,6 +224,9 @@ const SearchResults: React.FC = () => {
           galleries: normalizedGalleries,
           guides:
             sanityData.guides?.reduce<Guide[]>((acc, guide) => {
+              if (guide.publishStatus !== 'published') {
+                return acc;
+              }
               if (
                 matchesQuery(guide.title, searchLower) ||
                 matchesQuery(guide.description, searchLower) ||

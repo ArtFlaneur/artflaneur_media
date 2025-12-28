@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Header, Footer } from './components/Layout';
 import Home from './pages/Home';
 import ArticleView from './pages/ArticleView';
@@ -38,9 +38,24 @@ const ScrollToTop = () => {
   return null;
 };
 
+// LegacyHashRedirect: поддерживает старые ссылки вида /#/guides/slug
+const LegacyHashRedirect = () => {
+  React.useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash || !hash.startsWith('#/')) return;
+
+    const nextPath = hash.slice(1); // remove leading '#'
+    const nextUrl = `${nextPath}${window.location.search || ''}`;
+    window.history.replaceState(null, '', nextUrl);
+  }, []);
+
+  return null;
+};
+
 const App: React.FC = () => {
   return (
-    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <LegacyHashRedirect />
       <ScrollToTop />
       <SiteSeo />
       <NewsletterPopup />
@@ -99,7 +114,7 @@ const App: React.FC = () => {
         </main>
         <Footer />
       </div>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 
