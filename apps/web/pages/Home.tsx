@@ -564,7 +564,7 @@ const Home: React.FC = () => {
 
       {/* Latest Reviews Grid */}
       <section className="py-24 container mx-auto px-4 md:px-6">
-        <SectionHeader title="Latest Critical Reviews" linkText="Archive" linkTo="/reviews" />
+        <SectionHeader title="Latest Reviews" linkText="Archive" linkTo="/reviews" />
         {error && (
           <p className="text-sm font-mono text-red-600 mb-6">{error}</p>
         )}

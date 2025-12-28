@@ -1,79 +1,465 @@
-# Frontend style (Art Flaneur Web)
+# Art Flaneur Design System
 
-## Where the global style is defined
+> Руководство по визуальному стилю для переноса дизайна на другие проекты
 
-The global styling setup for the web app is currently defined in:
+## Общая концепция дизайна
 
-- `apps/web/index.html`
-  - Tailwind is loaded via CDN: `https://cdn.tailwindcss.com`
-  - Theme tokens (fonts/colors) are defined inline via `tailwind.config = { theme: { extend: ... } }`
-  - A small amount of global CSS is defined in an inline `<style>` tag (body smoothing/background + helper utilities)
+Art Flaneur использует **"смелый редакционный / печатный"** стиль, вдохновленный традиционными художественными журналами и газетами. Дизайн балансирует между современной веб-эстетикой и классической типографикой печатных изданий.
 
-There is **no** dedicated `tailwind.config.*` or global CSS file in this project at the moment.
+### Ключевые принципы
 
-## Tech stack (styling)
+1. **Высококонтрастная графика** — четкие черные границы, жесткая сетка
+2. **Типографическая иерархия** — выразительные заголовки, читаемый основной текст
+3. **Минималистичная цветовая палитра** — преимущественно черно-белая с акцентными цветами
+4. **Прямые углы и границы** — никаких скругленных углов (border-radius: 0)
+5. **Квадратные изображения** — соотношение сторон 1:1 для единообразия
 
-- **Tailwind (CDN runtime config)**
-  - Utility-first styling is applied directly via `className` in React components.
-  - Custom tokens are provided via `theme.extend` in the inline Tailwind config.
-- **Fonts** are loaded from Google Fonts in `apps/web/index.html`.
+---
 
-## Theme tokens
+## Цветовая палитра
 
-### Fonts
+### Основные цвета
 
-Configured in `apps/web/index.html` Tailwind `extend.fontFamily`:
+| Название | HEX | RGB | Применение |
+|----------|-----|-----|------------|
+| **Black** | `#1a1a1a` | `rgb(26, 26, 26)` | Текст, границы, разделители |
+| **Paper** | `#F9F7F5` | `rgb(249, 247, 245)` | Основной фон (теплый off-white) |
+| **White** | `#FFFFFF` | `rgb(255, 255, 255)` | Контрастные блоки, карточки |
 
-- `font-sans`: `Inter`
-- `font-serif`: `Playfair Display`
-- `font-mono`: `JetBrains Mono`
+### Акцентные цвета
 
-### Colors
+| Название | HEX | RGB | Применение |
+|----------|-----|-----|------------|
+| **Blue** | `#2539e9` | `rgb(37, 57, 233)` | Основной интерактивный цвет (ссылки, кнопки, hover) |
+| **Yellow** | `#FFD700` | `rgb(255, 215, 0)` | Вторичный акцент, выделение важной информации |
+| **Red** | `#D93025` | `rgb(217, 48, 37)` | Предупреждения, ошибки, срочная информация |
+| **Gray** | `#E5E5E5` | `rgb(229, 229, 229)` | Неактивные элементы, разделители |
 
-Configured in `apps/web/index.html` Tailwind `extend.colors`:
+### Использование цветов
 
-The project uses a custom `art.*` palette (available via Tailwind class names like `bg-art-paper`, `text-art-blue`, etc):
+- **Фон страницы**: Paper (#F9F7F5)
+- **Текст основной**: Black (#1a1a1a)
+- **Текст вторичный**: Black с прозрачностью 60-70%
+- **Границы**: Black (#1a1a1a), толщина 2px
+- **Интерактивные элементы**: Blue (#2539e9) для hover и активных состояний
+- **Выделение**: Yellow (#FFD700) для подсветки важной информации
 
-- `art.black`: `#1a1a1a`
-- `art.paper`: `#F9F7F5` (warm off-white background)
-- `art.red`: `#D93025`
-- `art.blue`: `#2539e9` (primary accent)
-- `art.yellow`: `#FFD700`
-- `art.gray`: `#E5E5E5`
+---
 
-### Border widths
+## Типографика
 
-Configured in `apps/web/index.html` Tailwind `extend.borderWidth`:
+### Шрифты
 
-- `border-3`: `3px`
+#### Inter (Sans-serif) — Основной UI шрифт
+- **Применение**: Навигация, кнопки, формы, общий интерфейс
+- **Начертания**: Regular (400), Medium (500), Semibold (600), Bold (700)
+- **Google Fonts**: `https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap`
 
-## Global CSS utilities
+#### Playfair Display (Serif) — Редакционный шрифт
+- **Применение**: Заголовки статей, основной текст контента, цитаты
+- **Начертания**: Regular (400), Medium (500), Bold (700), Black (900)
+- **Google Fonts**: `https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700;900&display=swap`
 
-Defined inline in `apps/web/index.html`:
+#### JetBrains Mono (Monospace) — Метаинформация
+- **Применение**: Даты, метки, категории, техническая информация
+- **Начертания**: Regular (400), Medium (500), Bold (700)
+- **Google Fonts**: `https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap`
 
-- `body` smoothing + default background color
-- `.hide-scrollbar` helper (cross-browser scrollbar hiding)
-- `@keyframes marquee` + `.animate-marquee` helper
+### Типографическая шкала
 
-## Common UI patterns in components
+| Элемент | Шрифт | Размер | Вес | Регистр | Letter-spacing |
+|---------|-------|--------|-----|---------|----------------|
+| H1 (Главный заголовок) | Playfair Display | 48-64px | Black (900) | Normal | -0.02em |
+| H2 (Заголовок раздела) | Playfair Display | 36-48px | Bold (700) | Normal | -0.01em |
+| H3 (Подзаголовок) | Playfair Display | 24-32px | Bold (700) | Normal | 0 |
+| H4 (Малый заголовок) | Inter | 18-20px | Bold (700) | UPPERCASE | 0.05em |
+| Body Large | Playfair Display | 20-22px | Regular (400) | Normal | 0 |
+| Body | Inter | 16-18px | Regular (400) | Normal | 0 |
+| Body Small | Inter | 14-16px | Regular (400) | Normal | 0 |
+| Label | JetBrains Mono | 12-14px | Medium (500) | UPPERCASE | 0.1-0.3em |
+| Caption | JetBrains Mono | 10-12px | Regular (400) | UPPERCASE | 0.2em |
 
-The UI is implemented in a “bold editorial / print-like” style primarily via Tailwind utilities:
+### Иерархия применения шрифтов
 
-- **High-contrast borders**: frequent usage of `border-2 border-black`, section dividers, and boxed layouts.
-- **Uppercase headings**: `uppercase` combined with heavy weights (`font-black`, `font-bold`).
-- **Typography roles**:
-  - Editorial text: `font-serif`
-  - Navigation/meta/labels: `font-mono` + `uppercase` + tracking (`tracking-widest`, `tracking-[0.3em]`, etc)
-  - Default UI: `font-sans`
-- **Accents**:
-  - Primary interactive accent often uses `text-art-blue`, `hover:bg-art-blue`, or `border-art-blue`.
-  - Secondary highlights use `bg-art-yellow`.
-- **Cards**:
-  - Square media with hard borders (`aspect-square`, `border-b-2 border-black`)
-  - Hover treatments: custom shadow like `hover:shadow-[8px_8px_0px_0px_rgba(...)]`
+1. **Заголовки статей и редакционного контента** → Playfair Display (serif)
+2. **Навигация, меню, UI элементы** → JetBrains Mono (mono) в UPPERCASE с увеличенным letter-spacing
+3. **Основной интерфейс, формы, кнопки** → Inter (sans-serif)
+4. **Даты, метки, категории** → JetBrains Mono (mono) в UPPERCASE
 
-## Notes / constraints for future work
+---
 
-- Since Tailwind is loaded via CDN, any additional global tokens are currently easiest to add in `apps/web/index.html` under the existing `tailwind.config` block.
-- Most styling should continue to be done via Tailwind utility classes to match the existing patterns.
-- Prefer using `art.*` palette classes instead of hard-coded hex values in components.
+## Границы и рамки
+
+### Толщина границ
+- **Стандартная**: 2px (border-width: 2px)
+- **Утолщенная**: 3px (border-width: 3px) — для особого акцента
+- **Тонкая**: 1px (border-width: 1px) — для внутренних разделителей
+
+### Применение границ
+- Все границы используют цвет Black (#1a1a1a)
+- Границы всегда прямые (border-radius: 0)
+- Карточки и блоки контента имеют сплошные границы со всех сторон
+- Разделители секций — горизонтальные линии 2px
+- Кнопки и интерактивные элементы — 2px границы
+
+---
+
+## Интервалы и сетка
+
+### Базовая единица
+- **Base unit**: 8px (все отступы кратны 8)
+
+### Стандартные отступы
+| Размер | Значение | Применение |
+|--------|----------|------------|
+| xs | 4px | Минимальные внутренние отступы |
+| sm | 8px | Плотные группы элементов |
+| md | 16px | Стандартные отступы между элементами |
+| lg | 24px | Отступы между секциями |
+| xl | 32px | Большие разделители |
+| 2xl | 48px | Межсекционные отступы |
+| 3xl | 64px | Отступы больших разделов |
+
+### Сетка контента
+- **Контейнер**: max-width 1280px, центрирование
+- **Колонки**: 12-колоночная сетка с gap 24px
+- **Боковые отступы**: 16px на мобильных, 32px на десктопе
+
+---
+
+## Компоненты
+
+### Кнопки
+
+#### Первичная кнопка
+```
+Фон: Blue (#2539e9)
+Текст: White (#FFFFFF)
+Шрифт: Inter Bold, 14-16px, UPPERCASE
+Padding: 12px 24px
+Border: 2px solid Black (#1a1a1a)
+Hover: Фон темнеет на 10%, добавляется тень 4px 4px 0px Black
+```
+
+#### Вторичная кнопка
+```
+Фон: White (#FFFFFF)
+Текст: Black (#1a1a1a)
+Шрифт: Inter Bold, 14-16px, UPPERCASE
+Padding: 12px 24px
+Border: 2px solid Black (#1a1a1a)
+Hover: Фон Black, текст White, тень 4px 4px 0px Blue
+```
+
+#### Ghost кнопка
+```
+Фон: Transparent
+Текст: Black (#1a1a1a)
+Шрифт: JetBrains Mono Medium, 12-14px, UPPERCASE
+Padding: 8px 16px
+Border: none
+Hover: Подчеркивание 2px Blue
+```
+
+### Карточки контента
+
+#### Карточка статьи/выставки
+```
+Структура:
+┌─────────────────────┐
+│   [Квадратное фото] │ ← aspect-ratio: 1/1
+├─────────────────────┤ ← border-bottom: 2px solid Black
+│ КАТЕГОРИЯ           │ ← JetBrains Mono, 12px, UPPERCASE, tracking 0.2em
+│ Заголовок статьи    │ ← Playfair Display Bold, 20-24px
+│ Краткое описание... │ ← Inter Regular, 14-16px
+│                     │
+│ [Метаинформация]    │ ← JetBrains Mono, 12px, opacity 70%
+└─────────────────────┘
+
+Фон: White (#FFFFFF)
+Border: 2px solid Black (#1a1a1a)
+Padding: 0 (изображение), 16px (контент)
+Hover: Тень 8px 8px 0px rgba(37, 57, 233, 0.2)
+Transition: all 0.3s ease
+```
+
+### Навигация
+
+#### Главное меню
+```
+Фон: White (#FFFFFF)
+Border-bottom: 2px solid Black (#1a1a1a)
+Padding: 16px 32px
+Высота: 64-80px
+
+Пункты меню:
+- Шрифт: JetBrains Mono Medium, 14px, UPPERCASE
+- Letter-spacing: 0.15-0.3em
+- Цвет: Black (#1a1a1a)
+- Hover: Подчеркивание 2px Blue
+- Активный: Фон Yellow (#FFD700), padding 4px 8px
+```
+
+#### Бегущая строка (Ticker)
+```
+Фон: Black (#1a1a1a)
+Текст: White (#FFFFFF)
+Шрифт: JetBrains Mono Bold, 12px, UPPERCASE
+Letter-spacing: 0.3em
+Padding: 8px 0
+Анимация: бесконечная прокрутка влево
+Скорость: 50px/s
+```
+
+### Формы
+
+#### Поле ввода
+```
+Фон: White (#FFFFFF)
+Border: 2px solid Black (#1a1a1a)
+Border-radius: 0
+Padding: 12px 16px
+Шрифт: Inter Regular, 16px
+Focus: Border-color Blue (#2539e9), outline 2px Blue offset 2px
+```
+
+#### Лейбл
+```
+Шрифт: JetBrains Mono Medium, 12px, UPPERCASE
+Letter-spacing: 0.1em
+Margin-bottom: 8px
+Цвет: Black (#1a1a1a)
+```
+
+### Изображения
+
+#### Основное изображение
+```
+Aspect-ratio: 1:1 (квадрат) для карточек
+Aspect-ratio: 16:9 для героев и баннеров
+Object-fit: cover
+Border: 2px solid Black (#1a1a1a) (по контексту)
+```
+
+#### Галерея изображений
+```
+Сетка: 3 колонки на десктопе, 2 на планшете, 1 на мобильном
+Gap: 24px
+Все изображения квадратные (1:1)
+```
+
+---
+
+## Эффекты и анимации
+
+### Тени
+```css
+/* Легкая тень для hover */
+box-shadow: 4px 4px 0px rgba(26, 26, 26, 0.1);
+
+/* Средняя тень для карточек */
+box-shadow: 8px 8px 0px rgba(37, 57, 233, 0.2);
+
+/* Сильная тень для модальных окон */
+box-shadow: 12px 12px 0px rgba(26, 26, 26, 0.3);
+```
+
+Важно: тени всегда **прямоугольные** (hard shadows), не размытые
+
+### Переходы
+```css
+/* Стандартный переход */
+transition: all 0.3s ease;
+
+/* Быстрый переход для интерактивных элементов */
+transition: all 0.15s ease;
+
+/* Медленный переход для больших элементов */
+transition: all 0.5s ease;
+```
+
+### Hover эффекты
+
+**Кнопки и ссылки:**
+- Изменение цвета фона/текста
+- Добавление тени 4px 4px
+- Легкий сдвиг вверх на -2px
+
+**Карточки:**
+- Добавление тени 8px 8px 0px Blue с прозрачностью
+- Легкое увеличение scale(1.02)
+
+**Изображения:**
+- Легкий zoom (scale: 1.05) с overflow: hidden на контейнере
+
+---
+
+## Адаптивность
+
+### Breakpoints
+
+| Размер | Ширина | Применение |
+|--------|--------|------------|
+| Mobile | < 640px | Смартфоны |
+| Tablet | 640px - 1024px | Планшеты |
+| Desktop | > 1024px | Ноутбуки и десктопы |
+| Wide | > 1280px | Широкие экраны |
+
+### Адаптивное поведение
+
+**Типографика:**
+- Заголовки H1: 32px (mobile) → 48px (tablet) → 64px (desktop)
+- Заголовки H2: 24px (mobile) → 32px (tablet) → 42px (desktop)
+- Body: 16px (mobile) → 18px (desktop)
+
+**Сетка:**
+- 1 колонка на mobile
+- 2 колонки на tablet
+- 3-4 колонки на desktop
+
+**Отступы:**
+- Боковые отступы: 16px (mobile) → 24px (tablet) → 32px (desktop)
+- Межсекционные: 32px (mobile) → 48px (tablet) → 64px (desktop)
+
+**Навигация:**
+- Мобильное меню: бургер-меню с полноэкранным overlay
+- Десктоп: горизонтальное меню в шапке
+
+---
+
+## Специальные элементы
+
+### Бегущая строка (Marquee)
+```
+Анимация: плавная бесконечная прокрутка
+Направление: справа налево
+Скорость: примерно 50px в секунду
+Пауза при hover: опционально
+Дублирование контента: для бесшовности
+```
+
+### Цитаты
+```
+Шрифт: Playfair Display Regular, 24-28px
+Отступы: 32px слева
+Border-left: 4px solid Blue (#2539e9)
+Padding-left: 24px
+Font-style: italic
+```
+
+### Разделители секций
+```
+Height: 2px
+Background: Black (#1a1a1a)
+Width: 100%
+Margin: 48px 0 (desktop), 32px 0 (mobile)
+```
+
+### Метки и теги
+```
+Шрифт: JetBrains Mono Medium, 10-12px, UPPERCASE
+Padding: 4px 12px
+Border: 2px solid Black (#1a1a1a)
+Background: Yellow (#FFD700) для акцента или White для нейтральных
+Letter-spacing: 0.2em
+Display: inline-block
+```
+
+---
+
+## Примеры композиций
+
+### Главная страница
+```
+[Бегущая строка - черная полоса]
+─────────────────────────────────
+[Навигация - белый фон, нижняя граница]
+─────────────────────────────────
+[Герой - крупное изображение 16:9]
+КАТЕГОРИЯ
+Крупный заголовок (Playfair Display)
+Подзаголовок (Inter)
+[Кнопка CTA]
+─────────────────────────────────
+[Сетка карточек 3x3 - квадратные изображения]
+─────────────────────────────────
+[Футер - черный фон, белый текст]
+```
+
+### Страница статьи
+```
+[Навигация]
+─────────────────────────────────
+КАТЕГОРИЯ (JetBrains Mono)
+Заголовок статьи (Playfair Display, 48-64px)
+Метаинформация (JetBrains Mono, 12px)
+─────────────────────────────────
+[Главное изображение 16:9]
+─────────────────────────────────
+Основной текст (Playfair Display, 20px)
+с подзаголовками (Playfair Display Bold)
+и цитатами (Playfair Display Italic)
+─────────────────────────────────
+[Галерея дополнительных изображений 3 колонки]
+─────────────────────────────────
+[Похожие статьи - карточки 1:1]
+```
+
+---
+
+## Технические требования
+
+### Производительность
+- Lazy loading для изображений
+- Оптимизация шрифтов (font-display: swap)
+- Минификация CSS
+
+### Доступность
+- Контрастность текста минимум 4.5:1 (соответствует WCAG AA)
+- Все интерактивные элементы имеют focus states
+- Alt-тексты для всех изображений
+- Семантический HTML
+
+### Браузеры
+- Chrome (последние 2 версии)
+- Firefox (последние 2 версии)
+- Safari (последние 2 версии)
+- Edge (последние 2 версии)
+
+---
+
+## Чеклист для дизайнера
+
+При переносе стиля на новый проект убедитесь:
+
+- [ ] Используются только указанные шрифты (Inter, Playfair Display, JetBrains Mono)
+- [ ] Цветовая палитра ограничена 7 цветами из спецификации
+- [ ] Все границы прямые (border-radius: 0)
+- [ ] Все границы 2px толщиной (или 3px для акцента)
+- [ ] Изображения в карточках квадратные (1:1)
+- [ ] Заголовки используют Playfair Display
+- [ ] Метки и категории в UPPERCASE с JetBrains Mono
+- [ ] Тени прямоугольные, не размытые
+- [ ] Отступы кратны 8px
+- [ ] Hover эффекты добавляют тени и легкие трансформации
+- [ ] Типографическая иерархия соблюдена
+
+---
+
+## Справочная информация для разработчиков
+
+### Техническая реализация в текущем проекте
+
+- Tailwind CSS загружается через CDN
+- Кастомные токены определены в `apps/web/index.html`
+- Утилитарные классы применяются напрямую в React компонентах
+- Шрифты загружаются из Google Fonts
+
+### Классы Tailwind для палитры
+- `bg-art-paper` — фон Paper
+- `text-art-blue` — текст Blue
+- `border-art-blue` — граница Blue
+- `bg-art-yellow` — фон Yellow
+- `border-black` — граница Black
+
+Эта спецификация должна быть достаточной для переноса визуального стиля Art Flaneur на любой другой проект без доступа к исходному коду.
