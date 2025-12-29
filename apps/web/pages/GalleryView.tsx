@@ -30,23 +30,6 @@ const parseCoordinate = (value?: string | number | null): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const buildGoogleMapsLink = (gallery: GraphqlGallery | null) => {
-  if (!gallery) return undefined;
-
-  const lat = parseCoordinate(gallery.lat);
-  const lon = parseCoordinate(gallery.lon);
-
-  if (lat !== null && lon !== null) {
-    return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-  }
-
-  if (gallery.fulladdress) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gallery.fulladdress)}`;
-  }
-
-  return undefined;
-};
-
 const buildHeroImage = (gallery: GraphqlGallery | null) => {
   if (!gallery) return FALLBACK_IMAGE;
   return gallery.gallery_img_url ?? gallery.logo_img_url ?? FALLBACK_IMAGE;
@@ -230,7 +213,6 @@ const GalleryView: React.FC = () => {
   }, [galleryId]);
 
   const workingHours = useMemo(() => formatWorkingHoursSchedule(gallery?.openinghours), [gallery?.openinghours]);
-  const mapsLink = useMemo(() => buildGoogleMapsLink(gallery), [gallery]);
   const appDownloadLink = useMemo(() => getAppDownloadLink(), []);
   const heroImage = useMemo(() => buildHeroImage(gallery), [gallery]);
   const locationLabel = useMemo(() => [gallery?.city, gallery?.country].filter(Boolean).join(', '), [gallery]);
@@ -325,6 +307,15 @@ const GalleryView: React.FC = () => {
       : undefined,
   });
 
+  useEffect(() => {
+    const handleContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    return () => document.removeEventListener('contextmenu', handleContextMenu);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-art-paper">
@@ -353,7 +344,7 @@ const GalleryView: React.FC = () => {
     gallery.fulladdress && {
       icon: MapPin,
       value: gallery.fulladdress,
-      href: mapsLink,
+      href: appDownloadLink,
     },
     gallery.placeurl && {
       icon: Globe,
@@ -439,16 +430,18 @@ const GalleryView: React.FC = () => {
                     target="_blank"
                     rel="noreferrer"
                     className="mt-6 inline-flex items-center justify-between w-full gap-3 px-4 py-3 border border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+                    aria-label="Follow this gallery in the Art Flaneur app"
                   >
-                    Follow Gallery
+                    Follow
                     <ExternalLink className="w-4 h-4" />
                   </a>
 
                   <Link
                     to={claimGalleryUrl}
                     className="mt-3 inline-flex items-center justify-between w-full gap-3 px-4 py-3 border border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+                    aria-label="Open the claim your gallery form"
                   >
-                    Claim Your Gallery
+                    Claim
                     <ExternalLink className="w-4 h-4" />
                   </Link>
                 </div>
