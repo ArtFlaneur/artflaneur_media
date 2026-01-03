@@ -1,6 +1,8 @@
 import { createClient } from '@sanity/client';
 
 const token = process.env.SANITY_API_TOKEN || process.env.SANITY_AUTH_TOKEN;
+const projectId = process.env.SANITY_STUDIO_PROJECT_ID || process.env.SANITY_PROJECT_ID;
+const dataset = process.env.SANITY_STUDIO_DATASET || process.env.SANITY_DATASET || 'blog';
 
 if (!token) {
   throw new Error(
@@ -8,9 +10,15 @@ if (!token) {
   );
 }
 
+if (!projectId) {
+  throw new Error(
+    'Missing Sanity project ID. Set SANITY_STUDIO_PROJECT_ID or SANITY_PROJECT_ID in your environment.'
+  );
+}
+
 const client = createClient({
-  projectId: 'o1yl0ri9',
-  dataset: 'blog',
+  projectId,
+  dataset,
   apiVersion: '2024-01-01',
   token,
   useCdn: false,

@@ -248,7 +248,7 @@ const ArtistView: React.FC = () => {
     if (artist.country) bioParts.push(`from ${artist.country}`);
     
     const bioPrefix = bioParts.join(' ');
-    const bioText = biographyParagraphs?.[0] || artist.bio || 'Contemporary artist profile on Art Flaneur.';
+    const bioText = biographyParagraphs?.[0] || artist.description || 'Contemporary artist profile on Art Flaneur.';
     
     return `${bioPrefix}. ${bioText}`.slice(0, 160);
   }, [artist, lifespan, biographyParagraphs]);
@@ -262,7 +262,7 @@ const ArtistView: React.FC = () => {
       '@context': 'https://schema.org',
       '@type': 'Person',
       name: artist.name || 'Artist',
-      ...(artist.bio && { description: artist.bio }),
+      ...(artist.description && { description: artist.description }),
       ...(storyPortraitUrl && { image: storyPortraitUrl }),
       ...(artist.birth_year && { birthDate: artist.birth_year.toString() }),
       ...(artist.death_year && { deathDate: artist.death_year.toString() }),

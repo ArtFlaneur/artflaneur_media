@@ -179,8 +179,8 @@ The generators automatically read from your `.env.local` file. Required variable
 
 ```env
 # Sanity CMS (required for reviews and guides)
-VITE_SANITY_PROJECT_ID=o1yl0ri9
-VITE_SANITY_DATASET=blog
+VITE_SANITY_PROJECT_ID=your_project_id
+VITE_SANITY_DATASET=production
 
 # GraphQL API (optional, for exhibitions, galleries, artists)
 VITE_GRAPHQL_ENDPOINT=https://your-endpoint.appsync-api.region.amazonaws.com/graphql

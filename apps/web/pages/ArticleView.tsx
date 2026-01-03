@@ -255,6 +255,7 @@ type SharePlatform = 'facebook' | 'twitter' | 'linkedin';
 type EnrichedReview = REVIEW_QUERYResult & {
   resolvedExternalExhibition?: GraphqlExhibition | null;
   resolvedExternalGallery?: GraphqlGallery | null;
+  _updatedAt?: string;
 };
 
 type GallerySlide = {

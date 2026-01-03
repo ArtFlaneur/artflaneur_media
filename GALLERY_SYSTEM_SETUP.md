@@ -73,7 +73,7 @@ supabase-fix-rls.sql
 
 ```bash
 # apps/web/.env.local
-VITE_SUPABASE_URL=https://esavlnghlshbzuytkykj.supabase.co
+VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
