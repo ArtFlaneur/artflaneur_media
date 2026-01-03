@@ -4,6 +4,7 @@ import { fetchArtistById, fetchExhibitionsForArtist, GraphqlArtist, GraphqlExhib
 import { client } from '../sanity/lib/client';
 import { ARTIST_STORY_BY_GRAPHQL_ID_QUERY } from '../sanity/lib/queries';
 import { ARTIST_STORY_BY_GRAPHQL_ID_QUERYResult, BlockContent } from '../sanity/types';
+import { useSeo } from '../lib/useSeo';
 
 /**
  * Extract artist ID from URL slug.
@@ -237,6 +238,67 @@ const ArtistView: React.FC = () => {
       : null;
 
   const storyTitle = artistStory?.title ?? artist.name ?? 'Artist Story';
+
+  // SEO with JSON-LD Person schema
+  const seoTitle = artist.name ? `${artist.name} | Art Flaneur` : 'Artist | Art Flaneur';
+  const seoDescription = useMemo(() => {
+    const bioParts: string[] = [];
+    if (artist.name) bioParts.push(artist.name);
+    if (lifespan) bioParts.push(`(${lifespan})`);
+    if (artist.country) bioParts.push(`from ${artist.country}`);
+    
+    const bioPrefix = bioParts.join(' ');
+    const bioText = biographyParagraphs?.[0] || artist.bio || 'Contemporary artist profile on Art Flaneur.';
+    
+    return `${bioPrefix}. ${bioText}`.slice(0, 160);
+  }, [artist, lifespan, biographyParagraphs]);
+
+  const artistJsonLd = useMemo(() => {
+    if (!artist) return undefined;
+    
+    const artistSlug = slugParam || artist.id;
+    
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: artist.name || 'Artist',
+      ...(artist.bio && { description: artist.bio }),
+      ...(storyPortraitUrl && { image: storyPortraitUrl }),
+      ...(artist.birth_year && { birthDate: artist.birth_year.toString() }),
+      ...(artist.death_year && { deathDate: artist.death_year.toString() }),
+      ...(artist.country && { nationality: artist.country }),
+      url: `https://www.artflaneur.com.au/artists/${artistSlug}`,
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': `https://www.artflaneur.com.au/artists/${artistSlug}`,
+      },
+      ...(exhibitions.length > 0 && {
+        hasOfferCatalog: {
+          '@type': 'OfferCatalog',
+          name: 'Exhibitions',
+          itemListElement: exhibitions.slice(0, 5).map((ex, idx) => ({
+            '@type': 'ListItem',
+            position: idx + 1,
+            item: {
+              '@type': 'ExhibitionEvent',
+              name: ex.title,
+              ...(ex.datefrom && { startDate: ex.datefrom }),
+              ...(ex.dateto && { endDate: ex.dateto }),
+            }
+          }))
+        }
+      }),
+    };
+  }, [artist, slugParam, storyPortraitUrl, exhibitions]);
+
+  useSeo({
+    title: seoTitle,
+    description: seoDescription,
+    imageUrl: storyPortraitUrl || undefined,
+    canonicalUrl: `https://www.artflaneur.com.au/artists/${slugParam}`,
+    ogType: 'profile',
+    jsonLd: artistJsonLd,
+  });
 
   return (
     <div className="bg-white">

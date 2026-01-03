@@ -83,7 +83,7 @@ const About: React.FC = () => {
               Who it's for
             </h2>
             
-            <div className="space-y-2 font-mono text-[14px]text-gray-700">
+            <div className="space-y-2 font-mono text-[14px] text-gray-700">
               <p>
                 Art Flaneur is for cultural tourists, local explorers, students, collectors, artists, and anyone who wants to feel more connected to where they are. It's for the person who lands in a new city and doesn't want an itinerary that feels like homework. It's also for the local who has lived somewhere for years and suddenly realises there are entire creative worlds within a 15‑minute walk.
               </p>
@@ -182,7 +182,7 @@ const About: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div>
                 <h3 className="text-[26px] text-art-red font-bold mb-6">Legal</h3>
-                <div className="space-y-2 font-serif text-[18px] leading-relaxed text-black">
+                <div className="space-y-2 font-mono text-[14px] text-gray-700">
                   <p>Registered in Australia</p>
                   <p>ABN: 27 672 710 520</p>
                   <p>Art Flaneur Global Pty Ltd</p>

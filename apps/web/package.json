@@ -12,7 +12,10 @@
     "sitemap": "node scripts/generate-sitemap.mjs",
     "build": "node scripts/generate-sitemap.mjs && tsc && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:sitemap": "tsx scripts/generateSitemap.ts",
+    "generate:rss": "tsx scripts/generateRss.ts",
+    "generate:seo": "npm run generate:sitemap && npm run generate:rss"
   },
   "dependencies": {
     "@sanity/client": "^6.22.8",

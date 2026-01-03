@@ -10,6 +10,7 @@ import { REVIEW_QUERYResult, REVIEWS_QUERYResult, ExternalExhibitionReference } 
 import { Article, ContentType } from '../types';
 import { formatWorkingHoursSchedule, getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
 import { fetchExhibitionById, fetchGalleryById, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
+import { useSeo } from '../lib/useSeo';
 
 type ReviewLike = (REVIEW_QUERYResult | REVIEWS_QUERYResult[number]) & {
   externalExhibition?: ExternalExhibitionReference | null;
@@ -507,6 +508,74 @@ const ArticleView: React.FC = () => {
     },
     [article?.title],
   );
+
+  // SEO with JSON-LD Article schema
+  const seoTitle = article?.title 
+    ? `${article.title} | Art Flaneur` 
+    : 'Review | Art Flaneur';
+  const seoDescription = useMemo(() => {
+    const baseDesc = review?.excerpt || articleBody?.slice(0, 155) || 'Exhibition review on Art Flaneur.';
+    const venueInfo = location !== 'Gallery Location' ? ` — ${location}` : '';
+    return `${baseDesc}${venueInfo}`.slice(0, 160);
+  }, [review?.excerpt, articleBody, location]);
+
+  const articleJsonLd = useMemo(() => {
+    if (!review || !article) return undefined;
+    
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: article.title,
+      description: seoDescription,
+      image: article.image,
+      datePublished: review.publishedAt || undefined,
+      dateModified: review._updatedAt || review.publishedAt || undefined,
+      author: article.author ? {
+        '@type': 'Person',
+        name: article.author.name,
+        url: authorProfilePath ? `https://www.artflaneur.com.au${authorProfilePath}` : undefined,
+      } : {
+        '@type': 'Organization',
+        name: 'Art Flaneur',
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Art Flaneur Global Pty Ltd',
+        url: 'https://www.artflaneur.com.au/',
+      },
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': `https://www.artflaneur.com.au/reviews/${article.slug}`,
+      },
+      ...(review.rating && {
+        reviewRating: {
+          '@type': 'Rating',
+          ratingValue: review.rating,
+          bestRating: 5,
+        }
+      }),
+      ...(exhibitionTitle && {
+        about: {
+          '@type': 'ExhibitionEvent',
+          name: exhibitionTitle,
+          location: hostGalleryName ? {
+            '@type': 'Place',
+            name: hostGalleryName,
+            address: galleryMeta.city || undefined,
+          } : undefined,
+        }
+      }),
+    };
+  }, [review, article, seoDescription, authorProfilePath, exhibitionTitle, hostGalleryName, galleryMeta.city]);
+
+  useSeo({
+    title: seoTitle,
+    description: seoDescription,
+    imageUrl: article?.image,
+    canonicalUrl: article ? `https://www.artflaneur.com.au/reviews/${article.slug}` : undefined,
+    ogType: 'article',
+    jsonLd: articleJsonLd,
+  });
 
   if (loading) {
     return (

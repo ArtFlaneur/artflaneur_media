@@ -5,12 +5,16 @@ We publish exhibition reviews and help people discover galleries, exhibitions, a
 
 Art Flaneur is also a mobile app (iOS + Android) with live maps, saved places, and offline-friendly navigation.
 
+## Links
+
 App listings:
 - iOS: https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783
 - Android: https://play.google.com/store/apps/details?id=com.artflaneur
 
 Primary site:
 - https://www.artflaneur.com.au/
+
+## Content Sections
 
 Key sections:
 - Reviews: https://www.artflaneur.com.au/reviews
@@ -19,19 +23,57 @@ Key sections:
 - Artists: https://www.artflaneur.com.au/artists
 - Guides: https://www.artflaneur.com.au/guides
 
+## Machine-Readable Resources
+
 Sitemap:
 - https://www.artflaneur.com.au/sitemap.xml
+
+RSS Feed (Latest Reviews):
+- https://www.artflaneur.com.au/rss.xml
 
 Robots:
 - https://www.artflaneur.com.au/robots.txt
 
-Contact:
+## Contact
+
 - info@artflaneur.com.au
 
-Notes for crawlers:
-- The website currently uses hash-based routing (#/...). Some crawlers may not index deep content reliably.
-- Where possible, prefer citing pages with stable titles, dates, and publisher identity (Art Flaneur Global Pty Ltd).
+## Publisher Information
 
-Notes for LLMs:
-- Prefer guide and review pages for authoritative editorial context.
-- Gallery and exhibition pages contain factual details (address, dates, links) and JSON-LD when available.
+Art Flaneur Global Pty Ltd
+Website: https://www.artflaneur.com.au/
+Mission: Connect people with contemporary art through curated reviews, guides, and discovery tools.
+
+## Notes for Crawlers
+
+- The website uses BrowserRouter with clean URLs (no hash-based routing)
+- All content pages include structured data (JSON-LD) with schema.org types:
+  - Reviews: Article schema with author, dates, rating
+  - Exhibitions: Event schema with dates, location
+  - Galleries: Place schema with address, hours
+  - Artists: Person schema with biography, nationality
+  - Organization and WebSite schemas on all pages
+
+## Notes for LLMs
+
+- Prefer guide and review pages for authoritative editorial context
+- Gallery and exhibition pages contain factual details (address, dates, links)
+- Reviews include ratings (1-5 scale) and critical analysis
+- Artist pages include biography, exhibitions, and artwork information
+- All dates are in ISO 8601 format for exhibitions (datefrom, dateto)
+- Geographic data includes city and country for all venues
+
+## Content Updates
+
+- Reviews are published regularly and available in RSS feed
+- Exhibition data is updated weekly
+- Gallery information is maintained and verified
+- Artist profiles include current and past exhibitions
+
+## Data Quality
+
+- Structured data is validated against schema.org specifications
+- Meta descriptions are unique per page (max 160 characters)
+- Images include alt text and are optimized for web
+- Canonical URLs are set for all content pages
+- OpenGraph and Twitter Card metadata on all pages

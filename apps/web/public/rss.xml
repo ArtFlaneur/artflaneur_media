@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Art Flaneur - Exhibition Reviews</title>
+    <link>https://www.artflaneur.com.au</link>
+    <description>Curated exhibition reviews and contemporary art insights from Art Flaneur</description>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 03 Jan 2026 05:01:33 GMT</lastBuildDate>
+    <atom:link href="https://www.artflaneur.com.au/rss.xml" rel="self" type="application/rss+xml" />
+    <copyright>Art Flaneur Global Pty Ltd</copyright>
+    <managingEditor>info@artflaneur.com.au (Art Flaneur)</managingEditor>
+    <webMaster>info@artflaneur.com.au (Art Flaneur)</webMaster>
+    <image>
+      <url>https://www.artflaneur.com.au/Logo.png</url>
+      <title>Art Flaneur</title>
+      <link>https://www.artflaneur.com.au</link>
+    </image>
+  </channel>
+</rss>

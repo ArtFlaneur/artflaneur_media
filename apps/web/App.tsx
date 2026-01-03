@@ -26,6 +26,7 @@ import GallerySettings from './pages/GallerySettings';
 import AdminModeration from './pages/AdminModeration';
 import SiteSeo from './components/SiteSeo';
 import NewsletterPopup from './components/NewsletterPopup';
+import ArtEventsCalendar from './pages/ArtEventsCalendar';
 
 // ScrollToTop component - прокручивает страницу наверх при смене маршрута
 const ScrollToTop = () => {
@@ -90,6 +91,7 @@ const App: React.FC = () => {
                 <Route path="/partners/events" element={<Partners type="event" />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/mission" element={<Mission />} />
+                <Route path="/calendar" element={<ArtEventsCalendar />} />
                 
                 {/* Legal Pages */}
                 <Route path="/privacy" element={<PrivacyPolicy />} />

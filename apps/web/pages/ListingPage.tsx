@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 import { EntityCard, SkeletonCard } from '../components/Shared';
 import { client } from '../sanity/lib/client';
 import {
@@ -71,6 +72,113 @@ const mapGraphqlArtistToCard = (artist: GraphqlArtist): Artist => {
     featuredWork: '',
     lifespan,
   };
+};
+
+interface CountryOption {
+  code: string;
+  name: string;
+}
+
+interface CountryMultiSelectProps {
+  label: string;
+  placeholder: string;
+  options: CountryOption[];
+  value: string[];
+  onChange: (codes: string[]) => void;
+}
+
+const CountryMultiSelect: React.FC<CountryMultiSelectProps> = ({
+  label,
+  placeholder,
+  options,
+  value,
+  onChange,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleOption = useCallback(
+    (code: string) => {
+      const exists = value.includes(code);
+      let next: string[];
+      if (exists) {
+        next = value.filter((current) => current !== code);
+      } else {
+        const orderedCodes = options.map((option) => option.code);
+        next = orderedCodes.filter((optionCode) => optionCode === code || value.includes(optionCode));
+      }
+      onChange(next);
+    },
+    [onChange, options, value]
+  );
+
+  const labelByCode = useMemo(() => {
+    return options.reduce<Record<string, string>>((acc, option) => {
+      acc[option.code] = option.name;
+      return acc;
+    }, {});
+  }, [options]);
+
+  const displayValue = useMemo(() => {
+    if (!value.length) return placeholder;
+    return value
+      .map((code) => labelByCode[code] ?? code)
+      .filter(Boolean)
+      .join(', ');
+  }, [labelByCode, placeholder, value]);
+
+  return (
+    <div className="flex flex-col text-xs font-mono uppercase tracking-widest">
+      <div className="relative" ref={containerRef}>
+        <button
+          type="button"
+          aria-label={label}
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="relative w-full border-2 border-black bg-white pl-4 pr-12 py-3 text-left text-sm font-mono hover:bg-art-paper focus:outline-none focus:border-art-blue"
+        >
+          <span className={value.length === 0 ? 'text-gray-400' : ''}>{displayValue}</span>
+          <ChevronDown
+            className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-700 transition-transform ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+        {isOpen && (
+          <div className="absolute left-0 right-0 z-30 mt-2 max-h-64 overflow-auto border-2 border-black bg-white shadow-xl">
+            {options.length ? (
+              options.map((option) => (
+                <label
+                  key={option.code}
+                  className="flex items-center gap-3 px-4 py-2 text-sm font-mono uppercase hover:bg-art-paper cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    className="accent-black"
+                    checked={value.includes(option.code)}
+                    onChange={() => toggleOption(option.code)}
+                  />
+                  <span>{option.name}</span>
+                </label>
+              ))
+            ) : (
+              <p className="px-4 py-3 text-xs text-gray-500">No countries available.</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 const buildCountryFilter = (aliases: string[]): GalleryFilterInput | undefined => {
@@ -230,18 +338,30 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
   const [countingItems, setCountingItems] = useState(false);
   const [countryMetaReady, setCountryMetaReady] = useState(true);
-  const selectedCountryCode = searchParams.get('country') || '';
+  const searchParamString = searchParams.toString();
   
   // Static list of all countries (must be before selectedCountry)
   const countries = useMemo(() => getAllCountries(), []);
-  const countryAliases = useMemo(() => (selectedCountryCode ? getCountryAliases(selectedCountryCode) : []), [selectedCountryCode]);
+  const selectedCountryCodes = useMemo(() => {
+    const params = new URLSearchParams(searchParamString);
+    const codes = params.getAll('country').filter(Boolean);
+    return codes;
+  }, [searchParamString]);
+  const selectedCountryKey = useMemo(() => selectedCountryCodes.join('|'), [selectedCountryCodes]);
+  const countryAliases = useMemo(() => {
+    if (!selectedCountryCodes.length) return [];
+    const aliasSet = new Set<string>();
+    selectedCountryCodes.forEach((code) => {
+      getCountryAliases(code).forEach((alias) => aliasSet.add(alias));
+    });
+    return Array.from(aliasSet);
+  }, [selectedCountryCodes]);
   const normalizedCountryAliases = useMemo(
     () => countryAliases.map((alias) => alias.trim().toLowerCase()),
     [countryAliases]
   );
   const supportsCountryCount = type === 'galleries' || type === 'artists';
   const showCountryFilter = supportsCountryCount || type === 'exhibitions';
-
   useSeo({
     title: `${title} | Art Flaneur`,
     description:
@@ -269,7 +389,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   }, []);
 
   useEffect(() => {
-    if (type !== 'exhibitions' || !selectedCountryCode || !countryAliases.length) {
+    if (type !== 'exhibitions' || !selectedCountryCodes.length || !countryAliases.length) {
       countryFilteredGalleryIdsRef.current = null;
       setCountryMetaReady(true);
       return;
@@ -310,25 +430,27 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     return () => {
       cancelled = true;
     };
-  }, [type, selectedCountryCode, countryAliases]);
+  }, [type, selectedCountryCodes, countryAliases]);
   
-  const setSelectedCountryCode = useCallback((code: string) => {
-    if (code) {
-      setSearchParams({ country: code }, { replace: true });
-    } else {
-      setSearchParams({}, { replace: true });
-    }
-  }, [setSearchParams]);
-  
-  // Find selected country name for display
-  const selectedCountry = useMemo(() => 
-    countries.find(c => c.code === selectedCountryCode), 
-    [countries, selectedCountryCode]
+  const setSelectedCountryCodes = useCallback(
+    (codes: string[]) => {
+      const next = new URLSearchParams(searchParamString);
+      next.delete('country');
+      const uniqueCodes = Array.from(new Set(codes.filter(Boolean)));
+      if (uniqueCodes.length === 0) {
+        setSearchParams(next, { replace: true });
+        return;
+      }
+      uniqueCodes.forEach((code) => next.append('country', code));
+      setSearchParams(next, { replace: true });
+    },
+    [searchParamString, setSearchParams]
   );
   
+  // Find selected country name for display
   // Count items when country changes (for galleries and artists)
   useEffect(() => {
-    if (!supportsCountryCount || !selectedCountryCode) {
+    if (!supportsCountryCount || !selectedCountryCodes.length) {
       setFilteredCount(null);
       return;
     }
@@ -366,7 +488,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     return () => {
       cancelled = true;
     };
-  }, [type, selectedCountryCode, supportsCountryCount, countryAliases]);
+  }, [type, supportsCountryCount, countryAliases, selectedCountryCodes]);
   
   const isPaginatedType = PAGINATED_TYPES.has(type);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -374,8 +496,45 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const pendingCardsRef = useRef<ListingEntity[]>([]);
   const cursorRef = useRef<string | null>(null);
   const artistOffsetRef = useRef(0); // For artists: simple offset-based pagination
+  const endOfResultsRef = useRef(false);
+  const loadedIdsRef = useRef<Set<string>>(new Set());
+  const bufferedIdsRef = useRef<Set<string>>(new Set());
   const exhibitionGalleryMetaRef = useRef<Map<string, ExhibitionGalleryMeta>>(new Map());
   const countryFilteredGalleryIdsRef = useRef<Set<string> | null>(null);
+
+  const getEntityId = (item: ListingEntity) => {
+    if ('id' in item && item.id) {
+      return String(item.id);
+    }
+    return getCardKey(item);
+  };
+
+  const resetDeduper = () => {
+    loadedIdsRef.current.clear();
+    bufferedIdsRef.current.clear();
+  };
+
+  const claimItemsAsLoaded = (items: ListingEntity[]) => {
+    items.forEach((item) => loadedIdsRef.current.add(getEntityId(item)));
+  };
+
+  const bufferItems = (items: ListingEntity[]) => {
+    items.forEach((item) => bufferedIdsRef.current.add(getEntityId(item)));
+  };
+
+  const releaseBufferedItems = (items: ListingEntity[]) => {
+    items.forEach((item) => {
+      const id = getEntityId(item);
+      bufferedIdsRef.current.delete(id);
+      loadedIdsRef.current.add(id);
+    });
+  };
+
+  const filterUniqueItems = (items: ListingEntity[]) =>
+    items.filter((item) => {
+      const id = getEntityId(item);
+      return !loadedIdsRef.current.has(id) && !bufferedIdsRef.current.has(id);
+    });
 
   // Anti-scraping: disable right-click on galleries page
   useEffect(() => {
@@ -414,7 +573,13 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         setData([]);
         cursorRef.current = null;
         artistOffsetRef.current = 0;
+        endOfResultsRef.current = false;
+        resetDeduper();
       } else {
+        if (endOfResultsRef.current && pendingCardsRef.current.length === 0) {
+          setHasMore(false);
+          return;
+        }
         setLoadingMore(true);
       }
 
@@ -424,7 +589,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           const result = await fetchArtistsCached({
             limit: PAGE_SIZE,
             offset: artistOffsetRef.current,
-            countryCode: selectedCountryCode || undefined,
+            countryCode: selectedCountryCodes.length === 1 ? selectedCountryCodes[0] : undefined,
           });
 
           const mapped = result.items.map(mapGraphqlArtistToCard);
@@ -451,12 +616,14 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
             : null;
           const targetBatchSize = replace ? EXHIBITIONS_INITIAL_LOAD : PAGE_SIZE;
           const nextBatch: ListingEntity[] = [];
-          let reachedEnd = false;
+          let reachedEnd = endOfResultsRef.current;
           const allowedGalleryIds = countryFilteredGalleryIdsRef.current;
 
           if (pendingCardsRef.current.length) {
             const take = Math.min(targetBatchSize, pendingCardsRef.current.length);
-            nextBatch.push(...pendingCardsRef.current.splice(0, take));
+            const pendingSlice = pendingCardsRef.current.splice(0, take);
+            releaseBufferedItems(pendingSlice);
+            nextBatch.push(...pendingSlice);
           }
 
           while (nextBatch.length < targetBatchSize && !reachedEnd) {
@@ -515,13 +682,24 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
                 : undefined;
               return mapGraphqlExhibitionToCard(exhibition, info);
             });
+            const uniqueMapped = filterUniqueItems(mapped);
+
+            if (!uniqueMapped.length) {
+              if (!cursorRef.current) {
+                reachedEnd = true;
+              }
+              continue;
+            }
 
             const slots = targetBatchSize - nextBatch.length;
-            nextBatch.push(...mapped.slice(0, slots));
-            const leftover = mapped.slice(slots);
+            const immediate = uniqueMapped.slice(0, slots);
+            nextBatch.push(...immediate);
+            claimItemsAsLoaded(immediate);
+            const leftover = uniqueMapped.slice(slots);
 
             if (leftover.length) {
               pendingCardsRef.current = leftover;
+              bufferItems(leftover);
               break;
             }
 
@@ -532,25 +710,30 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
 
           if (!isMountedRef.current || listingType !== type) return;
 
+          if (reachedEnd) {
+            endOfResultsRef.current = true;
+          }
           setData((prev) => (replace ? nextBatch : [...prev, ...nextBatch]));
           const hasPending = pendingCardsRef.current.length > 0;
-          setHasMore(hasPending || !reachedEnd);
+          setHasMore(hasPending || !endOfResultsRef.current);
           setError(nextBatch.length === 0 && replace ? 'No published entries yet.' : null);
           return;
         }
 
         // GALLERIES: Keep cursor-based pagination
         const nextBatch: ListingEntity[] = [];
-        let reachedEnd = false;
+        let reachedEnd = endOfResultsRef.current;
 
         if (pendingCardsRef.current.length) {
           const take = Math.min(PAGE_SIZE, pendingCardsRef.current.length);
-          nextBatch.push(...pendingCardsRef.current.splice(0, take));
+          const pendingSlice = pendingCardsRef.current.splice(0, take);
+          releaseBufferedItems(pendingSlice);
+          nextBatch.push(...pendingSlice);
         }
 
         while (nextBatch.length < PAGE_SIZE && !reachedEnd) {
           // Build filter for galleries by country (using all aliases)
-          const filter = selectedCountryCode && countryAliases.length ? buildCountryFilter(countryAliases) : undefined;
+          const filter = selectedCountryCodes.length && countryAliases.length ? buildCountryFilter(countryAliases) : undefined;
 
           const connection = await fetchGalleries({
             limit: PAGE_SIZE + 1,
@@ -567,13 +750,24 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           }
 
           const mapped = rows.map(mapGraphqlGalleryToEntity);
+          const uniqueMapped = filterUniqueItems(mapped);
+
+          if (!uniqueMapped.length) {
+            if (!cursorRef.current) {
+              reachedEnd = true;
+            }
+            continue;
+          }
 
           const slots = PAGE_SIZE - nextBatch.length;
-          nextBatch.push(...mapped.slice(0, slots));
-          const leftover = mapped.slice(slots);
+          const immediate = uniqueMapped.slice(0, slots);
+          nextBatch.push(...immediate);
+          claimItemsAsLoaded(immediate);
+          const leftover = uniqueMapped.slice(slots);
 
           if (leftover.length) {
             pendingCardsRef.current = leftover;
+            bufferItems(leftover);
             break;
           }
 
@@ -584,9 +778,12 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
 
         if (!isMountedRef.current || listingType !== type) return;
 
+        if (reachedEnd) {
+          endOfResultsRef.current = true;
+        }
         setData((prev) => (replace ? nextBatch : [...prev, ...nextBatch]));
         const hasPending = pendingCardsRef.current.length > 0;
-        setHasMore(hasPending || !reachedEnd);
+        setHasMore(hasPending || !endOfResultsRef.current);
         setError(nextBatch.length === 0 && replace ? 'No published entries yet.' : null);
       } catch (err) {
         console.error(`❌ Error fetching ${listingType}:`, err);
@@ -604,7 +801,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         }
       }
     },
-    [type, selectedCountryCode, countryAliases, normalizedCountryAliases, countryMetaReady]
+    [type, selectedCountryCodes, countryAliases, normalizedCountryAliases, countryMetaReady]
   );
 
   useEffect(() => {
@@ -614,6 +811,8 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     setHasMore(false);
     pendingCardsRef.current = [];
     cursorRef.current = null;
+    endOfResultsRef.current = false;
+    resetDeduper();
 
     if (type === 'exhibitions' && normalizedCountryAliases.length > 0 && !countryMetaReady) {
       setLoading(true);
@@ -740,7 +939,10 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   useEffect(() => {
     cursorRef.current = null;
     artistOffsetRef.current = 0;
-  }, [type, selectedCountryCode]);
+    endOfResultsRef.current = false;
+    pendingCardsRef.current = [];
+    resetDeduper();
+  }, [type, selectedCountryKey]);
 
   const cardType: Parameters<typeof EntityCard>[0]['type'] = CARD_TYPE_MAP[type];
 
@@ -754,12 +956,12 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-6 mb-8">
             <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter flex flex-wrap items-baseline gap-4">
               <span>{title}</span>
-              {supportsCountryCount && !selectedCountryCode && (
+              {supportsCountryCount && selectedCountryCodes.length === 0 && (
                 <span className="text-2xl md:text-4xl text-gray-400 font-mono tracking-wide">
                   {type === 'galleries' ? `${APPROXIMATE_GALLERY_COUNT.toLocaleString()}+` : ''}
                 </span>
               )}
-              {supportsCountryCount && selectedCountry && (
+              {supportsCountryCount && selectedCountryCodes.length > 0 && (
                 <span className="text-2xl md:text-4xl text-gray-400 font-mono tracking-wide">
                   {countingItems ? '...' : filteredCount !== null ? `${filteredCount.toLocaleString()} ${type === 'artists' ? 'names' : 'places'}` : ''}
                 </span>
@@ -770,26 +972,14 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           {/* Filters */}
           <div className="flex flex-wrap gap-4 font-mono text-xs uppercase font-bold items-center">
             {showCountryFilter && (
-              <div className="relative">
-                <select
-                  value={selectedCountryCode}
-                  onChange={(e) => setSelectedCountryCode(e.target.value)}
-                  className="bg-white text-black px-4 py-2 pr-10 border-2 border-black hover:bg-gray-100 cursor-pointer appearance-none font-mono text-xs uppercase font-bold focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 text-center"
-                >
-                  <option value="">Country ▾</option>
-                  {countries.map((country) => (
-                    <option key={country.code} value={country.code}>{country.name}</option>
-                  ))}
-                </select>
-                {selectedCountryCode && (
-                  <button
-                    onClick={() => setSelectedCountryCode('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-black hover:text-red-600 font-bold text-lg leading-none"
-                    title="Clear filter"
-                  >
-                    ×
-                  </button>
-                )}
+              <div className="min-w-[220px]">
+                <CountryMultiSelect
+                  label="Country"
+                  placeholder="Country"
+                  options={countries}
+                  value={selectedCountryCodes}
+                  onChange={setSelectedCountryCodes}
+                />
               </div>
             )}
 
