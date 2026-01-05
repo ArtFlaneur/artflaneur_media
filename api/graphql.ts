@@ -4,6 +4,18 @@ export const config = {
 };
 
 export default async function handler(request: Request) {
+  // Handle CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, x-tenant-id',
+      },
+    });
+  }
+
   // Эти переменные БЕЗ VITE_ - они секретные, только на сервере
   const GRAPHQL_ENDPOINT = process.env.GRAPHQL_ENDPOINT;
   const GRAPHQL_API_KEY = process.env.GRAPHQL_API_KEY;
@@ -13,7 +25,10 @@ export default async function handler(request: Request) {
       JSON.stringify({ error: 'GraphQL not configured on server' }), 
       { 
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        }
       }
     );
   }
@@ -24,7 +39,10 @@ export default async function handler(request: Request) {
       JSON.stringify({ error: 'Method not allowed' }), 
       { 
         status: 405,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        }
       }
     );
   }
@@ -49,6 +67,7 @@ export default async function handler(request: Request) {
       status: response.status,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     });
@@ -58,7 +77,10 @@ export default async function handler(request: Request) {
       JSON.stringify({ error: 'GraphQL request failed' }), 
       { 
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        }
       }
     );
   }
