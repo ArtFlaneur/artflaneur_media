@@ -110,8 +110,8 @@ async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[
   const results: GraphqlExhibition[] = []
   let nextToken: string | null | undefined = null
   const PAGE_SIZE = 100
-  const MAX_PAGES = 3 // Search first 300 exhibitions to keep responses fast
-  const MAX_RESULTS = 20
+  const MAX_PAGES = 100 // Search up to 10,000 exhibitions (should cover all data)
+  const MAX_RESULTS = 50
 
   if (searchLower.length < MIN_QUERY_LENGTH) {
     console.warn('🔍 [Exhibition Search] Search term too short, skipping request')
@@ -151,6 +151,16 @@ async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[
     const items = data.data?.listAllExhibitions?.items ?? []
     
     console.log(`🔍 [Exhibition Search] Page ${page + 1} returned ${items.length} items`)
+    
+    // Debug: show first 3 items to understand data structure
+    if (page === 0 && items.length > 0) {
+      console.log('📊 [Exhibition Search] Sample data (first 3 items):', items.slice(0, 3).map(item => ({
+        title: item.title,
+        gallery: item.galleryname,
+        city: item.city,
+        artist: item.artist
+      })))
+    }
 
     // Client-side filtering
     const matching = items.filter((exhibition: GraphqlExhibition) => {
@@ -163,6 +173,15 @@ async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[
     })
 
     console.log(`🔍 [Exhibition Search] Found ${matching.length} matching exhibitions on page ${page + 1}`)
+    
+    // Debug: if no matches, show why
+    if (matching.length === 0 && page === 0 && items.length > 0) {
+      console.log(`🔍 [Exhibition Search] No matches for "${searchLower}". Checking first item:`, {
+        title: items[0].title,
+        titleLower: items[0].title?.toLowerCase(),
+        includes: items[0].title?.toLowerCase().includes(searchLower)
+      })
+    }
     
     results.push(...matching)
 
@@ -196,26 +215,33 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
     | undefined
 
   const handleSearch = useCallback(async () => {
+    console.log('🔘 [handleSearch] Called with searchTerm:', searchTerm)
     const normalizedTerm = searchTerm.trim()
+    
     if (!normalizedTerm) {
+      console.log('⚠️ [handleSearch] Search term is empty')
       setResults([])
       setError('Enter a search term to find exhibitions')
       return
     }
+    
     if (normalizedTerm.length < MIN_QUERY_LENGTH) {
+      console.log('⚠️ [handleSearch] Search term too short:', normalizedTerm.length, 'chars (need', MIN_QUERY_LENGTH, ')')
       setResults([])
       setError(`Type at least ${MIN_QUERY_LENGTH} characters to search`)
       return
     }
 
+    console.log('✅ [handleSearch] Starting search for:', normalizedTerm)
     setLoading(true)
     setError(null)
 
     try {
       const exhibitions = await searchExhibitions(normalizedTerm)
+      console.log('✅ [handleSearch] Search completed, found:', exhibitions.length, 'results')
       setResults(exhibitions)
     } catch (err) {
-      console.error('Failed to search exhibitions:', err)
+      console.error('❌ [handleSearch] Search failed:', err)
       setError('Unable to search exhibitions. Check console for details.')
     } finally {
       setLoading(false)
