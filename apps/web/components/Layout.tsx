@@ -71,7 +71,7 @@ const Ticker: React.FC = () => {
             <span key={index}>{message}</span>
           ))}
         </div>
-        <div className="whitespace-nowrap flex gap-8 items-center font-mono text-xs tracking-widest uppercase">
+        <div className="whitespace-nowrap flex gap-8 items-center font-mono text-xs tracking-widest uppercase ml-8">
           {messages.map((message, index) => (
             <span key={`dup-${index}`}>{message}</span>
           ))}
