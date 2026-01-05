@@ -45,3 +45,4 @@ codegen.yaml
 # API Keys and Environment files
 .env*
 !.env.example
+.vercel
