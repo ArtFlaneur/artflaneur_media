@@ -186,7 +186,7 @@ const About: React.FC = () => {
                   <p>Registered in Australia</p>
                   <p>ABN: 27 672 710 520</p>
                   <p>Art Flaneur Global Pty Ltd</p>
-                  <p>Email: <a href="mailto:tim@artflaneur.com.au" className="text-black hover:underline">tim@artflaneur.com.au</a></p>
+                  <p>Email: <a href="mailto:admin@artflaneur.art" className="text-black hover:underline">admin@artflaneur.art</a></p>
                 </div>
               </div>
             </div>

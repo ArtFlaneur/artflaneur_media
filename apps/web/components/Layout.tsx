@@ -307,7 +307,7 @@ export const Footer: React.FC = () => {
                         <li>ABN 27 672 710 520</li>
                         <li>
                             <a href="mailto:info@artflaneur.com.au" className="hover:text-art-yellow">
-                                info@artflaneur.com.au
+                                admin@artflaneur.art
                             </a>
                         </li>
                     </ul>
@@ -325,7 +325,7 @@ export const Footer: React.FC = () => {
       {/* Bottom Bar */}
       <div className="border-t border-gray-800">
           <div className="container mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-center text-xs font-mono text-gray-500 uppercase tracking-wider">
-              <p>© 2025 Art Flaneur Global Pty Ltd</p>
+              <p>© 2026 Art Flaneur Global Pty Ltd</p>
               <div className="flex gap-6 mt-2 md:mt-0">
                   <Link to="/privacy" className="hover:text-white">Privacy</Link>
                   <Link to="/terms" className="hover:text-white">Terms</Link>

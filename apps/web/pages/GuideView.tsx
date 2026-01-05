@@ -114,7 +114,7 @@ const GuideView: React.FC = () => {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-white text-center px-6">
                 <p className="font-mono text-lg mb-4">{error || 'Guide unavailable'}</p>
-                <p className="text-sm text-gray-500">Please try another trail while we refresh this one.</p>
+                <p className="text-sm text-gray-500">Please try another route while we refresh this one.</p>
             </div>
         );
     }
