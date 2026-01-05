@@ -1,12 +1,12 @@
 import { normalizeCountry } from './countries';
 
-const GRAPHQL_ENDPOINT = import.meta.env.VITE_GRAPHQL_ENDPOINT;
-const GRAPHQL_API_KEY = import.meta.env.VITE_GRAPHQL_API_KEY;
+// Using proxy endpoint to protect API key
+const GRAPHQL_PROXY_URL = import.meta.env.VITE_API_PROXY_URL || '/api/graphql';
 const GRAPHQL_TENANT_ID = import.meta.env.VITE_GRAPHQL_TENANT_ID || 'artflaneur';
 
-if (!GRAPHQL_ENDPOINT || !GRAPHQL_API_KEY) {
+if (!GRAPHQL_PROXY_URL) {
   console.warn(
-    '⚠️ GraphQL API is not fully configured. Set VITE_GRAPHQL_ENDPOINT and VITE_GRAPHQL_API_KEY to enable API access.'
+    '⚠️ GraphQL proxy is not configured. Set VITE_API_PROXY_URL to enable API access.'
   );
 }
 
@@ -113,15 +113,14 @@ export interface GalleryFilterInput {
 }
 
 async function executeGraphQL<T>(query: string, variables?: Record<string, any>): Promise<T> {
-  if (!GRAPHQL_ENDPOINT || !GRAPHQL_API_KEY) {
-    throw new Error('GraphQL API is not configured. Please set VITE_GRAPHQL_ENDPOINT and VITE_GRAPHQL_API_KEY.');
+  if (!GRAPHQL_PROXY_URL) {
+    throw new Error('GraphQL proxy is not configured. Please set VITE_API_PROXY_URL.');
   }
 
-  const response = await fetch(GRAPHQL_ENDPOINT, {
+  const response = await fetch(GRAPHQL_PROXY_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': GRAPHQL_API_KEY,
       'x-tenant-id': GRAPHQL_TENANT_ID,
     },
     body: JSON.stringify({ query, variables }),
