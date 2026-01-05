@@ -65,17 +65,14 @@ const Ticker: React.FC = () => {
 
   return (
     <div className="bg-art-blue text-white py-2 overflow-hidden border-b border-white relative z-50">
-      <div className="flex animate-marquee">
-        <div className="whitespace-nowrap flex gap-8 items-center font-mono text-xs tracking-widest uppercase">
-          {messages.map((message, index) => (
-            <span key={index}>{message}</span>
-          ))}
-        </div>
-        <div className="whitespace-nowrap flex gap-8 items-center font-mono text-xs tracking-widest uppercase ml-8">
-          {messages.map((message, index) => (
-            <span key={`dup-${index}`}>{message}</span>
-          ))}
-        </div>
+      <div className="flex animate-marquee gap-8">
+        {[...Array(5)].map((_, setIndex) => (
+          <div key={setIndex} className="whitespace-nowrap flex gap-8 items-center font-mono text-xs tracking-widest uppercase shrink-0">
+            {messages.map((message, index) => (
+              <span key={`${setIndex}-${index}`}>{message}</span>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );
