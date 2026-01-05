@@ -16,7 +16,7 @@ export const TermsConditions: React.FC = () => {
 
           <section>
             <p>
-              These are the Terms and Conditions on which Art Flaneur permits users to access and use the Art Flaneur website located at <a href="http://www.artflaneur.com.au" className="text-art-blue underline">www.ArtFlaneur.com.au</a> (Site). Your access to and use of the site is subject to the Terms and Conditions and the Art Flaneur privacy policy. If you do not agree to these Terms and Conditions and the privacy policy, you must not use or access this Site.
+              These are the Terms and Conditions on which Art Flaneur permits users to access and use the Art Flaneur website located at <a href="https://www.artflaneur.com.au" className="text-art-blue underline">www.ArtFlaneur.com.au</a> (Site). Your access to and use of the site is subject to the Terms and Conditions and the Art Flaneur privacy policy. If you do not agree to these Terms and Conditions and the privacy policy, you must not use or access this Site.
             </p>
           </section>
 
