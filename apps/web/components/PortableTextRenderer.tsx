@@ -32,7 +32,7 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
   }
 
   return (
-    <div className="font-serif text-base leading-7 space-y-5 text-gray-900">
+    <div className="font-mono text-base leading-7 space-y-5 text-gray-900">
       {value.map((block, blockIndex) => {
         // Render image blocks
         if (block._type === 'image') {
@@ -77,7 +77,7 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
                 text = (
                   <strong
                     key={`${block._key}-child-strong-${childIndex}`}
-                    className="font-serif font-bold"
+                    className="font-serif font-bold text-lg md:text-xl leading-relaxed"
                   >
                     {text}
                   </strong>
@@ -147,13 +147,13 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
               // First paragraph gets drop cap
               if (blockIndex === 0) {
                 return (
-                  <p key={key} className="text-lg md:text-xl leading-relaxed">
+                  <p key={key} className="text-base leading-7">
                     {content}
                   </p>
                 );
               }
               return (
-                <p key={key} className="text-lg md:text-xl leading-relaxed">
+                <p key={key} className="text-base leading-7">
                   {content}
                 </p>
               );
