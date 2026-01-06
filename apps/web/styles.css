@@ -8,6 +8,11 @@ body {
   background-color: #F9F7F5;
 }
 
+.font-mono {
+  font-size: 0.875rem; /* 14px - same as text-sm */
+  line-height: 1.25rem; /* 20px */
+}
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

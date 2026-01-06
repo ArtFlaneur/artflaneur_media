@@ -404,7 +404,11 @@ const ArticleView: React.FC = () => {
   const location = galleryMeta.name ? `${galleryMeta.name}${galleryMeta.city ? `, ${galleryMeta.city}` : ''}` : 'Gallery Location';
 
   const galleryAddress =
-    review?.resolvedExternalGallery?.fulladdress ?? galleryMeta.address ?? galleryMeta.city ?? null;
+    review?.resolvedExternalGallery?.fulladdress ??
+    review?.externalExhibition?.gallery?.address ??
+    galleryMeta.address ??
+    galleryMeta.city ??
+    null;
   const galleryWebsite = review?.resolvedExternalGallery?.placeurl ?? galleryMeta.website ?? null;
   const galleryWebsiteLabel = galleryWebsite
     ? getDisplayDomain(galleryWebsite) ?? galleryWebsite.replace(/^https?:\/\//i, '').replace(/\/$/, '')
@@ -418,6 +422,7 @@ const ArticleView: React.FC = () => {
 
   const rawOpeningHours =
     review?.resolvedExternalGallery?.openinghours?.trim() ||
+    review?.externalExhibition?.gallery?.openingHours?.trim() ||
     galleryMeta.openingHours?.trim() ||
     null;
   const openingHoursSchedule = useMemo(
