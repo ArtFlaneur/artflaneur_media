@@ -119,6 +119,29 @@ const formatDayValue = (label: string, raw?: string) => {
 const TIME_RANGE_PATTERN = /\b\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s*(?:-|–|—|to)\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\b/i;
 const SINGLE_TIME_PATTERN = /\b\d{1,2}[:.]\d{2}\b|\b\d{1,2}\s*(?:am|pm)\b/i;
 
+export const slugifyForUrl = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+export const buildExhibitionSlug = (exhibition: { id: string | number; title?: string | null }) => {
+  const id = String(exhibition.id);
+  const title = exhibition.title?.trim() ?? '';
+  const titleSlug = title ? slugifyForUrl(title) : '';
+  return titleSlug ? `${titleSlug}-${id}` : id;
+};
+
+export const extractNumericIdFromSlug = (slugOrId: string) => {
+  const trimmed = slugOrId.trim();
+  if (!trimmed) return trimmed;
+  const parts = trimmed.split('-');
+  const lastPart = parts[parts.length - 1];
+  return /^\d+$/.test(lastPart) ? lastPart : trimmed;
+};
+
 const isFreeFormHoursNote = (entry: string) => {
   const normalized = entry.trim();
   if (!normalized) return false;

@@ -5,7 +5,7 @@
     <link>https://www.artflaneur.art</link>
     <description>Curated exhibition reviews and contemporary art insights from Art Flaneur</description>
     <language>en-us</language>
-    <lastBuildDate>Sat, 03 Jan 2026 05:01:33 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 06 Jan 2026 10:13:59 GMT</lastBuildDate>
     <atom:link href="https://www.artflaneur.art/rss.xml" rel="self" type="application/rss+xml" />
     <copyright>Art Flaneur Global Pty Ltd</copyright>
     <managingEditor>info@artflaneur.com.au (Art Flaneur)</managingEditor>
@@ -15,5 +15,14 @@
       <title>Art Flaneur</title>
       <link>https://www.artflaneur.art</link>
     </image>
+    <item>
+      <title>“Recipes for Broken Hearts”: How Bukhara Rethinks the Biennale Format</title>
+      <link>https://www.artflaneur.art/stories/recipes-for-broken-hearts-how-bukhara-rethinks-the-biennale-format</link>
+      <guid isPermaLink="true">https://www.artflaneur.art/stories/recipes-for-broken-hearts-how-bukhara-rethinks-the-biennale-format</guid>
+      <pubDate>Thu, 16 Oct 2025 23:02:00 GMT</pubDate>
+      <description>The first Bukhara Biennale, organised by Uzbekistan Art and Culture Development Foundation offers a fundamentally different approach to the biennial format: it proposes an intimate immersion into the living cultural fabric of the ancient Silk Road city.</description>
+      <author>info@artflaneur.com.au (Svetlana Astakhova)</author>
+      <enclosure url="https://cdn.sanity.io/images/o1yl0ri9/blog/4723c6d9dd740d5a41fcc5348824fc1bb9b77b5d-1280x719.jpg" type="image/jpeg" />
+    </item>
   </channel>
 </rss>

@@ -19,6 +19,7 @@ import { fetchExhibitions, fetchExhibitionsPage, fetchGalleryById, fetchGallerie
 import { mapGraphqlGalleryToEntity } from '../lib/galleryMapping';
 import { getAllCountries, getCountryAliases, getCountryDisplayName } from '../lib/countries';
 import { useSeo } from '../lib/useSeo';
+import { buildExhibitionSlug } from '../lib/formatters';
 
 interface ListingPageProps {
   title: string;
@@ -346,7 +347,7 @@ const mapGraphqlExhibitionToCard = (
   meta?: Pick<ExhibitionGalleryMeta, 'city' | 'country'>
 ): Exhibition => ({
   id: exhibition.id,
-  slug: exhibition.id,
+  slug: buildExhibitionSlug({ id: exhibition.id, title: exhibition.title }),
   title: exhibition.title ?? 'Untitled Exhibition',
   gallery: exhibition.galleryname ?? 'Gallery',
   city: meta?.city ?? exhibition.city ?? 'City',

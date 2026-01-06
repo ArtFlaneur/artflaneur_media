@@ -10,7 +10,7 @@ import {
   GraphqlExhibition,
   GraphqlGallery,
 } from '../lib/graphql';
-import { formatWorkingHoursSchedule, getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
+import { buildExhibitionSlug, formatWorkingHoursSchedule, getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
 import SecureImage from '../components/SecureImage';
 import { useSeo } from '../lib/useSeo';
 
@@ -494,7 +494,10 @@ const GalleryView: React.FC = () => {
                       key={exhibition.id}
                       className="group border-2 border-black bg-white hover:-translate-y-1 transition-all"
                     >
-                      <Link to={`/exhibitions/${exhibition.id}`} className="block">
+                      <Link
+                        to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
+                        className="block"
+                      >
                         <div className="aspect-[4/3] border-b-2 border-black overflow-hidden">
                           <SecureImage
                             src={
@@ -508,7 +511,10 @@ const GalleryView: React.FC = () => {
                         </div>
                       </Link>
 
-                      <div className="p-5 flex gap-4">\n                        <Link to={`/exhibitions/${exhibition.id}`} className="min-w-0 flex-1 space-y-2">
+                      <div className="p-5 flex gap-4">\n                        <Link
+                          to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
+                          className="min-w-0 flex-1 space-y-2"
+                        >
                           <p className="font-mono text-xs uppercase text-gray-500">
                             {formatExhibitionDate(exhibition, 'start')} — {formatExhibitionDate(exhibition, 'end')}
                           </p>
@@ -553,7 +559,10 @@ const GalleryView: React.FC = () => {
                       key={exhibition.id}
                       className="group border-2 border-black bg-white hover:-translate-y-1 transition-all"
                     >
-                      <Link to={`/exhibitions/${exhibition.id}`} className="block">
+                      <Link
+                        to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
+                        className="block"
+                      >
                         <div className="aspect-[4/3] border-b-2 border-black overflow-hidden">
                           <SecureImage
                             src={
@@ -568,7 +577,10 @@ const GalleryView: React.FC = () => {
                       </Link>
 
                       <div className="p-5 flex gap-4">
-                        <Link to={`/exhibitions/${exhibition.id}`} className="min-w-0 flex-1 space-y-2">
+                        <Link
+                          to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
+                          className="min-w-0 flex-1 space-y-2"
+                        >
                           <p className="font-mono text-xs uppercase text-gray-500">
                             {formatExhibitionDate(exhibition, 'start')} — {formatExhibitionDate(exhibition, 'end')}
                           </p>

@@ -8,7 +8,7 @@ import { HOMEPAGE_QUERYResult, LATEST_REVIEWS_QUERYResult } from '../sanity/type
 import { Article, ContentType } from '../types';
 import { fetchExhibitionById, fetchGalleryById, fetchGalleryByName, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
 import SecureImage from '../components/SecureImage';
-import { getAppDownloadLink } from '../lib/formatters';
+import { buildExhibitionSlug, getAppDownloadLink } from '../lib/formatters';
 
 type HomepageData = NonNullable<HOMEPAGE_QUERYResult>;
 type HeroSection = NonNullable<HomepageData['heroSection']>;
@@ -646,7 +646,7 @@ const Home: React.FC = () => {
                       )}
                     </div>
                     <Link
-                      to={`/exhibitions/${exhibition.id}`}
+                      to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
                       className="mt-8 inline-flex items-center justify-center gap-2 border-2 border-black px-4 py-3 font-bold uppercase text-sm hover:bg-black hover:text-white transition-colors"
                     >
                       View <ArrowRight className="w-4 h-4" />

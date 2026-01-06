@@ -7,7 +7,7 @@ import {
   fetchHistoricalExhibitionById,
   type GraphqlExhibition,
 } from '../lib/graphql';
-import { getAppDownloadLink } from '../lib/formatters';
+import { buildExhibitionSlug, extractNumericIdFromSlug, getAppDownloadLink } from '../lib/formatters';
 import SecureImage from '../components/SecureImage';
 import { useSeo } from '../lib/useSeo';
 import { client } from '../sanity/lib/client';
@@ -54,17 +54,22 @@ const buildHeroImage = (exhibition: GraphqlExhibition | null) => {
 };
 
 const ExhibitionView: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: slugParam } = useParams<{ id: string }>();
   const [exhibition, setExhibition] = useState<GraphqlExhibition | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasReview, setHasReview] = useState<boolean>(false);
 
+  const exhibitionId = useMemo(() => {
+    if (!slugParam) return '';
+    return extractNumericIdFromSlug(slugParam);
+  }, [slugParam]);
+
   useEffect(() => {
     let isMounted = true;
 
     const load = async () => {
-      if (!id) return;
+      if (!exhibitionId) return;
       setLoading(true);
       setError(null);
 
@@ -72,13 +77,14 @@ const ExhibitionView: React.FC = () => {
         let found: GraphqlExhibition | null = null;
 
         try {
-          found = await fetchExhibitionByIdDirect(id);
+          found = await fetchExhibitionByIdDirect(exhibitionId);
         } catch (err) {
           console.warn('⚠️ getExhibitionById failed; falling back to paginated scans', err);
         }
 
         if (!found) {
-          found = (await fetchExhibitionById(id)) ?? (await fetchHistoricalExhibitionById(id));
+          found =
+            (await fetchExhibitionById(exhibitionId)) ?? (await fetchHistoricalExhibitionById(exhibitionId));
         }
 
         if (!isMounted) return;
@@ -92,7 +98,7 @@ const ExhibitionView: React.FC = () => {
           // Check if review exists for this exhibition
           try {
             const reviewCheckQuery = defineQuery(`count(*[_type == "review" && publishStatus == "published" && externalExhibition.id == $exhibitionId])`);
-            const reviewCount = await client.fetch<number>(reviewCheckQuery, { exhibitionId: id });
+            const reviewCount = await client.fetch<number>(reviewCheckQuery, { exhibitionId: exhibitionId });
             if (isMounted) {
               setHasReview(reviewCount > 0);
             }
@@ -115,7 +121,17 @@ const ExhibitionView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [exhibitionId]);
+
+  // Normalize to SEO-friendly slug + id URLs (while still accepting plain id URLs).
+  useEffect(() => {
+    if (!exhibition || !slugParam) return;
+    const desiredSlug = buildExhibitionSlug({ id: exhibition.id, title: exhibition.title });
+    if (desiredSlug && slugParam !== desiredSlug) {
+      const nextPath = `/exhibitions/${desiredSlug}${window.location.search ?? ''}`;
+      window.history.replaceState(null, '', nextPath);
+    }
+  }, [exhibition, slugParam]);
 
   const heroImage = useMemo(() => buildHeroImage(exhibition), [exhibition]);
   const appDownloadLink = useMemo(() => getAppDownloadLink(), []);
@@ -129,17 +145,23 @@ const ExhibitionView: React.FC = () => {
     ? `${exhibition.title ?? 'Exhibition'}${seoVenueLabel ? ` — ${seoVenueLabel}` : ''}${dateLabel ? ` (${dateLabel})` : ''}. ${exhibition.description?.trim() ?? 'Discover exhibition details on Art Flaneur.'}`
     : 'Exhibition details on Art Flaneur.';
 
+  const exhibitionSlug = useMemo(
+    () => (exhibition ? buildExhibitionSlug({ id: exhibition.id, title: exhibition.title }) : null),
+    [exhibition],
+  );
+
   useSeo({
     title: exhibition ? seoTitle : error ? 'Exhibition not found | Art Flaneur' : 'Exhibition | Art Flaneur',
     description: seoDescription,
     imageUrl: heroImage,
     ogType: 'event',
+    canonicalUrl: exhibitionSlug ? `https://www.artflaneur.art/exhibitions/${exhibitionSlug}` : undefined,
     jsonLd: exhibition
       ? {
           '@context': 'https://schema.org',
           '@type': 'Event',
           name: exhibition.title ?? 'Exhibition',
-          url: `https://www.artflaneur.art/exhibitions/${exhibition.id}`,
+          url: `https://www.artflaneur.art/exhibitions/${exhibitionSlug ?? exhibition.id}`,
           image: heroImage,
           description: exhibition.description?.trim() || undefined,
           startDate: exhibition.datefrom || undefined,

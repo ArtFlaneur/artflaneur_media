@@ -1,6 +1,39 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+const loadEnvFile = async (filePath) => {
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length && !line.startsWith('#'))
+      .forEach((line) => {
+        const eq = line.indexOf('=');
+        if (eq === -1) return;
+        const key = line.slice(0, eq).trim();
+        let value = line.slice(eq + 1).trim();
+        if (!key) return;
+        // Don't override values already set in the environment.
+        if (process.env[key] !== undefined) return;
+        // Strip optional surrounding quotes.
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
+          value = value.slice(1, -1);
+        }
+        process.env[key] = value;
+      });
+  } catch {
+    // optional
+  }
+};
+
+// Allow running via `npm run sitemap` without needing an external shell script.
+await loadEnvFile(path.resolve(process.cwd(), '.env'));
+await loadEnvFile(path.resolve(process.cwd(), '.env.local'));
+
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://www.artflaneur.art';
 
 const getEnv = (key) => {
@@ -339,7 +372,9 @@ const main = async () => {
   graphqlExhibitions.forEach((e) => {
     const id = e?.id;
     if (!id) return;
-    pushUnique(`${SITE_ORIGIN}/exhibitions/${id}`, null, { changefreq: 'weekly', priority: '0.7' });
+    const titleSlug = slugify(e?.title);
+    const slug = titleSlug ? `${titleSlug}-${id}` : id;
+    pushUnique(`${SITE_ORIGIN}/exhibitions/${slug}`, null, { changefreq: 'weekly', priority: '0.7' });
   });
 
   console.log(`📊 Sitemap stats:
