@@ -1153,21 +1153,35 @@ const ArtEventsCalendar: React.FC = () => {
       {viewMode === 'month' && (
         <section className="border-t-2 border-black bg-white">
           <div className="container mx-auto px-4 md:px-8 py-12 flex flex-col gap-8">
-            <div className="flex items-center gap-3 text-xs font-mono uppercase tracking-[0.3em] text-gray-500">
-              <Layers className="w-4 h-4" /> Full lineup
+            <div>
+              <div className="flex items-center gap-3 text-xs font-mono uppercase tracking-[0.3em] text-gray-500 mb-2">
+                <Layers className="w-4 h-4" /> Events for selected day
+              </div>
+              {selectedDayKey && (
+                <h3 className="text-2xl font-black uppercase">
+                  {longDate.format(dateFromKey(selectedDayKey))}
+                </h3>
+              )}
             </div>
             <div className="grid gap-6">
-              {monthlyEvents.length === 0 && (
-                <p className="text-gray-500 text-sm">
-                  No events match your filters for this month. Nudge the month selector or reset filters to broaden the view.
-                </p>
-              )}
-              {monthlyEvents
-                .slice()
-                .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
-                .map((event) => (
-                  <EventCard key={event.id} event={event} plannerLink={plannerLink} />
-                ))}
+              {(() => {
+                const eventsForSelectedDay = selectedDayKey ? (eventsByDay[selectedDayKey] ?? []) : [];
+                
+                if (eventsForSelectedDay.length === 0) {
+                  return (
+                    <p className="text-gray-500 text-sm">
+                      No events scheduled for this day. Select another day or adjust your filters.
+                    </p>
+                  );
+                }
+                
+                return eventsForSelectedDay
+                  .slice()
+                  .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+                  .map((event) => (
+                    <EventCard key={event.id} event={event} plannerLink={plannerLink} />
+                  ));
+              })()}
             </div>
           </div>
         </section>

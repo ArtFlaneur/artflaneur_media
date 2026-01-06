@@ -482,13 +482,12 @@ const GalleryView: React.FC = () => {
                               `https://picsum.photos/seed/${exhibition.id}/800/600`
                             }
                             alt={exhibition.title ?? 'Exhibition'}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            className="w-full h-full object-cover"
                           />
                         </div>
                       </Link>
 
-                      <div className="p-5 flex gap-4">
-                        <Link to={`/exhibitions/${exhibition.id}`} className="min-w-0 flex-1 space-y-2">
+                      <div className="p-5 flex gap-4">\n                        <Link to={`/exhibitions/${exhibition.id}`} className="min-w-0 flex-1 space-y-2">
                           <p className="font-mono text-xs uppercase text-gray-500">
                             {formatExhibitionDate(exhibition, 'start')} — {formatExhibitionDate(exhibition, 'end')}
                           </p>
@@ -542,7 +541,7 @@ const GalleryView: React.FC = () => {
                               `https://picsum.photos/seed/${exhibition.id}/800/600`
                             }
                             alt={exhibition.title ?? 'Exhibition'}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            className="w-full h-full object-cover"
                           />
                         </div>
                       </Link>

@@ -700,7 +700,7 @@ const Home: React.FC = () => {
                         <SecureImage
                           src={galleryImageUrl}
                           alt={resolvedGalleryName || 'Gallery'}
-                          className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700 grayscale group-hover:grayscale-0"
+                          className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-700"
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-100" />

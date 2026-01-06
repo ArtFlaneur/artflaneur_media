@@ -93,7 +93,7 @@ export const EntityCard: React.FC<{
         return (
             <Link to={`/galleries/${gallerySlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden border-b-2 border-black">
-                    <SecureImage src={gallery.image} alt={gallery.name} className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700 grayscale group-hover:grayscale-0" />
+                    <SecureImage src={gallery.image} alt={gallery.name} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-700" />
                     {locationLabel && (
                         <div className="absolute top-0 left-0 bg-white px-3 py-1 text-xs font-mono font-bold uppercase border-b-2 border-r-2 border-black group-hover:bg-art-blue group-hover:text-white transition-colors">
                             {locationLabel}
@@ -127,7 +127,7 @@ export const EntityCard: React.FC<{
         return (
             <Link to={`/exhibitions/${exhibitionSlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden border-b-2 border-black">
-                    <SecureImage src={exhibition.image} alt={exhibition.title} className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700 grayscale group-hover:grayscale-0" />
+                    <SecureImage src={exhibition.image} alt={exhibition.title} className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-700" />
                     <div className="absolute top-0 right-0 bg-art-yellow px-2 py-1 text-xs font-mono font-bold border-l-2 border-b-2 border-black">
                         {badgeLabel}
                     </div>
@@ -196,7 +196,7 @@ export const EntityCard: React.FC<{
                         <SecureImage 
                             src={article.image} 
                             alt={article.title} 
-                            className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700" 
+                            className="object-cover w-full h-full" 
                         />
             <div className="absolute top-0 left-0 bg-white px-3 py-1 text-xs font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10 group-hover:bg-art-blue group-hover:text-white transition-colors">
                 {article.type}

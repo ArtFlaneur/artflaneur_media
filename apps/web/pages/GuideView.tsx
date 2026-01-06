@@ -351,7 +351,7 @@ const GuideView: React.FC = () => {
                                     <Link to={galleryLink} className="group flex gap-3 border-2 border-black bg-white p-3 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
                                                 {stopImage ? (
                                                                     <div className="w-24 h-24 flex-shrink-0 border-2 border-black overflow-hidden">
-                                                    <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                    <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover" />
                                                                     </div>
                                                                 ) : (
                                                                     <div className="w-24 h-24 flex-shrink-0 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center">
