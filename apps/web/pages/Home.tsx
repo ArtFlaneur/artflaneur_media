@@ -298,6 +298,7 @@ const Home: React.FC = () => {
   }, [featuredGalleries]);
 
   const heroArticle = featuredArticle;
+  const heroLink = heroArticle ? `/reviews/${heroArticle.slug}` : null;
   const featuredArtistSlug = buildArtistSlug(featuredStory?.externalArtist);
 
   const heroSlides = React.useMemo(() => {
@@ -457,12 +458,21 @@ const Home: React.FC = () => {
                         }`}
                       />
                     ))}
+                    {heroLink && heroSlides.length > 0 && (
+                      <Link
+                        to={heroLink}
+                        className="absolute inset-0 z-10"
+                        aria-label={heroArticle ? `Read ${heroArticle.title}` : 'Read review'}
+                      >
+                        <span className="sr-only">{heroArticle ? `Read ${heroArticle.title}` : 'Read review'}</span>
+                      </Link>
+                    )}
                     {heroSlides.length > 1 && (
                       <>
                         <button
                           type="button"
                           onClick={handlePrevSlide}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-black border-2 border-black rounded-full p-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-black border-2 border-black rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
                           aria-label="Previous slide"
                         >
                           <ChevronLeft className="w-5 h-5" />
@@ -470,12 +480,12 @@ const Home: React.FC = () => {
                         <button
                           type="button"
                           onClick={handleNextSlide}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-black border-2 border-black rounded-full p-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-black border-2 border-black rounded-full p-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
                           aria-label="Next slide"
                         >
                           <ChevronRight className="w-5 h-5" />
                         </button>
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                           {heroSlides.map((_, idx) => (
                             <button
                               key={`dot-${idx}`}
