@@ -12,27 +12,27 @@ App listings:
 - Android: https://play.google.com/store/apps/details?id=com.artflaneur
 
 Primary site:
-- https://www.artflaneur.com.au/
+- https://www.artflaneur.art/
 
 ## Content Sections
 
 Key sections:
-- Reviews: https://www.artflaneur.com.au/reviews
-- Exhibitions: https://www.artflaneur.com.au/exhibitions
-- Galleries: https://www.artflaneur.com.au/galleries
-- Artists: https://www.artflaneur.com.au/artists
-- Guides: https://www.artflaneur.com.au/guides
+- Stories: https://www.artflaneur.art/stories
+- Exhibitions: https://www.artflaneur.art/exhibitions
+- Galleries: https://www.artflaneur.art/galleries
+- Artists: https://www.artflaneur.art/artists
+- Guides: https://www.artflaneur.art/guides
 
 ## Machine-Readable Resources
 
 Sitemap:
-- https://www.artflaneur.com.au/sitemap.xml
+- https://www.artflaneur.art/sitemap.xml
 
 RSS Feed (Latest Reviews):
-- https://www.artflaneur.com.au/rss.xml
+- https://www.artflaneur.art/rss.xml
 
 Robots:
-- https://www.artflaneur.com.au/robots.txt
+- https://www.artflaneur.art/robots.txt
 
 ## Contact
 
@@ -41,7 +41,7 @@ Robots:
 ## Publisher Information
 
 Art Flaneur Global Pty Ltd
-Website: https://www.artflaneur.com.au/
+Website: https://www.artflaneur.art/
 Mission: Connect people with contemporary art through curated reviews, guides, and discovery tools.
 
 ## Notes for Crawlers

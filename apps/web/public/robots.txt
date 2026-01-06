@@ -10,4 +10,4 @@ Disallow: /gallery-dashboard/
 # Allow everything else
 Allow: /
 
-Sitemap: https://www.artflaneur.com.au/sitemap.xml
+Sitemap: https://www.artflaneur.art/sitemap.xml

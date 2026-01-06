@@ -37,6 +37,19 @@ const buildHeroImage = (gallery: GraphqlGallery | null) => {
 
 const normalizeUrl = (value: string) => (/^https?:\/\//i.test(value) ? value : `https://${value}`);
 
+const slugifyName = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const buildGallerySlug = (gallery: GraphqlGallery) => {
+  const nameSlug = gallery.galleryname ? slugifyName(gallery.galleryname) : '';
+  return nameSlug ? `${nameSlug}-${gallery.id}` : String(gallery.id);
+};
+
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: 'numeric',
   month: 'short',
@@ -280,13 +293,14 @@ const GalleryView: React.FC = () => {
       ? `${gallery.galleryname}${locationLabel ? ` — ${locationLabel}` : ''}. ${galleryDescription ?? 'Discover exhibitions, details and directions.'}`
       : 'Gallery details on Art Flaneur.',
     imageUrl: heroImage,
+    canonicalUrl: gallery ? `https://www.artflaneur.art/galleries/${buildGallerySlug(gallery)}` : undefined,
     ogType: 'website',
     jsonLd: gallery?.galleryname
       ? {
           '@context': 'https://schema.org',
           '@type': 'ArtGallery',
           name: gallery.galleryname,
-          url: `https://www.artflaneur.com.au/galleries/${gallery.id}`,
+          url: `https://www.artflaneur.art/galleries/${buildGallerySlug(gallery)}`,
           image: heroImage,
           sameAs: gallery.placeurl ? [gallery.placeurl] : undefined,
           address: gallery.fulladdress
@@ -306,6 +320,17 @@ const GalleryView: React.FC = () => {
         }
       : undefined,
   });
+
+  useEffect(() => {
+    if (!gallery || !slugParam) return;
+    const desiredSlug = buildGallerySlug(gallery);
+
+    // If the user landed on the legacy /galleries/:id route, replace it with the name-based slug.
+    if (slugParam === String(gallery.id) && desiredSlug !== slugParam) {
+      const nextPath = `/galleries/${desiredSlug}${window.location.search ?? ''}`;
+      window.history.replaceState(null, '', nextPath);
+    }
+  }, [gallery, slugParam]);
 
   useEffect(() => {
     const handleContextMenu = (event: MouseEvent) => {

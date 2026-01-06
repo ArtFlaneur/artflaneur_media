@@ -34,7 +34,7 @@ const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const IOS_APP_URL = 'https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783';
 const ANDROID_APP_URL = 'https://play.google.com/store/apps/details?id=com.artflaneur';
-const WEB_APP_URL = 'https://www.artflaneur.com.au';
+const WEB_APP_URL = 'https://www.artflaneur.art';
 
 type PlannerPlatform = 'ios' | 'android' | 'web';
 
@@ -497,11 +497,11 @@ const ArtEventsCalendar: React.FC = () => {
       '@type': 'WebPage',
       name: 'Global Art Events Calendar',
       description: pageDescription,
-      url: 'https://www.artflaneur.com.au/calendar',
+      url: 'https://www.artflaneur.art/calendar',
       isPartOf: {
         '@type': 'WebSite',
         name: 'Art Flaneur',
-        url: 'https://www.artflaneur.com.au/',
+        url: 'https://www.artflaneur.art/',
       },
       about: {
         '@type': 'DataFeed',
@@ -511,7 +511,7 @@ const ArtEventsCalendar: React.FC = () => {
       },
       potentialAction: {
         '@type': 'SearchAction',
-        target: 'https://www.artflaneur.com.au/calendar?region={region}',
+        target: 'https://www.artflaneur.art/calendar?region={region}',
         'query-input': 'required name=region',
       },
     }),
@@ -521,7 +521,7 @@ const ArtEventsCalendar: React.FC = () => {
   useSeo({
     title: pageTitle,
     description: pageDescription,
-    canonicalUrl: 'https://www.artflaneur.com.au/calendar',
+    canonicalUrl: 'https://www.artflaneur.art/calendar',
     jsonLd: seoJsonLd,
   });
 

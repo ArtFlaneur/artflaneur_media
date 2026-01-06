@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://www.artflaneur.com.au';
+const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://www.artflaneur.art';
 
 const getEnv = (key) => {
   const direct = process.env[key];
@@ -47,6 +47,14 @@ const xmlEscape = (value) =>
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&apos;');
+
+const slugify = (text) =>
+  String(text ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 const buildUrlEntry = ({ loc, lastmod, changefreq, priority }) => {
   const parts = ['  <url>'];
@@ -175,7 +183,7 @@ const main = async () => {
 
   const hubs = [
     { loc: `${SITE_ORIGIN}/`, changefreq: 'daily', priority: '1.0' },
-    { loc: `${SITE_ORIGIN}/reviews`, changefreq: 'daily', priority: '0.9' },
+    { loc: `${SITE_ORIGIN}/stories`, changefreq: 'daily', priority: '0.9' },
     { loc: `${SITE_ORIGIN}/exhibitions`, changefreq: 'daily', priority: '0.9' },
     { loc: `${SITE_ORIGIN}/galleries`, changefreq: 'weekly', priority: '0.9' },
     { loc: `${SITE_ORIGIN}/artists`, changefreq: 'weekly', priority: '0.8' },
@@ -318,11 +326,13 @@ const main = async () => {
     pushUnique(`${SITE_ORIGIN}/artists/${slug}`, lastmod, { changefreq: 'monthly', priority: '0.6' });
   });
 
-  // GraphQL galleries - using ID since they don't have slugs
+  // GraphQL galleries - generate a stable slug from the name + id (GalleryView supports both)
   graphqlGalleries.forEach((g) => {
     const id = g?.id;
     if (!id) return;
-    pushUnique(`${SITE_ORIGIN}/galleries/${id}`, null, { changefreq: 'weekly', priority: '0.7' });
+    const nameSlug = slugify(g?.galleryname);
+    const slug = nameSlug ? `${nameSlug}-${id}` : id;
+    pushUnique(`${SITE_ORIGIN}/galleries/${slug}`, null, { changefreq: 'weekly', priority: '0.7' });
   });
 
   // GraphQL exhibitions - using ID since they don't have slugs

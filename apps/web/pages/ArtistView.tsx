@@ -267,10 +267,10 @@ const ArtistView: React.FC = () => {
       ...(artist.birth_year && { birthDate: artist.birth_year.toString() }),
       ...(artist.death_year && { deathDate: artist.death_year.toString() }),
       ...(artist.country && { nationality: artist.country }),
-      url: `https://www.artflaneur.com.au/artists/${artistSlug}`,
+      url: `https://www.artflaneur.art/artists/${artistSlug}`,
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': `https://www.artflaneur.com.au/artists/${artistSlug}`,
+        '@id': `https://www.artflaneur.art/artists/${artistSlug}`,
       },
       ...(exhibitions.length > 0 && {
         hasOfferCatalog: {
@@ -295,7 +295,7 @@ const ArtistView: React.FC = () => {
     title: seoTitle,
     description: seoDescription,
     imageUrl: storyPortraitUrl || undefined,
-    canonicalUrl: `https://www.artflaneur.com.au/artists/${slugParam}`,
+    canonicalUrl: `https://www.artflaneur.art/artists/${slugParam}`,
     ogType: 'profile',
     jsonLd: artistJsonLd,
   });

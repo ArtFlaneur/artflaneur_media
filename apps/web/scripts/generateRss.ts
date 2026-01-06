@@ -73,7 +73,7 @@ async function generateRssFeed() {
 
   console.log(`✅ Found ${reviews.length} published reviews`);
 
-  const baseUrl = 'https://www.artflaneur.com.au';
+  const baseUrl = 'https://www.artflaneur.art';
   const buildDate = new Date().toUTCString();
 
   const rssItems = reviews

@@ -510,7 +510,7 @@ const ArticleView: React.FC = () => {
       author: article.author ? {
         '@type': 'Person',
         name: article.author.name,
-        url: authorProfilePath ? `https://www.artflaneur.com.au${authorProfilePath}` : undefined,
+        url: authorProfilePath ? `https://www.artflaneur.art${authorProfilePath}` : undefined,
       } : {
         '@type': 'Organization',
         name: 'Art Flaneur',
@@ -518,11 +518,11 @@ const ArticleView: React.FC = () => {
       publisher: {
         '@type': 'Organization',
         name: 'Art Flaneur Global Pty Ltd',
-        url: 'https://www.artflaneur.com.au/',
+        url: 'https://www.artflaneur.art/',
       },
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': `https://www.artflaneur.com.au/stories/${article.slug}`,
+        '@id': `https://www.artflaneur.art/stories/${article.slug}`,
       },
       ...(review.rating && {
         reviewRating: {
@@ -549,7 +549,7 @@ const ArticleView: React.FC = () => {
     title: seoTitle,
     description: seoDescription,
     imageUrl: article?.image,
-    canonicalUrl: article ? `https://www.artflaneur.com.au/stories/${article.slug}` : undefined,
+    canonicalUrl: article ? `https://www.artflaneur.art/stories/${article.slug}` : undefined,
     ogType: 'article',
     jsonLd: articleJsonLd,
   });

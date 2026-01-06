@@ -31,7 +31,7 @@ const GuideView: React.FC = () => {
     }, [guide]);
 
     const seoConfig = useMemo(() => {
-        const canonicalUrl = `https://www.artflaneur.com.au/guides/${id ?? ''}`;
+        const canonicalUrl = `https://www.artflaneur.art/guides/${id ?? ''}`;
 
         if (!guide) {
             return {
@@ -93,12 +93,12 @@ const GuideView: React.FC = () => {
                 : {
                         '@type': 'Organization',
                         name: 'Art Flaneur Global Pty Ltd',
-                        url: 'https://www.artflaneur.com.au/',
+                        url: 'https://www.artflaneur.art/',
                     },
             publisher: {
                 '@type': 'Organization',
                 name: 'Art Flaneur Global Pty Ltd',
-                url: 'https://www.artflaneur.com.au/',
+                url: 'https://www.artflaneur.art/',
             },
         };
 

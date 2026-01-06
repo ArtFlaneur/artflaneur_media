@@ -6,72 +6,72 @@
     Set SANITY_PROJECT_ID and SANITY_DATASET in the build environment to include detail pages.
   -->
   <url>
-    <loc>https://www.artflaneur.com.au/</loc>
+    <loc>https://www.artflaneur.art/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/reviews</loc>
+    <loc>https://www.artflaneur.art/stories</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/exhibitions</loc>
+    <loc>https://www.artflaneur.art/exhibitions</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/galleries</loc>
+    <loc>https://www.artflaneur.art/galleries</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/artists</loc>
+    <loc>https://www.artflaneur.art/artists</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/guides</loc>
+    <loc>https://www.artflaneur.art/guides</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/calendar</loc>
+    <loc>https://www.artflaneur.art/calendar</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/about</loc>
+    <loc>https://www.artflaneur.art/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/mission</loc>
+    <loc>https://www.artflaneur.art/mission</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/partners/galleries</loc>
+    <loc>https://www.artflaneur.art/partners/galleries</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/partners/events</loc>
+    <loc>https://www.artflaneur.art/partners/events</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/privacy</loc>
+    <loc>https://www.artflaneur.art/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/terms</loc>
+    <loc>https://www.artflaneur.art/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.com.au/cookies</loc>
+    <loc>https://www.artflaneur.art/cookies</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>

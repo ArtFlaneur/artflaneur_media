@@ -139,7 +139,7 @@ const ExhibitionView: React.FC = () => {
           '@context': 'https://schema.org',
           '@type': 'Event',
           name: exhibition.title ?? 'Exhibition',
-          url: `https://www.artflaneur.com.au/exhibitions/${exhibition.id}`,
+          url: `https://www.artflaneur.art/exhibitions/${exhibition.id}`,
           image: heroImage,
           description: exhibition.description?.trim() || undefined,
           startDate: exhibition.datefrom || undefined,

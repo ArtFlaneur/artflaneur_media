@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Art Flaneur - Contemporary Art Guide",
   "author": "Art Flaneur Global Pty Ltd <tim@artflaneur.com.au>",
-  "homepage": "https://www.artflaneur.com.au",
+  "homepage": "https://www.artflaneur.art",
   "license": "UNLICENSED",
   "scripts": {
     "dev": "vite",

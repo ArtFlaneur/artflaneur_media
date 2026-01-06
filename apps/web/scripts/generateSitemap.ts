@@ -88,7 +88,7 @@ async function fetchGraphQL(query: string) {
 async function generateSitemap() {
   console.log('🗺️  Generating comprehensive sitemap...');
 
-  const baseUrl = 'https://www.artflaneur.com.au';
+  const baseUrl = 'https://www.artflaneur.art';
   const now = new Date().toISOString();
 
   // Static pages
@@ -264,10 +264,11 @@ async function generateSitemap() {
     console.log(`✅ Found ${galleries.length} galleries`);
 
     galleries.forEach((gallery) => {
+      const slug = `${slugify(gallery.galleryname)}-${gallery.id}`;
       const lastmod = gallery.updated_at || now;
       urls.push(`
   <url>
-    <loc>${baseUrl}/galleries/${gallery.id}</loc>
+    <loc>${baseUrl}/galleries/${slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

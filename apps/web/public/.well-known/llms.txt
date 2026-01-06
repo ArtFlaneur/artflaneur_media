@@ -1,7 +1,7 @@
 # Art Flaneur (Official)
 
 This file mirrors /llms.txt for AI discovery.
-For full details, see: https://www.artflaneur.com.au/llms.txt
+For full details, see: https://www.artflaneur.art/llms.txt
 
 ## Quick Links
 
@@ -9,20 +9,20 @@ App listings:
 - iOS: https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783
 - Android: https://play.google.com/store/apps/details?id=com.artflaneur
 
-Website: https://www.artflaneur.com.au/
+Website: https://www.artflaneur.art/
 
 ## Content Sections
 
-- Reviews: https://www.artflaneur.com.au/reviews
-- Exhibitions: https://www.artflaneur.com.au/exhibitions
-- Galleries: https://www.artflaneur.com.au/galleries
-- Artists: https://www.artflaneur.com.au/artists
-- Guides: https://www.artflaneur.com.au/guides
+- Stories: https://www.artflaneur.art/stories
+- Exhibitions: https://www.artflaneur.art/exhibitions
+- Galleries: https://www.artflaneur.art/galleries
+- Artists: https://www.artflaneur.art/artists
+- Guides: https://www.artflaneur.art/guides
 
 ## Machine-Readable
 
-- Sitemap: https://www.artflaneur.com.au/sitemap.xml
-- RSS Feed: https://www.artflaneur.com.au/rss.xml
-- Robots: https://www.artflaneur.com.au/robots.txt
+- Sitemap: https://www.artflaneur.art/sitemap.xml
+- RSS Feed: https://www.artflaneur.art/rss.xml
+- Robots: https://www.artflaneur.art/robots.txt
 
 Contact: info@artflaneur.com.au

@@ -19,13 +19,13 @@ const SiteSeo: React.FC = () => {
         {
           '@type': 'Organization',
           name: 'Art Flaneur Global Pty Ltd',
-          url: 'https://www.artflaneur.com.au/',
+          url: 'https://www.artflaneur.art/',
           email: 'info@artflaneur.com.au',
         },
         {
           '@type': 'WebSite',
           name: DEFAULT_SITE_NAME,
-          url: 'https://www.artflaneur.com.au/',
+          url: 'https://www.artflaneur.art/',
           description: DEFAULT_DESCRIPTION,
         },
         {
@@ -33,12 +33,12 @@ const SiteSeo: React.FC = () => {
           name: 'Art Flaneur',
           operatingSystem: 'iOS, Android',
           applicationCategory: 'TravelApplication',
-          url: 'https://www.artflaneur.com.au/',
+          url: 'https://www.artflaneur.art/',
           downloadUrl: [IOS_APP_URL, ANDROID_APP_URL],
           publisher: {
             '@type': 'Organization',
             name: 'Art Flaneur Global Pty Ltd',
-            url: 'https://www.artflaneur.com.au/',
+            url: 'https://www.artflaneur.art/',
           },
           sameAs: [IOS_APP_URL, ANDROID_APP_URL],
         },
