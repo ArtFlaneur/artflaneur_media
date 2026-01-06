@@ -1,4 +1,5 @@
 // CRM schemas
+import {article} from './article'
 import {review} from './review'
 import {author} from './author'
 import {blockContent} from './blockContent'
@@ -23,7 +24,8 @@ export const schemaTypes = [
   factTable,
   keyInsights,
   sponsor,
-  review,
+  article, // New unified article type
+  review, // Keep temporarily for migration
   author,
   artistStory,
   guide,

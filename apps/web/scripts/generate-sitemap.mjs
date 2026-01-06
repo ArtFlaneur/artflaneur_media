@@ -294,7 +294,7 @@ const main = async () => {
     const slug = r?.slug;
     if (!slug) return;
     const lastmod = toIsoDate(r?.lastmod);
-    pushUnique(`${SITE_ORIGIN}/reviews/${slug}`, lastmod, { changefreq: 'weekly', priority: '0.7' });
+    pushUnique(`${SITE_ORIGIN}/stories/${slug}`, lastmod, { changefreq: 'weekly', priority: '0.7' });
   });
 
   guides.forEach((g) => {

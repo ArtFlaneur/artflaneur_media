@@ -6,6 +6,7 @@ import ArticleView from './pages/ArticleView';
 import ExhibitionView from './pages/ExhibitionView';
 import Partners from './pages/Partners';
 import ListingPage from './pages/ListingPage';
+import Stories from './pages/Stories';
 import GuideView from './pages/GuideView';
 import ArtistView from './pages/ArtistView';
 import AmbassadorView from './pages/AmbassadorView';
@@ -70,7 +71,7 @@ const App: React.FC = () => {
                 <Route path="/search" element={<SearchResults />} />
                 
                 {/* Listings */}
-                <Route path="/reviews" element={<ListingPage title="Articles" type="reviews" />} />
+                <Route path="/stories" element={<Stories />} />
                 <Route path="/exhibitions" element={<ListingPage title="Exhibitions" type="exhibitions" />} />
                 <Route path="/artists" element={<ListingPage title="Artists" type="artists" />} />
                 <Route path="/guides" element={<ListingPage title="City Guides" type="guides" />} />
@@ -78,7 +79,7 @@ const App: React.FC = () => {
                 <Route path="/galleries" element={<ListingPage title="Galleries and Museums" type="galleries" />} />
                 
                 {/* Details */}
-                <Route path="/reviews/:id" element={<ArticleView />} />
+                <Route path="/stories/:id" element={<ArticleView />} />
                 <Route path="/exhibitions/:id" element={<ExhibitionView />} />
                 <Route path="/guides/:id" element={<GuideView />} />
                 <Route path="/artists/:id" element={<ArtistView />} />

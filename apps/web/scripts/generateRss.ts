@@ -78,7 +78,7 @@ async function generateRssFeed() {
 
   const rssItems = reviews
     .map((review) => {
-      const link = `${baseUrl}/reviews/${review.slug.current}`;
+      const link = `${baseUrl}/stories/${review.slug.current}`;
       const pubDate = new Date(review.publishedAt).toUTCString();
       const description = escapeXml(review.excerpt || review.title || '');
       const title = escapeXml(review.title || 'Untitled Review');

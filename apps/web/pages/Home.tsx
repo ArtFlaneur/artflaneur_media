@@ -102,7 +102,8 @@ const mapReviewToArticle = (review: ReviewWithSlug): Article => ({
 
 const buildContentPath = (doc?: { _type?: string | null; slug?: { current?: string | null } | null }) => {
   if (!doc?._type || !doc.slug?.current) return null;
-  if (doc._type === 'review') return `/reviews/${doc.slug.current}`;
+  if (doc._type === 'review') return `/stories/${doc.slug.current}`;
+  if (doc._type === 'article') return `/stories/${doc.slug.current}`;
   if (doc._type === 'guide') return `/guides/${doc.slug.current}`;
   if (doc._type === 'artistStory') return `/stories/${doc.slug.current}`;
   return null;
@@ -298,7 +299,7 @@ const Home: React.FC = () => {
   }, [featuredGalleries]);
 
   const heroArticle = featuredArticle;
-  const heroLink = heroArticle ? `/reviews/${heroArticle.slug}` : null;
+  const heroLink = heroArticle ? `/stories/${heroArticle.slug}` : null;
   const featuredArtistSlug = buildArtistSlug(featuredStory?.externalArtist);
 
   const heroSlides = React.useMemo(() => {
@@ -423,7 +424,7 @@ const Home: React.FC = () => {
                         <p className="font-serif text-lg md:text-xl italic text-gray-600 mb-6 border-l-4 border-art-yellow pl-4">
                             {heroArticle.subtitle}
                         </p>
-            <Link to={`/reviews/${heroArticle.slug}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
+            <Link to={`/stories/${heroArticle.slug}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
                             Read Full Article <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                         </Link>
                       </>
@@ -508,10 +509,10 @@ const Home: React.FC = () => {
       </section>
 
 
-      {/* Latest Articles Grid */}
+      {/* Latest Reviews Grid */}
       <section className="bg-white relative z-0 pt-16 md:pt-24 pb-24">
         <div className="container mx-auto px-4 md:px-6">
-          <SectionHeader title="Latest Articles" linkText="Archive" linkTo="/reviews" />
+          <SectionHeader title="Latest Reviews" linkText="Archive" linkTo="/stories" />
           {error && (
             <p className="text-sm font-mono text-red-600 mb-6">{error}</p>
           )}

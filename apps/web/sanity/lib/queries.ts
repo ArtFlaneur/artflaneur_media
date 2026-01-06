@@ -202,6 +202,192 @@ export const LATEST_REVIEWS_QUERY = defineQuery(`*[
   rating
 }`)
 
+// Articles queries (new unified content type)
+export const ARTICLES_QUERY = defineQuery(`*[
+  _type == "article"
+  && publishStatus == "published"
+] | order(publishedAt desc) {
+  _id,
+  title,
+  slug,
+  contentType,
+  "excerpt": coalesce(summary, excerpt),
+  mainImage {
+    asset->{
+      _id,
+      url
+    },
+    alt
+  },
+  author->{
+    _id,
+    name,
+    slug,
+    photo {
+      asset->{
+        url
+      }
+    }
+  },
+  publishedAt,
+  rating,
+  newsSource,
+  bookTitle,
+  bookAuthor,
+  filmTitle,
+  director,
+  externalExhibition {
+    _type,
+    id,
+    title,
+    startDate,
+    endDate,
+    artist,
+    description,
+    eventType,
+    exhibitionType,
+    gallery {
+      id,
+      name,
+      city,
+      address,
+      website,
+      openingHours,
+      allowed,
+      specialEvent,
+      eventType
+    }
+  }
+}`)
+
+export const ARTICLE_QUERY = defineQuery(`*[
+  _type == "article"
+  && slug.current == $slug
+][0] {
+  _id,
+  title,
+  slug,
+  contentType,
+  "excerpt": coalesce(summary, excerpt),
+  mainImage {
+    asset->{
+      _id,
+      url
+    },
+    alt
+  },
+  heroSlider[]{
+    _key,
+    asset->{
+      _id,
+      url
+    },
+    alt,
+    caption
+  },
+  body[]{
+    ...,
+    _type == "image" => {
+      _key,
+      _type,
+      asset->{
+        _id,
+        url
+      },
+      alt,
+      caption
+    }
+  },
+  rating,
+  author->{
+    _id,
+    name,
+    slug,
+    photo {
+      asset->{
+        url
+      }
+    },
+    bio
+  },
+  externalExhibition {
+    _type,
+    id,
+    title,
+    startDate,
+    endDate,
+    artist,
+    description,
+    eventType,
+    exhibitionType,
+    gallery {
+      id,
+      name,
+      city,
+      address,
+      website,
+      openingHours,
+      allowed,
+      specialEvent,
+      eventType
+    }
+  },
+  newsDate,
+  newsSource,
+  externalLink,
+  bookTitle,
+  bookAuthor,
+  publisher,
+  publishYear,
+  isbn,
+  purchaseLink,
+  filmTitle,
+  director,
+  releaseYear,
+  duration,
+  whereToWatch,
+  filmLink,
+  relatedArticles[]->{
+    _id,
+    title,
+    slug,
+    contentType,
+    "excerpt": coalesce(summary, excerpt),
+    mainImage {
+      asset->{
+        url
+      }
+    },
+    author->{
+      _id,
+      name
+    }
+  },
+  ctaText,
+  appCta,
+  sponsorship {
+    enabled,
+    type,
+    customDisclaimer,
+    badgePlacement,
+    sponsor->{
+      _id,
+      name,
+      logo {
+        asset->{
+          url
+        },
+        alt
+      },
+      defaultBadgeTemplate,
+      brandColor {
+        hex
+      }
+    }
+  },
+  publishedAt
+}`)
+
 export const EXHIBITION_QUERY = defineQuery(`*[
   _type == "exhibition"
   && slug.current == $slug

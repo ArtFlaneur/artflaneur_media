@@ -497,7 +497,7 @@ const GalleryView: React.FC = () => {
 
                         <div className="flex-shrink-0 flex items-start">
                           <Link
-                            to={`/reviews/${exhibition.id}`}
+                            to={`/stories/${exhibition.id}`}
                             className="font-mono text-[10px] uppercase tracking-widest border border-black px-3 py-2 hover:bg-black hover:text-white transition-colors"
                             aria-label="Open review"
                           >
@@ -557,7 +557,7 @@ const GalleryView: React.FC = () => {
 
                         <div className="flex-shrink-0 flex items-start">
                           <Link
-                            to={`/reviews/${exhibition.id}`}
+                            to={`/stories/${exhibition.id}`}
                             className="font-mono text-[10px] uppercase tracking-widest border border-black px-3 py-2 hover:bg-black hover:text-white transition-colors"
                             aria-label="Open review"
                           >

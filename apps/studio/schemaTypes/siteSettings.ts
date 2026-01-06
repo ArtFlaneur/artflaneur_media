@@ -1,5 +1,5 @@
 import {CogIcon} from '@sanity/icons'
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 import {socialLinksField} from './fields/socialLinksField'
 
 export const siteSettings = defineType({
@@ -9,6 +9,7 @@ export const siteSettings = defineType({
   icon: CogIcon,
   groups: [
     {name: 'basic', title: 'Basic', default: true},
+    {name: 'homepage', title: 'Homepage'},
     {name: 'sponsorship', title: 'Sponsorship Defaults'},
   ],
   fields: [
@@ -85,6 +86,75 @@ export const siteSettings = defineType({
           initialValue: 'Meet the artist',
           validation: (Rule) => [Rule.required().error('Provide a default CTA for artist stories')],
         }),
+      ],
+    }),
+    
+    // Homepage Configuration
+    defineField({
+      name: 'heroArticle',
+      title: 'Hero Article',
+      type: 'reference',
+      group: 'homepage',
+      to: [{type: 'article'}, {type: 'artistStory'}, {type: 'guide'}],
+      description: 'Main featured content in the hero section',
+      validation: (Rule) => [Rule.required().warning('Select a hero article for the homepage')],
+    }),
+    defineField({
+      name: 'featuredReviews',
+      title: 'Featured Exhibition Reviews',
+      type: 'array',
+      group: 'homepage',
+      description: 'Showcase 3-4 exhibition reviews on the homepage',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{type: 'article'}],
+          options: {
+            filter: 'contentType == "exhibition-review" && publishStatus == "published"',
+          },
+        }),
+      ],
+      validation: (Rule) => [
+        Rule.max(4).warning('Limit to 4 featured reviews for optimal layout'),
+        Rule.unique().error('Each review can only be featured once'),
+      ],
+    }),
+    defineField({
+      name: 'showNewsSection',
+      title: 'Show News Section',
+      type: 'boolean',
+      group: 'homepage',
+      description: 'Display a news section with the latest news articles',
+      initialValue: true,
+    }),
+    defineField({
+      name: 'newsCount',
+      title: 'Number of News Items',
+      type: 'number',
+      group: 'homepage',
+      description: 'How many recent news articles to show (1-5)',
+      initialValue: 3,
+      hidden: ({document}) => !document?.showNewsSection,
+      validation: (Rule) => [
+        Rule.integer().positive().error('Must be a positive number'),
+        Rule.min(1).max(5).warning('Recommended: 2-3 news items'),
+      ],
+    }),
+    defineField({
+      name: 'featuredContent',
+      title: 'Featured Content Mix',
+      type: 'array',
+      group: 'homepage',
+      description: 'Flexible section: mix books, films, artist stories, or any content you choose',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{type: 'article'}, {type: 'artistStory'}, {type: 'guide'}],
+        }),
+      ],
+      validation: (Rule) => [
+        Rule.max(6).warning('Limit to 6 items for optimal display'),
+        Rule.unique().error('Each piece of content can only be featured once'),
       ],
     }),
     defineField({

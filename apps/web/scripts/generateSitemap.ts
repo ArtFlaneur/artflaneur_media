@@ -94,7 +94,7 @@ async function generateSitemap() {
   // Static pages
   const staticPages = [
     { loc: '/', priority: '1.0', changefreq: 'daily' },
-    { loc: '/reviews', priority: '0.9', changefreq: 'daily' },
+    { loc: '/stories', priority: '0.9', changefreq: 'daily' },
     { loc: '/exhibitions', priority: '0.9', changefreq: 'daily' },
     { loc: '/galleries', priority: '0.9', changefreq: 'weekly' },
     { loc: '/artists', priority: '0.8', changefreq: 'weekly' },
@@ -135,7 +135,7 @@ async function generateSitemap() {
       const lastmod = review.publishedAt || review._updatedAt;
       urls.push(`
   <url>
-    <loc>${baseUrl}/reviews/${review.slug.current}</loc>
+    <loc>${baseUrl}/stories/${review.slug.current}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

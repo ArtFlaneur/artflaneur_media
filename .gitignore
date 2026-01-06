@@ -46,3 +46,6 @@ codegen.yaml
 .env*
 !.env.example
 .vercel
+
+# Sensitive docs
+CLIENT_GRAPHQL_API_ACCESS.md

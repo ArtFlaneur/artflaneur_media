@@ -280,7 +280,7 @@ const ExhibitionView: React.FC = () => {
                   </a>
                   {hasReview ? (
                     <Link
-                      to={`/reviews/${exhibition.id}`}
+                      to={`/stories/${exhibition.id}`}
                       className="inline-flex items-center justify-between w-full gap-3 px-4 py-3 border-2 border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
                     >
                       Read review

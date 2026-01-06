@@ -14,24 +14,24 @@ export const structure = (S: StructureBuilder) =>
                 .title('In Review')
                 .child(
                   S.documentList()
-                    .title('Articles in Review')
-                    .filter('_type == "review" && publishStatus == "inReview"')
+                    .title('Content in Review')
+                    .filter('_type in ["article", "review"] && publishStatus == "inReview"')
                     .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
               S.listItem()
                 .title('Needs Revision')
                 .child(
                   S.documentList()
-                    .title('Articles Needing Revision')
-                    .filter('_type == "review" && publishStatus == "needsRevision"')
+                    .title('Content Needing Revision')
+                    .filter('_type in ["article", "review"] && publishStatus == "needsRevision"')
                     .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
               S.listItem()
                 .title('Approved')
                 .child(
                   S.documentList()
-                    .title('Approved Articles')
-                    .filter('_type == "review" && publishStatus == "approved"')
+                    .title('Approved Content')
+                    .filter('_type in ["article", "review"] && publishStatus == "approved"')
                     .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
               S.divider(),
@@ -41,7 +41,7 @@ export const structure = (S: StructureBuilder) =>
                   S.documentList()
                     .title('Scheduled for Publication')
                     .filter(
-                      '_type in ["review", "artistStory", "guide"] && publishStatus == "scheduled" && defined(scheduledPublishAt)'
+                      '_type in ["article", "review", "artistStory", "guide"] && publishStatus == "scheduled" && defined(scheduledPublishAt)',
                     )
                     .defaultOrdering([{field: 'scheduledPublishAt', direction: 'asc'}])
                 ),
@@ -59,14 +59,60 @@ export const structure = (S: StructureBuilder) =>
       
       // Content
       S.listItem()
-        .title('Articles')
+        .title('📝 All Articles')
+        .schemaType('article')
+        .child(
+          S.documentList()
+            .title('All Articles')
+            .filter('_type == "article"')
+            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
+        ),
+      S.listItem()
+        .title('🎨 Exhibition Reviews')
+        .child(
+          S.documentList()
+            .title('Exhibition Reviews')
+            .filter('_type == "article" && contentType == "exhibition-review"')
+            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
+        ),
+      S.listItem()
+        .title('📰 News')
+        .child(
+          S.documentList()
+            .title('News Articles')
+            .filter('_type == "article" && contentType == "news"')
+            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
+        ),
+      S.listItem()
+        .title('📚 Book Reviews')
+        .child(
+          S.documentList()
+            .title('Book Reviews')
+            .filter('_type == "article" && contentType == "book-review"')
+            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
+        ),
+      S.listItem()
+        .title('🎬 Film Reviews')
+        .child(
+          S.documentList()
+            .title('Film Reviews')
+            .filter('_type == "article" && contentType == "film-review"')
+            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
+        ),
+      
+      S.divider(),
+      
+      S.listItem()
+        .title('🔗 Old Reviews (Legacy)')
         .schemaType('review')
         .child(
           S.documentList()
-            .title('Articles')
+            .title('Legacy Reviews - Migrate to Articles')
             .filter('_type == "review"')
             .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
         ),
+      
+      S.divider(),
       S.listItem()
         .title('Artist Stories')
         .schemaType('artistStory')

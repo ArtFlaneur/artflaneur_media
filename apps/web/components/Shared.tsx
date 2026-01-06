@@ -191,7 +191,7 @@ export const EntityCard: React.FC<{
                     : 'aspect-[4/5]';
     
     return (
-        <Link to={type === 'guide' ? `/guides/${guideSlug}` : `/reviews/${reviewSlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
+        <Link to={type === 'guide' ? `/guides/${guideSlug}` : `/stories/${reviewSlug}`} className="group block border-2 border-black bg-white hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(217,48,37,1)] transition-all duration-200 h-full flex flex-col">
                     <div className={`relative ${aspectClass} border-b-2 border-black overflow-hidden`}>
                         <SecureImage 
                             src={article.image} 

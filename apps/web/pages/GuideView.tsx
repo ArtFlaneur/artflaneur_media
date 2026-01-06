@@ -317,7 +317,7 @@ const GuideView: React.FC = () => {
                         <PortableTextRenderer value={guide.body} />
                     </div>
                 )}
-                <div className="relative border-l-2 border-black ml-4 md:ml-6 space-y-8">
+                <div className="relative border-l-2 border-black ml-4 md:ml-6 space-y-8 pb-10">
                                         {stops.length === 0 && (
                                             <div className="pl-8">
                                                 <p className="font-mono text-sm text-gray-500">Stops coming soon.</p>
@@ -401,10 +401,13 @@ const GuideView: React.FC = () => {
                                 <>
                                     <div className="absolute -left-[5px] bottom-[-24px] w-2 h-2 border-r-2 border-b-2 border-black transform rotate-45"></div>
                                 </>
-                            )}                            {index === stops.length - 1 && (
-                                <div className="absolute -left-[2px] bottom-[-32px] w-8 h-0 border-t-2 border-black"></div>
-                            )}                        </div>
+                            )}
+                        </div>
                     )})}
+
+                    {stops.length > 0 && (
+                        <div className="absolute left-0 bottom-0 w-8 h-0 border-t-2 border-black -translate-x-1/2" />
+                    )}
                 </div>
             </div>
 

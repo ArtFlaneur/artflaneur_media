@@ -303,9 +303,8 @@ export const Footer: React.FC = () => {
                     <h4 className="text-gray-500 uppercase tracking-widest mb-4">Contact</h4>
                     <ul className="space-y-2 text-xs">
                         <li className="text-white font-bold">Art Flaneur Global Pty Ltd</li>
-                        <li>ABN 27 672 710 520</li>
                         <li>
-                            <a href="mailto:info@artflaneur.com.au" className="hover:text-art-yellow">
+                            <a href="mailto:admin@artflaneur.art" className="hover:text-art-yellow">
                                 admin@artflaneur.art
                             </a>
                         </li>

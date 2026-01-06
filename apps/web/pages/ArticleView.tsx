@@ -1,19 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Facebook, Twitter, Linkedin, MapPin, Ticket, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Facebook, Twitter, Linkedin, MapPin, Ticket, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, BookOpen, Film } from 'lucide-react';
 import { ArticleCard } from '../components/Shared';
 import PortableTextRenderer from '../components/PortableTextRenderer';
 import { client } from '../sanity/lib/client';
-import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
+import { REVIEW_QUERY, REVIEWS_QUERY, ARTICLE_QUERY } from '../sanity/lib/queries';
 import { BlockContent } from '../sanity/types';
-import { REVIEW_QUERYResult, REVIEWS_QUERYResult, ExternalExhibitionReference } from '../sanity/types';
+import { REVIEW_QUERYResult, REVIEWS_QUERYResult, ARTICLE_QUERYResult, ExternalExhibitionReference } from '../sanity/types';
 import { Article, ContentType } from '../types';
 import { getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
 import { fetchExhibitionById, fetchGalleryById, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
 import { useSeo } from '../lib/useSeo';
 
-type ReviewLike = (REVIEW_QUERYResult | REVIEWS_QUERYResult[number]) & {
+type StoryDocument = ARTICLE_QUERYResult | REVIEW_QUERYResult;
+
+type ReviewLike = (REVIEW_QUERYResult | REVIEWS_QUERYResult[number] | ARTICLE_QUERYResult) & {
   externalExhibition?: ExternalExhibitionReference | null;
+  contentType?: string;
 };
 
 const isFullReview = (review: ReviewLike): review is REVIEW_QUERYResult => 'sponsorship' in review;
@@ -216,7 +219,7 @@ const badgeTemplateText: Record<string, string> = {
   default: 'Supported by {logo}',
 };
 
-const getSponsorBadge = (review: REVIEW_QUERYResult | null) => {
+const getSponsorBadge = (review: StoryDocument | null) => {
   const sponsorship = review?.sponsorship;
   const sponsor = sponsorship?.sponsor;
 
@@ -237,7 +240,7 @@ const getSponsorBadge = (review: REVIEW_QUERYResult | null) => {
 
 type SharePlatform = 'facebook' | 'twitter' | 'linkedin';
 
-type EnrichedReview = REVIEW_QUERYResult & {
+type EnrichedReview = StoryDocument & {
   resolvedExternalExhibition?: GraphqlExhibition | null;
   resolvedExternalGallery?: GraphqlGallery | null;
   _updatedAt?: string;
@@ -267,18 +270,28 @@ const ArticleView: React.FC = () => {
       setError(null);
 
       try {
-        const reviewData = await client.fetch<REVIEW_QUERYResult>(REVIEW_QUERY, {slug: id});
+        // Try to fetch as article first (new type)
+        let reviewData: StoryDocument | null = await client.fetch<ARTICLE_QUERYResult | null>(
+          ARTICLE_QUERY,
+          {slug: id},
+        );
+        
+        // If not found, try as review (legacy type)
+        if (!reviewData) {
+          reviewData = await client.fetch<REVIEW_QUERYResult | null>(REVIEW_QUERY, {slug: id});
+        }
+        
         if (!isMounted) return;
 
         if (!reviewData) {
-          setError('We could not find this review.');
+          setError('We could not find this story.');
           setReview(null);
           setRelatedArticles([]);
           setLoading(false);
           return;
         }
 
-        // Hydrate external exhibition + gallery if present
+        // Hydrate external exhibition + gallery if present (only for exhibition reviews)
         let resolvedExternalExhibition: GraphqlExhibition | null = null;
         let resolvedExternalGallery: GraphqlGallery | null = null;
 
@@ -311,9 +324,9 @@ const ArticleView: React.FC = () => {
           .map(mapReviewToArticle);
         setRelatedArticles(related);
       } catch (err) {
-        console.error('❌ Error fetching review:', err);
+        console.error('❌ Error fetching story:', err);
         if (!isMounted) return;
-        setError('Unable to load this review right now.');
+        setError('Unable to load this story right now.');
         setReview(null);
         setRelatedArticles([]);
       } finally {
@@ -509,7 +522,7 @@ const ArticleView: React.FC = () => {
       },
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': `https://www.artflaneur.com.au/reviews/${article.slug}`,
+        '@id': `https://www.artflaneur.com.au/stories/${article.slug}`,
       },
       ...(review.rating && {
         reviewRating: {
@@ -536,7 +549,7 @@ const ArticleView: React.FC = () => {
     title: seoTitle,
     description: seoDescription,
     imageUrl: article?.image,
-    canonicalUrl: article ? `https://www.artflaneur.com.au/reviews/${article.slug}` : undefined,
+    canonicalUrl: article ? `https://www.artflaneur.com.au/stories/${article.slug}` : undefined,
     ogType: 'article',
     jsonLd: articleJsonLd,
   });
@@ -555,7 +568,7 @@ const ArticleView: React.FC = () => {
         <div className="space-y-4">
           <p className="font-mono text-sm uppercase tracking-[0.3em]">{error ?? 'Review not found'}</p>
           <Link
-            to="/reviews"
+            to="/stories"
             className="inline-flex items-center gap-3 px-6 py-3 border-2 border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
           >
             Back to articles
