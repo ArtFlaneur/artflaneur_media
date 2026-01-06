@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Facebook, Twitter, Linkedin, MapPin, Clock, Ticket, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Facebook, Twitter, Linkedin, MapPin, Ticket, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '../components/Shared';
 import PortableTextRenderer from '../components/PortableTextRenderer';
 import { client } from '../sanity/lib/client';
@@ -8,7 +8,7 @@ import { REVIEW_QUERY, REVIEWS_QUERY } from '../sanity/lib/queries';
 import { BlockContent } from '../sanity/types';
 import { REVIEW_QUERYResult, REVIEWS_QUERYResult, ExternalExhibitionReference } from '../sanity/types';
 import { Article, ContentType } from '../types';
-import { formatWorkingHoursSchedule, getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
+import { getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
 import { fetchExhibitionById, fetchGalleryById, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
 import { useSeo } from '../lib/useSeo';
 
@@ -128,27 +128,6 @@ const formatExhibitionWindow = (
   }
 
   return null;
-};
-
-const getTodaysScheduleEntry = (schedule: string[]): string | null => {
-  if (!schedule.length) return null;
-  const jsDay = new Date().getDay(); // Sunday = 0
-  const index = (jsDay + 6) % 7; // Align to Monday-first array
-  return schedule[index] ?? null;
-};
-
-const stripDayLabel = (entry: string) => entry.replace(/^[^:]+:\s*/, '').trim();
-
-const normalizeHoursText = (value?: string | null) =>
-  value ? value.replace(/(\d{1,2})\.(\d{2})/g, '$1:$2') : '';
-
-const formatSchedulePreviewLine = (entry: string) => {
-  const normalized = normalizeHoursText(entry);
-  const [day, ...rest] = normalized.split(':');
-  if (!rest.length) return normalized;
-  const remainder = rest.join(':').trim();
-  const shortDay = (day?.trim().slice(0, 3) || '').replace(/\.$/, '');
-  return remainder ? `${shortDay}: ${remainder}` : `${shortDay}: Closed`;
 };
 
 const deriveAdmissionDetails = (
@@ -403,48 +382,23 @@ const ArticleView: React.FC = () => {
   const galleryMeta = useMemo(() => extractGalleryMeta(review), [review]);
   const location = galleryMeta.name ? `${galleryMeta.name}${galleryMeta.city ? `, ${galleryMeta.city}` : ''}` : 'Gallery Location';
 
-  const galleryAddress =
-    review?.resolvedExternalGallery?.fulladdress ??
-    review?.externalExhibition?.gallery?.address ??
-    galleryMeta.address ??
-    galleryMeta.city ??
+  const hostGalleryName = galleryMeta.name;
+  
+  const galleryId =
+    review?.resolvedExternalGallery?.id ??
+    review?.externalExhibition?.gallery?.id ??
     null;
+  const galleryLink = galleryId ? `/galleries/${galleryId}` : null;
+  
   const galleryWebsite = review?.resolvedExternalGallery?.placeurl ?? galleryMeta.website ?? null;
   const galleryWebsiteLabel = galleryWebsite
     ? getDisplayDomain(galleryWebsite) ?? galleryWebsite.replace(/^https?:\/\//i, '').replace(/\/$/, '')
     : null;
-  const hostGalleryName = galleryMeta.name;
 
   const exhibitionTimeline = useMemo(() => {
     const formatted = formatExhibitionWindow(review?.resolvedExternalExhibition, review?.externalExhibition);
     return formatted ?? {primary: 'Dates to be announced', secondary: null};
   }, [review?.externalExhibition, review?.resolvedExternalExhibition]);
-
-  const rawOpeningHours =
-    review?.resolvedExternalGallery?.openinghours?.trim() ||
-    review?.externalExhibition?.gallery?.openingHours?.trim() ||
-    galleryMeta.openingHours?.trim() ||
-    null;
-  const openingHoursSchedule = useMemo(
-    () => (rawOpeningHours ? formatWorkingHoursSchedule(rawOpeningHours) : []),
-    [rawOpeningHours],
-  );
-  const todaysScheduleLine = useMemo(() => getTodaysScheduleEntry(openingHoursSchedule), [openingHoursSchedule]);
-  const weeklyHoursPreview = useMemo(
-    () => (openingHoursSchedule.length ? openingHoursSchedule.slice(0, 3) : []),
-    [openingHoursSchedule],
-  );
-  const weeklyHoursPreviewFormatted = useMemo(
-    () => weeklyHoursPreview.map(formatSchedulePreviewLine),
-    [weeklyHoursPreview],
-  );
-  const showHoursEllipsis = openingHoursSchedule.length > weeklyHoursPreview.length;
-
-  const openTodayLabel = todaysScheduleLine
-    ? stripDayLabel(normalizeHoursText(todaysScheduleLine))
-    : rawOpeningHours
-      ? rawOpeningHours.split(/\r?\n/)[0]?.trim() ?? null
-      : null;
 
   const admissionDetails = useMemo(
     () =>
@@ -494,10 +448,6 @@ const ArticleView: React.FC = () => {
   const exhibitionTitle = review?.resolvedExternalExhibition?.title ?? review?.externalExhibition?.title ?? null;
   const exhibitionLinkId = review?.resolvedExternalExhibition?.id ?? review?.externalExhibition?.id ?? null;
   const exhibitionHref = exhibitionLinkId ? `/exhibitions/${exhibitionLinkId}` : null;
-
-  const openTodayStatus = todaysScheduleLine
-    ? stripDayLabel(normalizeHoursText(todaysScheduleLine)).split(':')[0].trim()
-    : null;
 
   const curatorList: LinkedDocument[] = [];
 
@@ -786,33 +736,23 @@ const ArticleView: React.FC = () => {
                          )}
                          
                          {/* Gallery Name */}
-                         <div className="flex items-start gap-3">
+                         {hostGalleryName && (
+                           <div className="flex items-start gap-3">
                              <MapPin className="w-4 h-4 mt-1" />
                              <div className="flex-1">
-                                 <p className="font-bold">{hostGalleryName ?? location}</p>
-                                 {galleryWebsite && galleryWebsiteLabel && (
-                                   <a
-                                     href={galleryWebsite}
-                                     target="_blank"
-                                     rel="noreferrer"
-                                     className="inline-flex items-center justify-center border-2 border-black px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest hover:bg-black hover:text-white transition-colors mt-2"
-                                   >
-                                     Visit
-                                   </a>
-                                 )}
-                                 <p className="text-gray-500 text-xs mt-2">{galleryAddress ?? 'Address available soon'}</p>
+                               {galleryLink ? (
+                                 <Link
+                                   to={galleryLink}
+                                   className="font-bold hover:underline underline-offset-2"
+                                 >
+                                   {hostGalleryName}
+                                 </Link>
+                               ) : (
+                                 <p className="font-bold">{hostGalleryName}</p>
+                               )}
                              </div>
-                         </div>
-                         
-                         {/* Open Today Status */}
-                         <div className="flex items-start gap-3">
-                             <Clock className="w-4 h-4 mt-1" />
-                             <div>
-                                <p className="font-bold">
-                                  {openTodayStatus ? `Open today: ${openTodayStatus}` : openTodayLabel ? `Open today: ${openTodayLabel}` : 'Opening hours available soon'}
-                                </p>
-                             </div>
-                         </div>
+                           </div>
+                         )}
                          
                          {/* Artist */}
                          <div className="border-t border-gray-200 pt-4">
