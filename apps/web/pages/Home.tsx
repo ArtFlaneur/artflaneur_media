@@ -409,7 +409,7 @@ const Home: React.FC = () => {
                 <div className="p-8 md:p-12 flex flex-col justify-center bg-art-paper h-full">
                     {/* Feature Badge - внутри контентного блока */}
                     <div className="absolute top-4 left-4 md:top-0 md:left-0 bg-art-red text-white px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10">
-                      {loading ? 'Syncing Latest Review' : 'Review of the Week'}
+                      {loading ? 'Syncing Latest Article' : 'Article of the Week'}
                     </div>
                     {heroArticle ? (
                       <>
@@ -424,7 +424,7 @@ const Home: React.FC = () => {
                             {heroArticle.subtitle}
                         </p>
             <Link to={`/reviews/${heroArticle.slug}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
-                            Read Full Review <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                            Read Full Article <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                         </Link>
                       </>
                     ) : (
@@ -508,10 +508,10 @@ const Home: React.FC = () => {
       </section>
 
 
-      {/* Latest Reviews Grid */}
+      {/* Latest Articles Grid */}
       <section className="bg-white relative z-0 pt-16 md:pt-24 pb-24">
         <div className="container mx-auto px-4 md:px-6">
-          <SectionHeader title="Latest Reviews" linkText="Archive" linkTo="/reviews" />
+          <SectionHeader title="Latest Articles" linkText="Archive" linkTo="/reviews" />
           {error && (
             <p className="text-sm font-mono text-red-600 mb-6">{error}</p>
           )}
@@ -524,7 +524,7 @@ const Home: React.FC = () => {
               ))}
             </div>
           ) : (
-            <p className="font-mono text-gray-500">No reviews published yet.</p>
+            <p className="font-mono text-gray-500">No articles published yet.</p>
           )}
         </div>
       </section>

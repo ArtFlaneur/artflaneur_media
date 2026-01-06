@@ -1,5 +1,5 @@
 export enum ContentType {
-  REVIEW = 'Review',
+  REVIEW = 'Article',
   GUIDE = 'Guide',
   STORY = 'Artist Story',
   NEWS = 'News',

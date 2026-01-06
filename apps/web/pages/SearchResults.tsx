@@ -417,7 +417,7 @@ const SearchResults: React.FC = () => {
             {results.reviews.length > 0 && (
               <section>
                 <h2 className="text-3xl font-black uppercase mb-6 border-l-4 border-art-red pl-4">
-                  Reviews ({results.reviews.length})
+                  Articles ({results.reviews.length})
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {results.reviews.map((review) => (

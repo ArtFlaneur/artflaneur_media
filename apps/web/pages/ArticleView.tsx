@@ -558,7 +558,7 @@ const ArticleView: React.FC = () => {
             to="/reviews"
             className="inline-flex items-center gap-3 px-6 py-3 border-2 border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
           >
-            Back to reviews
+            Back to articles
           </Link>
         </div>
       </div>

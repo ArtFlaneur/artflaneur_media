@@ -1,7 +1,7 @@
 import { PricingTier } from './types';
 
 export const NAV_ITEMS = [
-  { label: 'Reviews', path: '/reviews' },
+  { label: 'Articles', path: '/reviews' },
   { label: 'Galleries', path: '/galleries' },
   { label: 'Exhibitions', path: '/exhibitions' },
   { label: 'Guides', path: '/guides' },

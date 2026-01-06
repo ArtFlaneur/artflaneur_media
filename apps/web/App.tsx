@@ -70,7 +70,7 @@ const App: React.FC = () => {
                 <Route path="/search" element={<SearchResults />} />
                 
                 {/* Listings */}
-                <Route path="/reviews" element={<ListingPage title="Reviews" type="reviews" />} />
+                <Route path="/reviews" element={<ListingPage title="Articles" type="reviews" />} />
                 <Route path="/exhibitions" element={<ListingPage title="Exhibitions" type="exhibitions" />} />
                 <Route path="/artists" element={<ListingPage title="Artists" type="artists" />} />
                 <Route path="/guides" element={<ListingPage title="City Guides" type="guides" />} />

@@ -14,7 +14,7 @@ export const structure = (S: StructureBuilder) =>
                 .title('In Review')
                 .child(
                   S.documentList()
-                    .title('Reviews in Review')
+                    .title('Articles in Review')
                     .filter('_type == "review" && publishStatus == "inReview"')
                     .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
@@ -22,7 +22,7 @@ export const structure = (S: StructureBuilder) =>
                 .title('Needs Revision')
                 .child(
                   S.documentList()
-                    .title('Reviews Needing Revision')
+                    .title('Articles Needing Revision')
                     .filter('_type == "review" && publishStatus == "needsRevision"')
                     .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
@@ -30,7 +30,7 @@ export const structure = (S: StructureBuilder) =>
                 .title('Approved')
                 .child(
                   S.documentList()
-                    .title('Approved Reviews')
+                    .title('Approved Articles')
                     .filter('_type == "review" && publishStatus == "approved"')
                     .defaultOrdering([{field: '_updatedAt', direction: 'desc'}])
                 ),
@@ -59,11 +59,11 @@ export const structure = (S: StructureBuilder) =>
       
       // Content
       S.listItem()
-        .title('Reviews')
+        .title('Articles')
         .schemaType('review')
         .child(
           S.documentList()
-            .title('Reviews')
+            .title('Articles')
             .filter('_type == "review"')
             .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
         ),

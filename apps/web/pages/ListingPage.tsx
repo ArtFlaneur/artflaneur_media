@@ -7,6 +7,7 @@ import {
   REVIEWS_QUERY,
   AUTHORS_QUERY,
   GUIDES_QUERY,
+  GUIDES_CITIES_QUERY,
 } from '../sanity/lib/queries';
 import {
   REVIEWS_QUERYResult,
@@ -85,6 +86,18 @@ interface CountryMultiSelectProps {
   options: CountryOption[];
   value: string[];
   onChange: (codes: string[]) => void;
+}
+
+interface CityOption {
+  name: string;
+}
+
+interface CityMultiSelectProps {
+  label: string;
+  placeholder: string;
+  options: CityOption[];
+  value: string[];
+  onChange: (cities: string[]) => void;
 }
 
 const CountryMultiSelect: React.FC<CountryMultiSelectProps> = ({
@@ -181,6 +194,73 @@ const CountryMultiSelect: React.FC<CountryMultiSelectProps> = ({
   );
 };
 
+const CityMultiSelect: React.FC<CityMultiSelectProps> = ({ label, placeholder, options, value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handler);
+    }
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  const toggleCity = (city: string) => {
+    const newValue = value.includes(city)
+      ? value.filter((c) => c !== city)
+      : [...value, city];
+    onChange(newValue);
+  };
+
+  const displayText = value.length === 0
+    ? placeholder
+    : value.length === 1
+      ? value[0]
+      : `${value.length} cities`;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between gap-2 px-4 py-2 border-2 border-black bg-white hover:bg-gray-50 transition-colors min-w-[200px]"
+      >
+        <span className={value.length === 0 ? 'text-gray-400' : ''}>{displayText}</span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-black shadow-lg z-50 max-h-[300px] overflow-y-auto">
+          {options.length > 0 ? (
+            options.map((option) => {
+              const isSelected = value.includes(option.name);
+              return (
+                <button
+                  key={option.name}
+                  type="button"
+                  onClick={() => toggleCity(option.name)}
+                  className={`w-full text-left px-4 py-2 hover:bg-art-yellow transition-colors border-b border-gray-200 last:border-b-0 ${
+                    isSelected ? 'bg-art-blue text-white hover:bg-art-blue' : ''
+                  }`}
+                >
+                  {option.name}
+                </button>
+              );
+            })
+          ) : (
+            <div className="px-4 py-3 text-xs text-gray-500">No cities available.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const buildCountryFilter = (aliases: string[]): GalleryFilterInput | undefined => {
   if (!aliases.length) return undefined;
   if (aliases.length === 1) {
@@ -241,7 +321,7 @@ const mapReviewToArticle = (review: REVIEWS_QUERYResult[number]): Article => ({
   id: review._id,
   slug: review.slug?.current ?? review._id,
   type: ContentType.REVIEW,
-  title: review.title ?? 'Untitled Review',
+  title: review.title ?? 'Untitled Article',
   subtitle: review.excerpt ?? '',
   image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/600/600`,
   date: formatDate(review.publishedAt),
@@ -338,6 +418,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
   const [filteredCount, setFilteredCount] = useState<number | null>(null);
   const [countingItems, setCountingItems] = useState(false);
   const [countryMetaReady, setCountryMetaReady] = useState(true);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const searchParamString = searchParams.toString();
   
   // Static list of all countries (must be before selectedCountry)
@@ -360,6 +441,10 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
     () => countryAliases.map((alias) => alias.trim().toLowerCase()),
     [countryAliases]
   );
+  const selectedCities = useMemo(() => {
+    const params = new URLSearchParams(searchParamString);
+    return params.getAll('city').filter(Boolean);
+  }, [searchParamString]);
   const supportsCountryCount = type === 'galleries' || type === 'artists';
   const showCountryFilter = supportsCountryCount || type === 'exhibitions';
   useSeo({
@@ -372,7 +457,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           : type === 'artists'
             ? 'Browse artists. Explore biographies and exhibitions.'
             : type === 'reviews'
-              ? 'Read exhibition reviews and editorial features from Art Flaneur.'
+              ? 'Read articles and editorial features from Art Flaneur.'
               : 'Explore Art Flaneur content.',
   });
 
@@ -387,6 +472,42 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
       cancelled = true;
     };
   }, []);
+
+  // Load available cities for guides
+  useEffect(() => {
+    if (type !== 'guides') {
+      setAvailableCities([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchCities = async () => {
+      try {
+        const result = await client.fetch<Array<{ city: string | null }>>(GUIDES_CITIES_QUERY);
+        if (!cancelled) {
+          const uniqueCities = Array.from(
+            new Set(
+              result
+                .map((item) => item.city)
+                .filter((city): city is string => Boolean(city))
+            )
+          ).sort();
+          setAvailableCities(uniqueCities);
+        }
+      } catch (error) {
+        console.error('Failed to fetch cities:', error);
+        if (!cancelled) {
+          setAvailableCities([]);
+        }
+      }
+    };
+
+    fetchCities();
+    return () => {
+      cancelled = true;
+    };
+  }, [type]);
 
   useEffect(() => {
     if (type !== 'exhibitions' || !selectedCountryCodes.length || !countryAliases.length) {
@@ -442,6 +563,21 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
         return;
       }
       uniqueCodes.forEach((code) => next.append('country', code));
+      setSearchParams(next, { replace: true });
+    },
+    [searchParamString, setSearchParams]
+  );
+
+  const setSelectedCities = useCallback(
+    (cities: string[]) => {
+      const next = new URLSearchParams(searchParamString);
+      next.delete('city');
+      const uniqueCities = Array.from(new Set(cities.filter(Boolean)));
+      if (uniqueCities.length === 0) {
+        setSearchParams(next, { replace: true });
+        return;
+      }
+      uniqueCities.forEach((city) => next.append('city', city));
       setSearchParams(next, { replace: true });
     },
     [searchParamString, setSearchParams]
@@ -870,7 +1006,17 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
           }
           case 'guides': {
             const guides = await client.fetch<GUIDES_QUERYResult>(GUIDES_QUERY);
-            mapped = (guides ?? []).map(mapGuideToCard);
+            let filteredGuides = guides ?? [];
+            
+            // Filter by selected cities if any
+            if (selectedCities.length > 0) {
+              const citySet = new Set(selectedCities.map(c => c.toLowerCase()));
+              filteredGuides = filteredGuides.filter(guide => 
+                guide.city && citySet.has(guide.city.toLowerCase())
+              );
+            }
+            
+            mapped = filteredGuides.map(mapGuideToCard);
             break;
           }
           case 'ambassadors': {
@@ -979,6 +1125,18 @@ const ListingPage: React.FC<ListingPageProps> = ({ title, type }) => {
                   options={countries}
                   value={selectedCountryCodes}
                   onChange={setSelectedCountryCodes}
+                />
+              </div>
+            )}
+
+            {type === 'guides' && (
+              <div className="min-w-[220px]">
+                <CityMultiSelect
+                  label="City"
+                  placeholder="City"
+                  options={availableCities.map(city => ({ name: city }))}
+                  value={selectedCities}
+                  onChange={setSelectedCities}
                 />
               </div>
             )}

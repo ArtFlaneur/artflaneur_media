@@ -882,6 +882,13 @@ export const GUIDES_QUERY = defineQuery(`*[
   }
 }`)
 
+// Query to get unique cities from guides
+export const GUIDES_CITIES_QUERY = defineQuery(`*[
+  _type == "guide"
+  && publishStatus == "published"
+  && defined(city)
+]{ "city": city } | order(city asc)`)
+
 // Guide query (single)
 export const GUIDE_QUERY = defineQuery(`*[
   _type == "guide"

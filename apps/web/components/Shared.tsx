@@ -199,7 +199,7 @@ export const EntityCard: React.FC<{
                             className="object-cover w-full h-full" 
                         />
             <div className="absolute top-0 left-0 bg-white px-3 py-1 text-xs font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10 group-hover:bg-art-blue group-hover:text-white transition-colors">
-                {article.type}
+                {type === 'guide' ? (data as Guide).city : article.type}
             </div>
           </div>
           <div className="p-5 flex flex-col flex-grow justify-between">

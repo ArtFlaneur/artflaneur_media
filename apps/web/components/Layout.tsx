@@ -41,7 +41,7 @@ const Ticker: React.FC = () => {
   const [messages, setMessages] = useState<string[]>([
     '• Contemporary Art Guide',
     '• Available on iOS & Android',
-    '• New Exhibition Reviews Weekly',
+    '• New Exhibition Articles Weekly',
   ]);
 
   useEffect(() => {
@@ -242,12 +242,14 @@ export const Footer: React.FC = () => {
       <div className="container mx-auto px-4 md:px-6 py-16">
         <div className="flex flex-col md:flex-row justify-between items-start gap-12">
             <div className="max-w-md">
-                <div className="mb-8 invert filter brightness-0 grayscale opacity-100">
-                     <BrandLogo />
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="invert filter brightness-0 grayscale opacity-100 flex-shrink-0">
+                         <BrandLogo />
+                    </div>
+                    <h2 className="font-serif text-xl md:text-2xl">
+                        Curating the chaos of the contemporary art world.
+                    </h2>
                 </div>
-                <h2 className="font-serif text-3xl md:text-4xl mb-6">
-                    Curating the chaos of the contemporary art world.
-                </h2>
                 <div className="flex gap-4">
                     <a 
                         href="https://www.instagram.com/artflaneur.art/" 
@@ -276,8 +278,8 @@ export const Footer: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-12 font-mono text-sm">
-                 <div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-12 font-mono text-sm w-full md:w-auto justify-items-center md:justify-items-start">
+                 <div className="text-center md:text-left">
                     <h4 className="text-gray-500 uppercase tracking-widest mb-4">Platform</h4>
                     <ul className="space-y-2">
                         <li><Link to="/about" className="hover:text-art-yellow">About</Link></li>
