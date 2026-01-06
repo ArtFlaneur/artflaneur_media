@@ -627,7 +627,7 @@ const ArticleView: React.FC = () => {
                 <span className="font-mono text-art-red font-bold uppercase tracking-widest text-sm border border-art-red self-start px-2 py-1">
                     {article.type}
                 </span>
-                <h1 className="text-4xl md:text-7xl font-black uppercase leading-[0.9] max-w-5xl">
+                <h1 className="text-2xl md:text-3xl font-black uppercase leading-tight max-w-4xl">
                     {article.title}
                 </h1>
             </div>
@@ -797,14 +797,18 @@ const ArticleView: React.FC = () => {
                            <div>
                              <p className="font-bold uppercase text-xs tracking-widest mb-2">Artist{artistList.length > 1 ? 's' : ''}</p>
                              {artistList.length ? (
-                               <div className="flex flex-wrap gap-2 text-base font-mono">
-                                 {artistList.map((artist) => {
+                               <p className="text-base font-mono leading-relaxed">
+                                 {artistList.map((artist, index) => {
                                    const label = artist?.name ?? 'Unknown artist';
+                                   const isLast = index === artistList.length - 1;
                                    return (
-                                     <span key={artist._id}>{label}</span>
+                                     <React.Fragment key={artist._id}>
+                                       {label}
+                                       {!isLast && ', '}
+                                     </React.Fragment>
                                    );
                                  })}
-                               </div>
+                               </p>
                              ) : (
                                <p className="text-gray-500 text-xs">Artist details coming soon.</p>
                              )}
@@ -825,8 +829,8 @@ const ArticleView: React.FC = () => {
 
             {/* Content Body */}
             <div className="lg:col-span-8 lg:col-start-5 order-1 lg:order-2">
-                <div className="prose prose-lg max-w-none">
-                     <p className="font-serif text-2xl md:text-3xl leading-relaxed text-black mb-8 italic">
+                 <div className="prose prose-lg max-w-none">
+                   <p className="font-serif text-lg md:text-xl leading-relaxed text-black mb-8 italic">
                         {article.subtitle}
                     </p>
                     <PortableTextRenderer value={review?.body} />

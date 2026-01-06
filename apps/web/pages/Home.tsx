@@ -417,10 +417,10 @@ const Home: React.FC = () => {
                             <span className="bg-black text-white px-2 py-1 text-xs font-mono uppercase">{heroArticle.type}</span>
                             <span className="border border-black px-2 py-1 text-xs font-mono uppercase">{heroArticle.date}</span>
                         </div>
-                        <h1 className="text-4xl md:text-6xl font-black uppercase leading-[0.9] mb-6">
+                        <h1 className="text-2xl md:text-3xl font-black uppercase leading-tight mb-6">
                             {heroArticle.title}
                         </h1>
-                        <p className="font-serif text-xl md:text-2xl italic text-gray-600 mb-8 border-l-4 border-art-yellow pl-4">
+                        <p className="font-serif text-lg md:text-xl italic text-gray-600 mb-6 border-l-4 border-art-yellow pl-4">
                             {heroArticle.subtitle}
                         </p>
             <Link to={`/reviews/${heroArticle.slug}`} className="inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest hover:text-art-red transition-colors group">
@@ -500,22 +500,24 @@ const Home: React.FC = () => {
 
 
       {/* Latest Reviews Grid */}
-      <section className="py-24 container mx-auto px-4 md:px-6">
-        <SectionHeader title="Latest Reviews" linkText="Archive" linkTo="/reviews" />
-        {error && (
-          <p className="text-sm font-mono text-red-600 mb-6">{error}</p>
-        )}
-        {loading && !latestReviews.length ? (
-          <p className="font-mono text-gray-500">Loading editor picks…</p>
-        ) : latestReviews.length ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {latestReviews.map((article) => (
-              <ArticleCard key={article.slug ?? article.id} article={article} imageAspect="square" />
-            ))}
-          </div>
-        ) : (
-          <p className="font-mono text-gray-500">No reviews published yet.</p>
-        )}
+      <section className="bg-white relative z-0 pt-16 md:pt-24 pb-24">
+        <div className="container mx-auto px-4 md:px-6">
+          <SectionHeader title="Latest Reviews" linkText="Archive" linkTo="/reviews" />
+          {error && (
+            <p className="text-sm font-mono text-red-600 mb-6">{error}</p>
+          )}
+          {loading && !latestReviews.length ? (
+            <p className="font-mono text-gray-500">Loading editor picks…</p>
+          ) : latestReviews.length ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {latestReviews.map((article) => (
+                <ArticleCard key={article.slug ?? article.id} article={article} imageAspect="square" />
+              ))}
+            </div>
+          ) : (
+            <p className="font-mono text-gray-500">No reviews published yet.</p>
+          )}
+        </div>
       </section>
 
       {cityPicks.length > 0 && (

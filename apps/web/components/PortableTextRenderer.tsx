@@ -74,10 +74,17 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
               
               // Apply marks (bold, italic, etc.)
               if (child.marks?.includes('strong')) {
-                text = <strong key={`${block._key}-child-${childIndex}`}>{text}</strong>;
+                text = (
+                  <strong
+                    key={`${block._key}-child-strong-${childIndex}`}
+                    className="font-serif font-bold tracking-tight not-italic text-current"
+                  >
+                    {text}
+                  </strong>
+                );
               }
               if (child.marks?.includes('em')) {
-                text = <em key={`${block._key}-child-${childIndex}`}>{text}</em>;
+                text = <em key={`${block._key}-child-em-${childIndex}`}>{text}</em>;
               }
 
               // Find and render links
