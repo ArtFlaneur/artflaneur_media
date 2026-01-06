@@ -25,45 +25,46 @@ const GuideView: React.FC = () => {
 
     const appDownloadLink = useMemo(() => getAppDownloadLink(), []);
 
-    const hydrateStops = React.useCallback(async (stops: RawGuideStop[] = []): Promise<GuideStop[]> => {
-        const graphqlIds = stops
-            .map((stop) => stop?.externalGallery?.id)
-            .filter((value): value is string => Boolean(value));
-        const uniqueIds = Array.from(new Set(graphqlIds));
-
-        if (!uniqueIds.length) {
-            return stops as GuideStop[];
-        }
-
-        const pairs = await Promise.all(
-            uniqueIds.map(async (galleryId) => {
-                try {
-                    const gallery = await fetchGalleryById(galleryId);
-                    return gallery ? ([galleryId, gallery] as const) : null;
-                } catch (err) {
-                    console.error('Failed to fetch gallery for guide stop', galleryId, err);
-                    return null;
-                }
-            }),
-        );
-
-        const galleryMap = new Map<string, GraphqlGallery>();
-        pairs.forEach((pair) => {
-            if (pair) {
-                galleryMap.set(pair[0], pair[1]);
-            }
-        });
-
-        return stops.map((stop) => ({
-            ...stop,
-            resolvedExternalGallery: stop?.externalGallery?.id
-                ? galleryMap.get(stop.externalGallery.id) ?? null
-                : null,
-        }));
-    }, []);
-
   useEffect(() => {
     let isMounted = true;
+    
+    const hydrateStops = async (stops: RawGuideStop[] = []): Promise<GuideStop[]> => {
+      const graphqlIds = stops
+        .map((stop) => stop?.externalGallery?.id)
+        .filter((value): value is string => Boolean(value));
+      const uniqueIds = Array.from(new Set(graphqlIds));
+
+      if (!uniqueIds.length) {
+        return stops as GuideStop[];
+      }
+
+      const pairs = await Promise.all(
+        uniqueIds.map(async (galleryId) => {
+          try {
+            const gallery = await fetchGalleryById(galleryId);
+            return gallery ? ([galleryId, gallery] as const) : null;
+          } catch (err) {
+            console.error('Failed to fetch gallery for guide stop', galleryId, err);
+            return null;
+          }
+        }),
+      );
+
+      const galleryMap = new Map<string, GraphqlGallery>();
+      pairs.forEach((pair) => {
+        if (pair) {
+          galleryMap.set(pair[0], pair[1]);
+        }
+      });
+
+      return stops.map((stop) => ({
+        ...stop,
+        resolvedExternalGallery: stop?.externalGallery?.id
+          ? galleryMap.get(stop.externalGallery.id) ?? null
+          : null,
+      }));
+    };
+    
     const fetchGuide = async () => {
       if (!id) {
         setError('Missing guide identifier.');
@@ -100,7 +101,7 @@ const GuideView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, hydrateStops]);
+  }, [id]);
 
     if (loading) {
         return (
