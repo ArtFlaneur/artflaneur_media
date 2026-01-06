@@ -63,44 +63,44 @@ const GuideView: React.FC = () => {
     }, []);
 
   useEffect(() => {
-        let isMounted = true;
+    let isMounted = true;
     const fetchGuide = async () => {
-            if (!id) {
-                setError('Missing guide identifier.');
-                setLoading(false);
-                return;
-            }
+      if (!id) {
+        setError('Missing guide identifier.');
+        setLoading(false);
+        return;
+      }
       
       try {
-                                const guideData = await client.fetch<GUIDE_QUERYResult | null>(GUIDE_QUERY, {slug: id});
-                                if (!isMounted) return;
+        const guideData = await client.fetch<GUIDE_QUERYResult | null>(GUIDE_QUERY, {slug: id});
+        if (!isMounted) return;
 
-                                if (!guideData) {
-                                    setGuide(null);
-                                    setError('Guide not found.');
-                                    setLoading(false);
-                                    return;
-                                }
+        if (!guideData) {
+          setGuide(null);
+          setError('Guide not found.');
+          setLoading(false);
+          return;
+        }
 
-                                const stops = Array.isArray(guideData.stops) ? guideData.stops.filter(Boolean) : [];
-                                const enrichedStops = await hydrateStops(stops as RawGuideStop[]);
-                                if (!isMounted) return;
+        const stops = Array.isArray(guideData.stops) ? guideData.stops.filter(Boolean) : [];
+        const enrichedStops = await hydrateStops(stops as RawGuideStop[]);
+        if (!isMounted) return;
 
-                                setGuide({...guideData, stops: enrichedStops});
-                                setError(null);
-                                setLoading(false);
+        setGuide({...guideData, stops: enrichedStops});
+        setError(null);
+        setLoading(false);
       } catch (error) {
         console.error('❌ Error fetching guide:', error);
-                setError('Unable to load this guide right now.');
+        setError('Unable to load this guide right now.');
         setLoading(false);
       }
     };
     
     fetchGuide();
-        return () => {
-            isMounted = false;
-        };
-    }, [hydrateStops, id]);
+    return () => {
+      isMounted = false;
+    };
+  }, [id, hydrateStops]);
 
     if (loading) {
         return (
