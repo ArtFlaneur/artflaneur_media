@@ -10,6 +10,8 @@ import {
 import { getAppDownloadLink } from '../lib/formatters';
 import SecureImage from '../components/SecureImage';
 import { useSeo } from '../lib/useSeo';
+import { client } from '../sanity/lib/client';
+import { defineQuery } from 'groq';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1600&q=80';
@@ -56,6 +58,7 @@ const ExhibitionView: React.FC = () => {
   const [exhibition, setExhibition] = useState<GraphqlExhibition | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasReview, setHasReview] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -85,6 +88,18 @@ const ExhibitionView: React.FC = () => {
         } else {
           setExhibition(found);
           setError(null);
+          
+          // Check if review exists for this exhibition
+          try {
+            const reviewCheckQuery = defineQuery(`count(*[_type == "review" && publishStatus == "published" && externalExhibition.id == $exhibitionId])`);
+            const reviewCount = await client.fetch<number>(reviewCheckQuery, { exhibitionId: id });
+            if (isMounted) {
+              setHasReview(reviewCount > 0);
+            }
+          } catch (err) {
+            console.error('Failed to check review existence:', err);
+            if (isMounted) setHasReview(false);
+          }
         }
       } catch (err) {
         console.error('❌ Error fetching exhibition:', err);
@@ -263,13 +278,20 @@ const ExhibitionView: React.FC = () => {
                     Add to your planner
                     <ExternalLink className="w-4 h-4" />
                   </a>
-                  <Link
-                    to={`/reviews/${exhibition.id}`}
-                    className="inline-flex items-center justify-between w-full gap-3 px-4 py-3 border-2 border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
-                  >
-                    Read review
-                    <ExternalLink className="w-4 h-4" />
-                  </Link>
+                  {hasReview ? (
+                    <Link
+                      to={`/reviews/${exhibition.id}`}
+                      className="inline-flex items-center justify-between w-full gap-3 px-4 py-3 border-2 border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+                    >
+                      Read review
+                      <ExternalLink className="w-4 h-4" />
+                    </Link>
+                  ) : (
+                    <div className="inline-flex items-center justify-between w-full gap-3 px-4 py-3 border-2 border-gray-300 font-mono text-xs uppercase tracking-widest text-gray-400 cursor-not-allowed">
+                      Read review
+                      <ExternalLink className="w-4 h-4" />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

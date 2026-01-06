@@ -459,12 +459,8 @@ const GalleryView: React.FC = () => {
 
             {/* Exhibitions */}
             <div>
-              <div className="flex items-center justify-between mb-6 border-b-2 border-black pb-3">
+              <div className="mb-6 border-b-2 border-black pb-3">
                 <h2 className="text-3xl font-black uppercase">Current and Future exhibitions</h2>
-                <Link to="/exhibitions" className="font-mono text-xs uppercase flex items-center gap-2 hover:underline">
-                  See all
-                  <ExternalLink className="w-4 h-4" />
-                </Link>
               </div>
               {currentAndFutureExhibitions.length ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

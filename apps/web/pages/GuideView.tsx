@@ -401,8 +401,9 @@ const GuideView: React.FC = () => {
                                 <>
                                     <div className="absolute -left-[5px] bottom-[-24px] w-2 h-2 border-r-2 border-b-2 border-black transform rotate-45"></div>
                                 </>
-                            )}
-                        </div>
+                            )}                            {index === stops.length - 1 && (
+                                <div className="absolute -left-[2px] bottom-[-32px] w-8 h-0 border-t-2 border-black"></div>
+                            )}                        </div>
                     )})}
                 </div>
             </div>
