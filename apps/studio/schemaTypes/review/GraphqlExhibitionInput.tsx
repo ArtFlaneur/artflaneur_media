@@ -40,7 +40,7 @@ interface GraphqlGallery {
 
 type ListExhibitionsResponse = {
   data?: {
-    listAllExhibitions?: {
+    listAllHistoricalExhibitions?: {
       items?: GraphqlExhibition[]
       nextToken?: string | null
     }
@@ -55,7 +55,7 @@ type GetGalleryResponse = {
 
 const SEARCH_EXHIBITIONS_QUERY = `#graphql
   query SearchExhibitions($limit: Int, $nextToken: String) {
-    listAllExhibitions(limit: $limit, nextToken: $nextToken) {
+    listAllHistoricalExhibitions(limit: $limit, nextToken: $nextToken) {
       items {
         id
         title
@@ -110,17 +110,22 @@ async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[
   const results: GraphqlExhibition[] = []
   let nextToken: string | null | undefined = null
   const PAGE_SIZE = 100
-  const MAX_PAGES = 100 // Search up to 10,000 exhibitions (should cover all data)
   const MAX_RESULTS = 50
+  
+  // Stop early if we found enough results - no need to load all pages
+  const EARLY_STOP_THRESHOLD = MAX_RESULTS
 
   if (searchLower.length < MIN_QUERY_LENGTH) {
     console.warn('🔍 [Exhibition Search] Search term too short, skipping request')
     return []
   }
 
-  console.log('🔍 [Exhibition Search] Starting pagination search...')
+  console.log('🔍 [Exhibition Search] Starting pagination search (searching ALL exhibitions including historical)...')
 
-  for (let page = 0; page < MAX_PAGES; page += 1) {
+  let page = 0
+  while (true) {
+    page += 1
+
     const requestBody: {
       query: string
       variables: {limit: number; nextToken: string | null | undefined}
@@ -148,12 +153,12 @@ async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[
     }
 
     const data: ListExhibitionsResponse = await response.json()
-    const items = data.data?.listAllExhibitions?.items ?? []
+    const items = data.data?.listAllHistoricalExhibitions?.items ?? []
     
-    console.log(`🔍 [Exhibition Search] Page ${page + 1} returned ${items.length} items`)
+    console.log(`🔍 [Exhibition Search] Page ${page} returned ${items.length} items`)
     
     // Debug: show first 3 items to understand data structure
-    if (page === 0 && items.length > 0) {
+    if (page === 1 && items.length > 0) {
       console.log('📊 [Exhibition Search] Sample data (first 3 items):', items.slice(0, 3).map(item => ({
         title: item.title,
         gallery: item.galleryname,
@@ -172,10 +177,10 @@ async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[
       return titleMatch || galleryMatch || cityMatch || artistMatch
     })
 
-    console.log(`🔍 [Exhibition Search] Found ${matching.length} matching exhibitions on page ${page + 1}`)
+    console.log(`🔍 [Exhibition Search] Found ${matching.length} matching exhibitions on page ${page}`)
     
     // Debug: if no matches, show why
-    if (matching.length === 0 && page === 0 && items.length > 0) {
+    if (matching.length === 0 && page === 1 && items.length > 0) {
       console.log(`🔍 [Exhibition Search] No matches for "${searchLower}". Checking first item:`, {
         title: items[0].title,
         titleLower: items[0].title?.toLowerCase(),
@@ -185,12 +190,13 @@ async function searchExhibitions(searchTerm: string): Promise<GraphqlExhibition[
     
     results.push(...matching)
 
-    // Stop if we have enough results
-    if (results.length >= MAX_RESULTS) {
+    // Stop early if we found enough results
+    if (results.length >= EARLY_STOP_THRESHOLD) {
+      console.log(`✅ [Exhibition Search] Found ${results.length} results, stopping early`)
       break
     }
 
-    nextToken = data.data?.listAllExhibitions?.nextToken ?? null
+    nextToken = data.data?.listAllHistoricalExhibitions?.nextToken ?? null
     if (!nextToken) {
       console.log('🔍 [Exhibition Search] No more pages')
       break
