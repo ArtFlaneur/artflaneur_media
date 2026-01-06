@@ -165,8 +165,8 @@ const LIST_GALLERIES_QUERY = `#graphql
 `;
 
 const GET_GALLERY_QUERY = `#graphql
-  query GetGalleryById($id: ID!) {
-    getGalleryById(id: $id) {
+  query GetGalleryById($id: ID!, $includeUnapproved: Boolean) {
+    getGalleryById(id: $id, includeUnapproved: $includeUnapproved) {
       id
       galleryname
       country
@@ -581,7 +581,10 @@ export async function fetchHistoricalExhibitionById(id: string): Promise<Graphql
 }
 
 export async function fetchGalleryById(id: string): Promise<GraphqlGallery | null> {
-  const data = await executeGraphQL<{ getGalleryById: GraphqlGallery | null }>(GET_GALLERY_QUERY, { id });
+  const data = await executeGraphQL<{ getGalleryById: GraphqlGallery | null }>(GET_GALLERY_QUERY, {
+    id,
+    includeUnapproved: true,
+  });
   return data.getGalleryById ? enrichGallery(data.getGalleryById) : null;
 }
 

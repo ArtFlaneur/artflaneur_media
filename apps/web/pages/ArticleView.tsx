@@ -38,7 +38,11 @@ const extractGalleryMeta = (review: ReviewLike | EnrichedReview | null) => {
     city: resolved?.city ?? fallbackGallery?.city ?? undefined,
     address: fallbackGalleryAny?.fullAddress ?? fallbackGalleryAny?.fulladdress ?? fallbackGallery?.address ?? undefined,
     website: fallbackGallery?.website ?? fallbackGalleryAny?.placeUrl ?? fallbackGalleryAny?.placeurl ?? undefined,
-    openingHours: fallbackGallery?.openingHours ?? fallbackGalleryAny?.openinghours ?? undefined,
+    openingHours:
+      fallbackGalleryAny?.workingHours ??
+      fallbackGallery?.openingHours ??
+      fallbackGalleryAny?.openinghours ??
+      undefined,
   };
 };
 
