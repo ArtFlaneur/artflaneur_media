@@ -279,7 +279,7 @@ const GuideView: React.FC = () => {
                             </div>
                         </div>
                         {/* Floating Badge */}
-                        <div className="absolute -top-3 -right-3 bg-art-red text-white px-2.5 py-1.5 rounded-full border-4 border-white shadow-lg">
+                        <div className="absolute -top-3 -right-3 bg-art-red text-white px-2.5 py-1.5 rounded-full border-4 border-white shadow-lg z-20">
                             <p className="font-mono text-[10px] uppercase tracking-wider">{stops.length} Stops</p>
                         </div>
                     </div>
@@ -329,7 +329,7 @@ const GuideView: React.FC = () => {
                                                                                             step.resolvedExternalGallery?.galleryname ??
                                                                                             step.externalGallery?.name ??
                                                                                             null;
-                                                                                        const stopTitle = step.title || galleryName || `Stop ${index + 1}`;
+                                                                                        const stopTitle = step.title || `Stop ${index + 1}`;
                                                                                         const stopImageAlt = stopTitle;
                                                                                         const galleryAddress =
                                                                                             step.resolvedExternalGallery?.fulladdress ??
@@ -348,27 +348,22 @@ const GuideView: React.FC = () => {
                             </div>
                             
                                 {galleryLink ? (
-                                    <Link to={galleryLink} className="group flex gap-3 border-2 border-black bg-white p-3 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
+                                    <Link to={galleryLink} className="group flex flex-col md:flex-row gap-3 border-2 border-black bg-white p-3 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
                                                 {stopImage ? (
-                                                                    <div className="w-24 h-24 flex-shrink-0 border-2 border-black overflow-hidden">
+                                                                    <div className="w-full md:w-24 h-48 md:h-24 flex-shrink-0 border-2 border-black overflow-hidden">
                                                     <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover" />
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="w-24 h-24 flex-shrink-0 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center">
-                                                                        <MapPin className="w-6 h-6 text-gray-400" />
+                                                                    <div className="w-full md:w-24 h-48 md:h-24 flex-shrink-0 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center">
+                                                                        <MapPin className="w-8 md:w-6 h-8 md:h-6 text-gray-400" />
                                                                     </div>
                                                                 )}
-                                <div className="flex-1 min-w-0">
-                                                                        <h3 className="text-base font-black uppercase mb-1 truncate group-hover:text-art-blue transition-colors">{stopTitle}</h3>
-                                                                                                {galleryName && step.title && (
-                                                                                                    <p className="text-xs font-mono uppercase tracking-wide text-gray-600 mb-1">
-                                                                                                        {galleryName}
-                                                                                                    </p>
-                                                                                                )}
-                                    <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                                                                            <MapPin className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{galleryAddress}</span>
+                                <div className="flex-1">
+                                                                        <h3 className="text-base md:text-lg font-black uppercase mb-2 group-hover:text-art-blue transition-colors">{stopTitle}</h3>
+                                    <p className="text-xs font-mono text-gray-500 mb-3 flex items-center gap-1">
+                                                                            <MapPin className="w-3 h-3 flex-shrink-0" /> <span>{galleryAddress}</span>
                                     </p>
-                                                                        <p className="text-sm text-gray-700 leading-relaxed mb-2">{step.summary || step.notes || 'Details coming soon.'}</p>
+                                                                        <p className="text-sm font-mono text-gray-700 leading-relaxed mb-2">{step.summary || step.notes || 'Details coming soon.'}</p>
                                                                         {curatorQuote && (
                                                                             <p className="text-xs italic text-gray-600 border-l-2 border-art-yellow pl-2 mt-2">
                                                                                 "{curatorQuote}"
@@ -377,27 +372,22 @@ const GuideView: React.FC = () => {
                                 </div>
                                     </Link>
                                 ) : (
-                                    <div className="flex gap-3 border-2 border-black bg-white p-3">
+                                    <div className="flex flex-col md:flex-row gap-3 border-2 border-black bg-white p-3">
                                                 {stopImage ? (
-                                                                    <div className="w-24 h-24 flex-shrink-0 border-2 border-black overflow-hidden">
+                                                                    <div className="w-full md:w-24 h-48 md:h-24 flex-shrink-0 border-2 border-black overflow-hidden">
                                                     <SecureImage src={stopImage} alt={stopImageAlt} className="w-full h-full object-cover" />
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="w-24 h-24 flex-shrink-0 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center">
-                                                                        <MapPin className="w-6 h-6 text-gray-400" />
+                                                                    <div className="w-full md:w-24 h-48 md:h-24 flex-shrink-0 border-2 border-dashed border-gray-400 bg-gray-100 flex items-center justify-center">
+                                                                        <MapPin className="w-8 md:w-6 h-8 md:h-6 text-gray-400" />
                                                                     </div>
                                                                 )}
-                                <div className="flex-1 min-w-0">
-                                                                        <h3 className="text-base font-black uppercase mb-1 truncate">{stopTitle}</h3>
-                                                                                                {galleryName && step.title && (
-                                                                                                    <p className="text-xs font-mono uppercase tracking-wide text-gray-600 mb-1">
-                                                                                                        {galleryName}
-                                                                                                    </p>
-                                                                                                )}
-                                    <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                                                                            <MapPin className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{galleryAddress}</span>
+                                <div className="flex-1">
+                                                                        <h3 className="text-base md:text-lg font-black uppercase mb-2">{stopTitle}</h3>
+                                    <p className="text-xs font-mono text-gray-500 mb-3 flex items-center gap-1">
+                                                                            <MapPin className="w-3 h-3 flex-shrink-0" /> <span>{galleryAddress}</span>
                                     </p>
-                                                                        <p className="text-sm text-gray-700 leading-relaxed mb-2">{step.summary || step.notes || 'Details coming soon.'}</p>
+                                                                        <p className="text-sm font-mono text-gray-700 leading-relaxed mb-2">{step.summary || step.notes || 'Details coming soon.'}</p>
                                                                         {curatorQuote && (
                                                                             <p className="text-xs italic text-gray-600 border-l-2 border-art-yellow pl-2 mt-2">
                                                                                 "{curatorQuote}"
@@ -442,7 +432,7 @@ const GuideView: React.FC = () => {
                             </div>
                         </div>
                         {/* Floating Badge */}
-                        <div className="absolute -top-3 -right-3 bg-art-red text-white px-2.5 py-1.5 rounded-full border-4 border-white shadow-lg">
+                        <div className="absolute -top-3 -right-3 bg-art-red text-white px-2.5 py-1.5 rounded-full border-4 border-white shadow-lg z-20">
                             <p className="font-mono text-[10px] uppercase tracking-wider">{stops.length} Stops</p>
                         </div>
                      </div>

@@ -155,7 +155,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Mobile Toggle */}
-        <button className="lg:hidden flex items-center px-4 border-l-2 border-black" onClick={() => setIsOpen(!isOpen)}>
+        <button className="lg:hidden flex items-center px-4 border-l-2 border-black ml-auto" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>

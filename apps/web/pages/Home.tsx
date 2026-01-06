@@ -402,19 +402,18 @@ const Home: React.FC = () => {
       <section className="border-b-2 border-black relative">
         <div className="grid grid-cols-1 lg:grid-cols-12 h-auto lg:h-[70vh]">
             
-            {/* Feature Badge - всегда поверх изображения */}
-      <div className="absolute top-0 left-0 bg-art-red text-white px-4 py-2 text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10">
-        {loading ? 'Syncing Latest Review' : 'Review of the Week'}
-      </div>
-            
             {/* Right: Content Grid - показывается первым на мобильных */}
-            <div className="lg:col-span-5 order-1 lg:order-2">
+            <div className="lg:col-span-5 order-1 lg:order-2 relative">
                 
                 {/* Title Block */}
                 <div className="p-8 md:p-12 flex flex-col justify-center bg-art-paper h-full">
+                    {/* Feature Badge - внутри контентного блока */}
+                    <div className="absolute top-4 left-4 md:top-0 md:left-0 bg-art-red text-white px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-bold font-mono uppercase border-r-2 border-b-2 border-black z-10">
+                      {loading ? 'Syncing Latest Review' : 'Review of the Week'}
+                    </div>
                     {heroArticle ? (
                       <>
-                        <div className="mb-6 flex gap-2">
+                        <div className="mb-6 flex flex-wrap gap-2 mt-8 md:mt-0">
                             <span className="bg-black text-white px-2 py-1 text-xs font-mono uppercase">{heroArticle.type}</span>
                             <span className="border border-black px-2 py-1 text-xs font-mono uppercase">{heroArticle.date}</span>
                         </div>
