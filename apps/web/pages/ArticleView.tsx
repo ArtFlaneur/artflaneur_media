@@ -30,13 +30,15 @@ const extractGalleryMeta = (review: ReviewLike | EnrichedReview | null) => {
 
   const resolved = hasResolvedExternalExhibition(review) ? review.resolvedExternalExhibition : undefined;
   const fallback = review.externalExhibition;
+  const fallbackGallery = fallback?.gallery ?? null;
+  const fallbackGalleryAny = fallbackGallery as Record<string, any> | null;
 
   return {
-    name: resolved?.galleryname ?? fallback?.gallery?.name ?? undefined,
-    city: resolved?.city ?? fallback?.gallery?.city ?? undefined,
-    address: fallback?.gallery?.address ?? undefined,
-    website: fallback?.gallery?.website ?? undefined,
-    openingHours: fallback?.gallery?.openingHours ?? undefined,
+    name: resolved?.galleryname ?? fallbackGallery?.name ?? undefined,
+    city: resolved?.city ?? fallbackGallery?.city ?? undefined,
+    address: fallbackGalleryAny?.fullAddress ?? fallbackGalleryAny?.fulladdress ?? fallbackGallery?.address ?? undefined,
+    website: fallbackGallery?.website ?? fallbackGalleryAny?.placeUrl ?? fallbackGalleryAny?.placeurl ?? undefined,
+    openingHours: fallbackGallery?.openingHours ?? fallbackGalleryAny?.openinghours ?? undefined,
   };
 };
 
@@ -481,6 +483,8 @@ const ArticleView: React.FC = () => {
   ]);
 
   const exhibitionTitle = review?.resolvedExternalExhibition?.title ?? review?.externalExhibition?.title ?? null;
+  const exhibitionLinkId = review?.resolvedExternalExhibition?.id ?? review?.externalExhibition?.id ?? null;
+  const exhibitionHref = exhibitionLinkId ? `/exhibitions/${exhibitionLinkId}` : null;
 
   const openTodayStatus = todaysScheduleLine
     ? stripDayLabel(normalizeHoursText(todaysScheduleLine)).split(':')[0].trim()
@@ -753,7 +757,16 @@ const ArticleView: React.FC = () => {
                          {/* Exhibition Title and Dates */}
                          {exhibitionTitle && (
                            <div className="pb-4 border-b border-gray-200">
-                             <p className="font-bold text-base leading-tight mb-2">{exhibitionTitle}</p>
+                             {exhibitionHref ? (
+                               <Link
+                                 to={exhibitionHref}
+                                 className="font-bold text-base leading-tight mb-2 underline-offset-2 hover:underline"
+                               >
+                                 {exhibitionTitle}
+                               </Link>
+                             ) : (
+                               <p className="font-bold text-base leading-tight mb-2">{exhibitionTitle}</p>
+                             )}
                              <div className="text-xs text-gray-600">
                                <span className="font-bold">{exhibitionTimeline.primary}</span>
                                {exhibitionTimeline.secondary && (
