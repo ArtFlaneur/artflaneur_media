@@ -77,6 +77,95 @@ const fetchSanity = async (groq) => {
   return json.result;
 };
 
+// GraphQL API configuration
+const GRAPHQL_ENDPOINT = getEnv('GRAPHQL_ENDPOINT') || getEnv('VITE_GRAPHQL_ENDPOINT');
+const GRAPHQL_API_KEY = getEnv('GRAPHQL_API_KEY') || getEnv('VITE_GRAPHQL_API_KEY');
+const GRAPHQL_TENANT_ID = getEnv('GRAPHQL_TENANT_ID') || getEnv('VITE_GRAPHQL_TENANT_ID') || 'artflaneur';
+
+const fetchGraphQL = async (query, variables = {}) => {
+  if (!GRAPHQL_ENDPOINT || !GRAPHQL_API_KEY) {
+    console.warn('⚠️ GraphQL not configured. Skipping GraphQL data.');
+    return null;
+  }
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': GRAPHQL_API_KEY,
+      'x-tenant-id': GRAPHQL_TENANT_ID,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`GraphQL query failed (${response.status}): ${body.slice(0, 500)}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    console.warn('GraphQL errors:', json.errors);
+  }
+  return json.data;
+};
+
+const fetchAllGraphQLGalleries = async () => {
+  const query = `
+    query ListAllGalleries($limit: Int, $nextToken: String) {
+      listGalleriesById(limit: $limit, nextToken: $nextToken) {
+        items {
+          id
+          galleryname
+        }
+        nextToken
+      }
+    }
+  `;
+
+  let allItems = [];
+  let nextToken = null;
+  const limit = 1000;
+
+  do {
+    const data = await fetchGraphQL(query, { limit, nextToken });
+    if (!data?.listGalleriesById) break;
+    
+    allItems = allItems.concat(data.listGalleriesById.items || []);
+    nextToken = data.listGalleriesById.nextToken;
+  } while (nextToken);
+
+  return allItems;
+};
+
+const fetchAllGraphQLExhibitions = async () => {
+  const query = `
+    query ListAllHistoricalExhibitions($limit: Int, $nextToken: String) {
+      listAllHistoricalExhibitions(limit: $limit, nextToken: $nextToken) {
+        items {
+          id
+          title
+        }
+        nextToken
+      }
+    }
+  `;
+
+  let allItems = [];
+  let nextToken = null;
+  const limit = 1000;
+
+  do {
+    const data = await fetchGraphQL(query, { limit, nextToken });
+    if (!data?.listAllHistoricalExhibitions) break;
+    
+    allItems = allItems.concat(data.listAllHistoricalExhibitions.items || []);
+    nextToken = data.listAllHistoricalExhibitions.nextToken;
+  } while (nextToken);
+
+  return allItems;
+};
+
 const main = async () => {
   const publicDir = path.resolve(process.cwd(), 'public');
   const outPath = path.join(publicDir, 'sitemap.xml');
@@ -91,6 +180,7 @@ const main = async () => {
     { loc: `${SITE_ORIGIN}/galleries`, changefreq: 'weekly', priority: '0.9' },
     { loc: `${SITE_ORIGIN}/artists`, changefreq: 'weekly', priority: '0.8' },
     { loc: `${SITE_ORIGIN}/guides`, changefreq: 'weekly', priority: '0.8' },
+    { loc: `${SITE_ORIGIN}/calendar`, changefreq: 'weekly', priority: '0.8' },
     { loc: `${SITE_ORIGIN}/about`, changefreq: 'monthly', priority: '0.5' },
     { loc: `${SITE_ORIGIN}/mission`, changefreq: 'monthly', priority: '0.5' },
     { loc: `${SITE_ORIGIN}/partners/galleries`, changefreq: 'monthly', priority: '0.4' },
@@ -143,13 +233,45 @@ const main = async () => {
     "lastmod": coalesce(_updatedAt, publishedAt)
   } | order(lastmod desc)`;
 
-  const [reviews, guides] = await Promise.all([
+  const GALLERIES_GROQ = `*[
+    _type == "gallery"
+    && defined(slug.current)
+  ]{
+    "slug": slug.current,
+    "lastmod": _updatedAt
+  } | order(lastmod desc)`;
+
+  const ARTISTS_GROQ = `*[
+    _type == "artist"
+    && defined(slug.current)
+  ]{
+    "slug": slug.current,
+    "lastmod": _updatedAt
+  } | order(lastmod desc)`;
+
+  const [reviews, guides, galleries, artists, graphqlGalleries, graphqlExhibitions] = await Promise.all([
     fetchSanity(REVIEWS_GROQ).catch((err) => {
       console.warn('⚠️ Failed to fetch reviews for sitemap:', err.message);
       return [];
     }),
     fetchSanity(GUIDES_GROQ).catch((err) => {
       console.warn('⚠️ Failed to fetch guides for sitemap:', err.message);
+      return [];
+    }),
+    fetchSanity(GALLERIES_GROQ).catch((err) => {
+      console.warn('⚠️ Failed to fetch galleries for sitemap:', err.message);
+      return [];
+    }),
+    fetchSanity(ARTISTS_GROQ).catch((err) => {
+      console.warn('⚠️ Failed to fetch artists for sitemap:', err.message);
+      return [];
+    }),
+    fetchAllGraphQLGalleries().catch((err) => {
+      console.warn('⚠️ Failed to fetch GraphQL galleries for sitemap:', err.message);
+      return [];
+    }),
+    fetchAllGraphQLExhibitions().catch((err) => {
+      console.warn('⚠️ Failed to fetch GraphQL exhibitions for sitemap:', err.message);
       return [];
     }),
   ]);
@@ -181,6 +303,44 @@ const main = async () => {
     const lastmod = toIsoDate(g?.lastmod);
     pushUnique(`${SITE_ORIGIN}/guides/${slug}`, lastmod, { changefreq: 'weekly', priority: '0.8' });
   });
+
+  galleries.forEach((g) => {
+    const slug = g?.slug;
+    if (!slug) return;
+    const lastmod = toIsoDate(g?.lastmod);
+    pushUnique(`${SITE_ORIGIN}/galleries/${slug}`, lastmod, { changefreq: 'weekly', priority: '0.7' });
+  });
+
+  artists.forEach((a) => {
+    const slug = a?.slug;
+    if (!slug) return;
+    const lastmod = toIsoDate(a?.lastmod);
+    pushUnique(`${SITE_ORIGIN}/artists/${slug}`, lastmod, { changefreq: 'monthly', priority: '0.6' });
+  });
+
+  // GraphQL galleries - using ID since they don't have slugs
+  graphqlGalleries.forEach((g) => {
+    const id = g?.id;
+    if (!id) return;
+    pushUnique(`${SITE_ORIGIN}/galleries/${id}`, null, { changefreq: 'weekly', priority: '0.7' });
+  });
+
+  // GraphQL exhibitions - using ID since they don't have slugs
+  graphqlExhibitions.forEach((e) => {
+    const id = e?.id;
+    if (!id) return;
+    pushUnique(`${SITE_ORIGIN}/exhibitions/${id}`, null, { changefreq: 'weekly', priority: '0.7' });
+  });
+
+  console.log(`📊 Sitemap stats:
+  - Hub pages: ${hubs.length}
+  - Sanity reviews: ${reviews.length}
+  - Sanity guides: ${guides.length}
+  - Sanity galleries: ${galleries.length}
+  - Sanity artists: ${artists.length}
+  - GraphQL galleries: ${graphqlGalleries.length}
+  - GraphQL exhibitions: ${graphqlExhibitions.length}
+  - Total URLs: ${entries.length + hubs.length}`);
 
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
