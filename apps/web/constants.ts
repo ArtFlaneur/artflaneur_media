@@ -74,7 +74,7 @@ export const EVENT_PRICING: PricingTier[] = [
     features: [
       'Event listing on map',
       'Event banner in the app',
-      'Up to 7 event points',
+      'Up to 5 event points',
       'Free RSVP system (no payment)',
       'Basic event metrics report',
       'Calendar integration'
@@ -86,7 +86,7 @@ export const EVENT_PRICING: PricingTier[] = [
     price: '$299/event',
     features: [
       'Everything in RSVP',
-      'Interactive Route map (15-30 points)',
+      'Interactive Route map (15-25 points)',
       'Geo-fencing push notifications',
       'Paid ticketing system',
       'QR code ticket generation',
@@ -101,15 +101,13 @@ export const EVENT_PRICING: PricingTier[] = [
     price: '$599-899/event',
     features: [
       'Everything in Event Route',
-      'Up to 40-50 event points',
+      'Up to 35 event points',
       'Advanced analytics & heatmaps',
-      'Professional video (2-3 min)',
       '10-15 high-res photos',
       '2-3 social media reels',
       'Ambassador review feature',
       'Push notification campaigns',
       'Newsletter features',
-      'White-label option'
     ],
     cta: 'Discuss Package',
     highlight: true,
