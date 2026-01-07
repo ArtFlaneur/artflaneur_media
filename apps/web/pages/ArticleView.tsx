@@ -8,7 +8,7 @@ import { REVIEW_QUERY, REVIEWS_QUERY, ARTICLE_QUERY } from '../sanity/lib/querie
 import { BlockContent } from '../sanity/types';
 import { REVIEW_QUERYResult, REVIEWS_QUERYResult, ARTICLE_QUERYResult, ExternalExhibitionReference } from '../sanity/types';
 import { Article, ContentType } from '../types';
-import { getAppDownloadLink, getDisplayDomain } from '../lib/formatters';
+import { getDisplayDomain } from '../lib/formatters';
 import { fetchExhibitionById, fetchGalleryById, type GraphqlExhibition, type GraphqlGallery } from '../lib/graphql';
 import { useSeo } from '../lib/useSeo';
 
@@ -813,29 +813,22 @@ const ArticleView: React.FC = () => {
                          </div>
                        </div>
                      )}
-                     {/* Save to App Button - с автоопределением платформы */}
-                     <a 
-                        href={getAppDownloadLink()}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full mt-8 bg-black text-white py-3 font-bold uppercase tracking-wide text-xs hover:bg-art-blue transition-colors text-center"
-                     >
-                        Save to App
-                     </a>
                  </div>
             </div>
 
               {/* Content Body */}
               <div className="lg:col-span-8 lg:col-start-5 order-1 lg:order-2">
+                <div className="prose prose-lg max-w-none">
+                  {article.subtitle && (
+                    <p className="font-serif text-lg md:text-xl leading-relaxed text-black mb-8 italic">
+                      {article.subtitle}
+                    </p>
+                  )}
+                  <PortableTextRenderer value={review?.body} />
+                </div>
                 {hasFilmEntries && (
                   <FilmReviewGrid films={filmEntries} />
                 )}
-                <div className="prose prose-lg max-w-none">
-                   <p className="font-serif text-lg md:text-xl leading-relaxed text-black mb-8 italic">
-                        {article.subtitle}
-                    </p>
-                    <PortableTextRenderer value={review?.body} />
-                </div>
             </div>
         </div>
       </div>
@@ -878,10 +871,12 @@ const FilmReviewSidebar: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }
         .filter((value): value is string => Boolean(value)),
     ),
   );
-  const highlights = films
-    .map((film) => film?.title)
-    .filter((value): value is string => Boolean(value))
-    .slice(0, 3);
+  const lineup = films
+    .map((film) => ({
+      title: film?.title?.trim(),
+      director: film?.director?.trim(),
+    }))
+    .filter((entry): entry is {title: string; director?: string} => Boolean(entry.title));
 
   return (
     <div className="space-y-6 font-mono text-sm">
@@ -899,17 +894,26 @@ const FilmReviewSidebar: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }
         )}
       </div>
 
-      {highlights.length > 0 && (
+      {lineup.length > 0 && (
         <div>
-          <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Highlights</p>
-          <ul className="space-y-1">
-            {highlights.map((title) => (
-              <li key={title} className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-black inline-block"></span>
-                <span className="font-bold">{title}</span>
+          <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Film Lineup</p>
+          <ol className="space-y-1">
+            {lineup.map((entry, index) => (
+              <li key={`${entry.title}-${index}`} className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 font-mono w-6">
+                  {(index + 1).toString().padStart(2, '0')}
+                </span>
+                <span className="font-bold leading-tight">
+                  {entry.title}
+                  {entry.director ? (
+                    <span className="font-normal text-xs uppercase tracking-[0.3em] text-gray-500 ml-2">
+                      Dir. {entry.director}
+                    </span>
+                  ) : null}
+                </span>
               </li>
             ))}
-          </ul>
+          </ol>
         </div>
       )}
 
@@ -952,6 +956,9 @@ const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) =
           if (film?.duration) {
             metaBits.push(`${film.duration} min`);
           }
+          const imageUrl = film?.still?.asset?.url ?? null;
+          const imageAlt = film?.still?.alt ?? `${film?.title ?? 'Film'} still`;
+          const imageCaption = film?.still?.caption;
           return (
             <article
               key={film?._key ?? `${film?.title ?? 'film'}-${index}`}
@@ -960,40 +967,57 @@ const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) =
               <span className="absolute -top-3 -left-3 bg-black text-white w-10 h-10 flex items-center justify-center font-black text-lg">
                 {(index + 1).toString().padStart(2, '0')}
               </span>
-              <div className="pl-8">
-                <h3 className="text-xl font-black uppercase mb-1">{film?.title ?? 'Untitled film'}</h3>
-                {film?.director && (
-                  <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">
-                    Directed by {film.director}
-                  </p>
+              <div className="flex flex-col gap-6 md:flex-row md:gap-10">
+                {imageUrl && (
+                  <figure className="md:w-1/3 border-2 border-black bg-gray-100 overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt={imageAlt}
+                      className="w-full h-full object-cover"
+                      loading={index > 2 ? 'lazy' : 'eager'}
+                    />
+                    {imageCaption && (
+                      <figcaption className="text-[10px] font-mono uppercase tracking-[0.3em] px-3 py-2 border-t border-black">
+                        {imageCaption}
+                      </figcaption>
+                    )}
+                  </figure>
                 )}
-                {metaBits.length > 0 && (
-                  <p className="text-xs font-mono text-gray-600 mb-3">{metaBits.join(' • ')}</p>
-                )}
-                {ratingValue !== null && (
-                  <p className="text-sm font-mono mb-3">
-                    Rating: {'⭐'.repeat(Math.round(ratingValue))} ({ratingValue.toFixed(1)})
-                  </p>
-                )}
-                {film?.summary && (
-                  <p className="text-base leading-relaxed mb-4">{film.summary}</p>
-                )}
-                <div className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase tracking-widest text-gray-600">
-                  {film?.whereToWatch && (
-                    <span className="bg-art-yellow px-3 py-1 border border-black text-black">
-                      {film.whereToWatch}
-                    </span>
+                <div className="flex-1 pl-0 md:pl-2">
+                  <h3 className="text-xl font-black uppercase mb-1">{film?.title ?? 'Untitled film'}</h3>
+                  {film?.director && (
+                    <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">
+                      Directed by {film.director}
+                    </p>
                   )}
-                  {film?.filmLink && (
-                    <a
-                      href={film.filmLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-black hover:text-art-blue"
-                    >
-                      Open link <ExternalLink className="w-3 h-3" />
-                    </a>
+                  {metaBits.length > 0 && (
+                    <p className="text-xs font-mono text-gray-600 mb-3">{metaBits.join(' • ')}</p>
                   )}
+                  {ratingValue !== null && (
+                    <p className="text-sm font-mono mb-3">
+                      Rating: {'⭐'.repeat(Math.round(ratingValue))} ({ratingValue.toFixed(1)})
+                    </p>
+                  )}
+                  {film?.summary && (
+                    <p className="text-base leading-relaxed mb-4">{film.summary}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase tracking-widest text-gray-600">
+                    {film?.whereToWatch && (
+                      <span className="bg-art-yellow px-3 py-1 border border-black text-black">
+                        {film.whereToWatch}
+                      </span>
+                    )}
+                    {film?.filmLink && (
+                      <a
+                        href={film.filmLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-black hover:text-art-blue"
+                      >
+                        Open link <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </article>

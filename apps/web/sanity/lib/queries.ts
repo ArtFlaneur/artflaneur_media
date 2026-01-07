@@ -243,7 +243,15 @@ export const ARTICLES_QUERY = defineQuery(`*[
     releaseYear,
     duration,
     whereToWatch,
-    filmLink
+    filmLink,
+    still{
+      asset->{
+        _id,
+        url
+      },
+      alt,
+      caption
+    }
   },
   externalExhibition {
     _type,
@@ -359,7 +367,15 @@ export const ARTICLE_QUERY = defineQuery(`*[
     releaseYear,
     duration,
     whereToWatch,
-    filmLink
+    filmLink,
+    still{
+      asset->{
+        _id,
+        url
+      },
+      alt,
+      caption
+    }
   },
   relatedArticles[]->{
     _id,

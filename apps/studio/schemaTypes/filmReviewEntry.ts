@@ -45,6 +45,25 @@ export const filmReviewEntry = defineType({
       ],
     }),
     defineField({
+      name: 'still',
+      title: 'Film Still',
+      type: 'image',
+      description: 'Wide still or poster that anchors the card layout',
+      options: {hotspot: true},
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alternative text',
+          type: 'string',
+          validation: (Rule) => [Rule.required().error('Describe the image for accessibility')],
+        }),
+        defineField({name: 'caption', type: 'string', title: 'Caption'}),
+      ],
+      validation: (Rule) => [
+        Rule.warning('Add a still so every film card has a visual anchor'),
+      ],
+    }),
+    defineField({
       name: 'rating',
       type: 'number',
       description: '1-5 rating specific to this film',
@@ -97,13 +116,14 @@ export const filmReviewEntry = defineType({
       title: 'title',
       director: 'director',
       rating: 'rating',
+      media: 'still',
     },
-    prepare({title, director, rating}) {
+    prepare({title, director, rating, media}) {
       const ratingLabel = typeof rating === 'number' ? `${rating.toFixed(1)}/5` : 'No rating'
       return {
         title: title || 'Untitled film',
         subtitle: [director, ratingLabel].filter(Boolean).join(' • '),
-        media: PlayIcon,
+        media: media || PlayIcon,
       }
     },
   },
