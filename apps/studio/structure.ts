@@ -131,6 +131,16 @@ export const structure = (S: StructureBuilder) =>
             .filter('_type == "guide"')
             .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
         ),
+
+      S.listItem()
+        .title('🗓️ Art Events')
+        .schemaType('artEvent')
+        .child(
+          S.documentList()
+            .title('Art Events')
+            .filter('_type == "artEvent"')
+            .defaultOrdering([{field: 'startDate', direction: 'desc'}])
+        ),
       
       S.divider(),
       
