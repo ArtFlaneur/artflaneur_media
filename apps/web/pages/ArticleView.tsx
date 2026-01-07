@@ -248,6 +248,18 @@ type EnrichedReview = StoryDocument & {
 
 type FilmReviewEntryType = NonNullable<ARTICLE_QUERYResult['filmReviews']>[number];
 
+const slugifyAnchor = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .trim();
+
+const getFilmAnchorId = (film: FilmReviewEntryType | null, index: number) => {
+  const fallback = film?.title ? slugifyAnchor(film.title) || `film-${index}` : `film-${index}`;
+  return film?.slug?.current ?? fallback;
+};
+
 const isArticleStory = (
   story: StoryDocument | EnrichedReview | null,
 ): story is EnrichedReview & ARTICLE_QUERYResult => {
@@ -827,7 +839,9 @@ const ArticleView: React.FC = () => {
                   <PortableTextRenderer value={review?.body} />
                 </div>
                 {hasFilmEntries && (
-                  <FilmReviewGrid films={filmEntries} />
+                  <div className="mt-16">
+                    <FilmReviewGrid films={filmEntries} />
+                  </div>
                 )}
             </div>
         </div>
@@ -872,11 +886,11 @@ const FilmReviewSidebar: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }
     ),
   );
   const lineup = films
-    .map((film) => ({
+    .map((film, index) => ({
       title: film?.title?.trim(),
-      director: film?.director?.trim(),
+      anchor: getFilmAnchorId(film ?? null, index),
     }))
-    .filter((entry): entry is {title: string; director?: string} => Boolean(entry.title));
+    .filter((entry): entry is {title: string; anchor: string} => Boolean(entry.title));
 
   return (
     <div className="space-y-6 font-mono text-sm">
@@ -896,21 +910,18 @@ const FilmReviewSidebar: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }
 
       {lineup.length > 0 && (
         <div>
-          <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Film Lineup</p>
           <ol className="space-y-1">
             {lineup.map((entry, index) => (
               <li key={`${entry.title}-${index}`} className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 font-mono w-6">
                   {(index + 1).toString().padStart(2, '0')}
                 </span>
-                <span className="font-bold leading-tight">
+                <a
+                  href={`#${entry.anchor}`}
+                  className="font-bold leading-tight hover:text-art-blue transition-colors"
+                >
                   {entry.title}
-                  {entry.director ? (
-                    <span className="font-normal text-xs uppercase tracking-[0.3em] text-gray-500 ml-2">
-                      Dir. {entry.director}
-                    </span>
-                  ) : null}
-                </span>
+                </a>
               </li>
             ))}
           </ol>
@@ -941,14 +952,10 @@ const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) =
         <div className="p-2 border-2 border-black rounded-full bg-art-yellow/80">
           <Film className="w-4 h-4" />
         </div>
-        <div>
-          <p className="text-xs font-mono uppercase tracking-[0.3em] text-gray-500">Film Lineup</p>
-          <h2 className="text-2xl font-black uppercase">{films.length} Films In Focus</h2>
-        </div>
+        <h2 className="text-2xl font-black uppercase">{films.length} Films In Focus</h2>
       </div>
       <div className="grid gap-6">
         {films.map((film, index) => {
-          const ratingValue = typeof film?.rating === 'number' ? film.rating : null;
           const metaBits: string[] = [];
           if (film?.releaseYear) {
             metaBits.push(film.releaseYear.toString());
@@ -956,13 +963,19 @@ const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) =
           if (film?.duration) {
             metaBits.push(`${film.duration} min`);
           }
+          if (film?.country) {
+            metaBits.push(film.country);
+          }
+          const ratingValue = typeof film?.rating === 'number' ? film.rating : null;
           const imageUrl = film?.still?.asset?.url ?? null;
           const imageAlt = film?.still?.alt ?? `${film?.title ?? 'Film'} still`;
           const imageCaption = film?.still?.caption;
+          const anchorId = getFilmAnchorId(film ?? null, index);
           return (
             <article
+              id={anchorId}
               key={film?._key ?? `${film?.title ?? 'film'}-${index}`}
-              className="relative border-2 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+              className="relative border-2 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] scroll-mt-32"
             >
               <span className="absolute -top-3 -left-3 bg-black text-white w-10 h-10 flex items-center justify-center font-black text-lg">
                 {(index + 1).toString().padStart(2, '0')}
@@ -999,22 +1012,34 @@ const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) =
                     </p>
                   )}
                   {film?.summary && (
-                    <p className="text-base leading-relaxed mb-4">{film.summary}</p>
+                    <p className="font-mono text-base leading-relaxed mb-4">{film.summary}</p>
                   )}
                   <div className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase tracking-widest text-gray-600">
-                    {film?.whereToWatch && (
-                      <span className="bg-art-yellow px-3 py-1 border border-black text-black">
-                        {film.whereToWatch}
-                      </span>
-                    )}
-                    {film?.filmLink && (
+                    {film?.whereToWatch && film?.filmLink && (
                       <a
                         href={film.filmLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-black hover:text-art-blue"
+                        className="inline-flex items-center gap-1 bg-art-yellow px-3 py-1 border border-black text-black hover:bg-black hover:text-art-yellow transition-colors"
                       >
-                        Open link <ExternalLink className="w-3 h-3" />
+                        {film.whereToWatch}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                    {film?.whereToWatch && !film?.filmLink && (
+                      <span className="bg-art-yellow px-3 py-1 border border-black text-black">
+                        {film.whereToWatch}
+                      </span>
+                    )}
+                    {!film?.whereToWatch && film?.filmLink && (
+                      <a
+                        href={film.filmLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-black hover:text-art-blue"
+                      >
+                        Watch
+                        <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>
