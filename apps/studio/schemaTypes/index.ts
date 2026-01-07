@@ -11,6 +11,7 @@ import {landingPage} from './landingPage'
 import {homepageContent} from './homepageContent'
 import {siteSettings} from './siteSettings'
 import {sponsor} from './sponsor'
+import {artEvent} from './artEvent'
 import {externalGalleryReference} from './externalGalleryReference'
 import {externalExhibitionReference} from './externalExhibitionReference'
 import {externalArtistReference} from './externalArtistReference'
@@ -28,6 +29,7 @@ export const schemaTypes = [
   review, // Keep temporarily for migration
   author,
   artistStory,
+  artEvent,
   guide,
   landingPage,
   homepageContent,

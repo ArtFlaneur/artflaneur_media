@@ -6,6 +6,7 @@
         "build": "sanity build",
         "deploy": "sanity deploy",
         "import-json": "tsx scripts/importFromJSON.ts",
+        "import:art-events": "tsx scripts/importArtEvents.ts",
         "sync:directus": "tsx scripts/syncFromDirectus.ts",
         "clear:exhibitions": "tsx scripts/clearExhibitions.ts",
         "clear:galleries": "tsx scripts/clearGalleries.ts",

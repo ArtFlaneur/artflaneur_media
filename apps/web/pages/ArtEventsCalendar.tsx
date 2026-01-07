@@ -14,6 +14,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useSeo } from '../lib/useSeo';
+import { client } from '../sanity/lib/client';
+import { ALL_ART_EVENTS_QUERY } from '../sanity/lib/queries';
 
 const CSV_URL = '/data/art-events.csv';
 const MONTH_LABELS = [
@@ -587,13 +589,24 @@ const ArtEventsCalendar: React.FC = () => {
       setStatus('loading');
       setError(null);
       try {
-        const response = await fetch(CSV_URL);
-        if (!response.ok) {
-          throw new Error('Unable to load the global calendar data.');
-        }
-        const text = await response.text();
+        const data = await client.fetch(ALL_ART_EVENTS_QUERY);
         if (!isMounted) return;
-        const parsed = parseCsv(text);
+        
+        const parsed = data.map((event: any) => ({
+          id: event._id,
+          name: event.name,
+          type: event.type,
+          city: event.city,
+          country: event.country,
+          region: event.region,
+          discipline: event.discipline || '',
+          startDate: new Date(event.startDate),
+          endDate: new Date(event.endDate),
+          website: event.website || '',
+          instagram: event.instagram ? normaliseInstagram(event.instagram) : '',
+          organizer: event.organizer || '',
+        }));
+        
         setEvents(parsed);
         setStatus('ready');
       } catch (err) {

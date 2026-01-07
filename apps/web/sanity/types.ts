@@ -333,6 +333,27 @@ export type LandingPage = {
   };
 };
 
+export type ArtEvent = {
+  _id: string;
+  _type: "artEvent";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  slug?: Slug;
+  type?: "Art Fair" | "Biennale" | "Triennale" | "Annual Festival" | "Art Weekend";
+  discipline?: string;
+  startDate?: string;
+  endDate?: string;
+  city?: string;
+  country?: string;
+  region?: "Africa" | "Americas" | "Asia" | "Europe" | "Middle East" | "Oceania";
+  website?: string;
+  instagram?: string;
+  email?: string;
+  organizer?: string;
+};
+
 export type Article = {
   _id: string;
   _type: "article";
@@ -1203,7 +1224,7 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = SiteSettings | HomepageContent | LandingPage | Article | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ExternalGalleryReference | ArtistStory | ExternalArtistReference | Review | Sponsor | Color | ExternalExhibitionReference | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = SiteSettings | HomepageContent | LandingPage | ArtEvent | Article | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ExternalGalleryReference | ArtistStory | ExternalArtistReference | Review | Sponsor | Color | ExternalExhibitionReference | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ../web/pages/ExhibitionView.tsx
 // Variable: reviewCheckQuery
@@ -2294,6 +2315,60 @@ export type AUTHOR_QUERYResult = {
     } | null;
   }>;
 } | null;
+// Variable: ART_EVENTS_QUERY
+// Query: *[  _type == "artEvent"  && startDate >= $startDate  && endDate <= $endDate] | order(startDate asc) {  _id,  name,  slug,  type,  discipline,  startDate,  endDate,  city,  country,  region,  website,  instagram,  email,  organizer}
+export type ART_EVENTS_QUERYResult = Array<{
+  _id: string;
+  name: string | null;
+  slug: Slug | null;
+  type: "Annual Festival" | "Art Fair" | "Art Weekend" | "Biennale" | "Triennale" | null;
+  discipline: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  city: string | null;
+  country: string | null;
+  region: "Africa" | "Americas" | "Asia" | "Europe" | "Middle East" | "Oceania" | null;
+  website: string | null;
+  instagram: string | null;
+  email: string | null;
+  organizer: string | null;
+}>;
+// Variable: ALL_ART_EVENTS_QUERY
+// Query: *[  _type == "artEvent"] | order(startDate asc) {  _id,  name,  slug,  type,  discipline,  startDate,  endDate,  city,  country,  region,  website,  instagram,  email,  organizer}
+export type ALL_ART_EVENTS_QUERYResult = Array<{
+  _id: string;
+  name: string | null;
+  slug: Slug | null;
+  type: "Annual Festival" | "Art Fair" | "Art Weekend" | "Biennale" | "Triennale" | null;
+  discipline: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  city: string | null;
+  country: string | null;
+  region: "Africa" | "Americas" | "Asia" | "Europe" | "Middle East" | "Oceania" | null;
+  website: string | null;
+  instagram: string | null;
+  email: string | null;
+  organizer: string | null;
+}>;
+// Variable: ART_EVENT_QUERY
+// Query: *[  _type == "artEvent"  && slug.current == $slug][0] {  _id,  name,  slug,  type,  discipline,  startDate,  endDate,  city,  country,  region,  website,  instagram,  email,  organizer}
+export type ART_EVENT_QUERYResult = {
+  _id: string;
+  name: string | null;
+  slug: Slug | null;
+  type: "Annual Festival" | "Art Fair" | "Art Weekend" | "Biennale" | "Triennale" | null;
+  discipline: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  city: string | null;
+  country: string | null;
+  region: "Africa" | "Americas" | "Asia" | "Europe" | "Middle East" | "Oceania" | null;
+  website: string | null;
+  instagram: string | null;
+  email: string | null;
+  organizer: string | null;
+} | null;
 // Variable: CURATOR_QUERY
 // Query: *[  _type == "curator"  && slug.current == $slug][0] {  _id,  name,  slug,  bio,  photo {    asset->{      url    },    alt  },  "exhibitions": *[_type == "exhibition" && references(^._id)] | order(startDate desc) [0...8] {    _id,    title,    slug,    startDate,    endDate,    gallery->{      name,      city    }  }}
 export type CURATOR_QUERYResult = null;
@@ -2326,6 +2401,9 @@ declare module "@sanity/client" {
     "*[\n  _type == \"guide\"\n  && publishStatus == \"published\"\n  && defined(city)\n]{ \"city\": city } | order(city asc)": GUIDES_CITIES_QUERYResult;
     "*[\n  _type == \"guide\"\n  && publishStatus == \"published\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  city,\n  \"description\": summary,\n  body,\n  ctaText,\n  publishStatus,\n  publishedAt,\n  author->{\n    _id,\n    name,\n    slug,\n    role\n  },\n  seo{\n    metaTitle,\n    metaDescription,\n    keywords\n  },\n  schemaMarkup,\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  appScreenshot {\n    asset->{\n      url\n    },\n    alt\n  },\n  sponsorship {\n    enabled,\n    type,\n    badgePlacement,\n    customDisclaimer,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      }\n    }\n  },\n  coverImage {\n    asset->{\n      url\n    },\n    alt\n  },\n  stops[] {\n    _key,\n    title,\n    summary,\n    notes,\n    curatorQuote,\n    externalGallery {\n      _type,\n      id,\n      name,\n      city,\n      address,\n      website\n    }\n  }\n}": GUIDE_QUERYResult;
     "*[\n  _type == \"author\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  email,\n  role,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"posts\": *[_type == \"review\" && references(^._id)] | order(publishedAt desc) [0...10] {\n    _id,\n    title,\n    slug,\n    publishedAt,\n    \"excerpt\": coalesce(summary, excerpt),\n    mainImage {\n      asset->{\n        url\n      },\n      alt\n    }\n  }\n}": AUTHOR_QUERYResult;
+    "*[\n  _type == \"artEvent\"\n  && startDate >= $startDate\n  && endDate <= $endDate\n] | order(startDate asc) {\n  _id,\n  name,\n  slug,\n  type,\n  discipline,\n  startDate,\n  endDate,\n  city,\n  country,\n  region,\n  website,\n  instagram,\n  email,\n  organizer\n}": ART_EVENTS_QUERYResult;
+    "*[\n  _type == \"artEvent\"\n] | order(startDate asc) {\n  _id,\n  name,\n  slug,\n  type,\n  discipline,\n  startDate,\n  endDate,\n  city,\n  country,\n  region,\n  website,\n  instagram,\n  email,\n  organizer\n}": ALL_ART_EVENTS_QUERYResult;
+    "*[\n  _type == \"artEvent\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  type,\n  discipline,\n  startDate,\n  endDate,\n  city,\n  country,\n  region,\n  website,\n  instagram,\n  email,\n  organizer\n}": ART_EVENT_QUERYResult;
     "*[\n  _type == \"curator\"\n  && slug.current == $slug\n][0] {\n  _id,\n  name,\n  slug,\n  bio,\n  photo {\n    asset->{\n      url\n    },\n    alt\n  },\n  \"exhibitions\": *[_type == \"exhibition\" && references(^._id)] | order(startDate desc) [0...8] {\n    _id,\n    title,\n    slug,\n    startDate,\n    endDate,\n    gallery->{\n      name,\n      city\n    }\n  }\n}": CURATOR_QUERYResult;
   }
 }

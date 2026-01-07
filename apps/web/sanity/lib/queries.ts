@@ -1183,6 +1183,67 @@ export const AUTHOR_QUERY = defineQuery(`*[
   }
 }`)
 
+// Art Events queries
+export const ART_EVENTS_QUERY = defineQuery(`*[
+  _type == "artEvent"
+  && startDate >= $startDate
+  && endDate <= $endDate
+] | order(startDate asc) {
+  _id,
+  name,
+  slug,
+  type,
+  discipline,
+  startDate,
+  endDate,
+  city,
+  country,
+  region,
+  website,
+  instagram,
+  email,
+  organizer
+}`)
+
+export const ALL_ART_EVENTS_QUERY = defineQuery(`*[
+  _type == "artEvent"
+] | order(startDate asc) {
+  _id,
+  name,
+  slug,
+  type,
+  discipline,
+  startDate,
+  endDate,
+  city,
+  country,
+  region,
+  website,
+  instagram,
+  email,
+  organizer
+}`)
+
+export const ART_EVENT_QUERY = defineQuery(`*[
+  _type == "artEvent"
+  && slug.current == $slug
+][0] {
+  _id,
+  name,
+  slug,
+  type,
+  discipline,
+  startDate,
+  endDate,
+  city,
+  country,
+  region,
+  website,
+  instagram,
+  email,
+  organizer
+}`)
+
 export const CURATOR_QUERY = defineQuery(`*[
   _type == "curator"
   && slug.current == $slug

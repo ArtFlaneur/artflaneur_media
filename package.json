@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@remix-run/router": "^1.23.0",
+    "csv-parse": "^6.1.0",
     "react-is": "^18.3.1"
   },
   "overrides": {
