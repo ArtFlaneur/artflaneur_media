@@ -20,6 +20,7 @@ import { mapGraphqlGalleryToEntity } from '../lib/galleryMapping';
 import { getAllCountries, getCountryAliases, getCountryDisplayName } from '../lib/countries';
 import { useSeo } from '../lib/useSeo';
 import { buildExhibitionSlug } from '../lib/formatters';
+import { imagePresets } from '../lib/imageBuilder';
 
 interface ListingPageProps {
   title: string;
@@ -324,14 +325,14 @@ const mapReviewToArticle = (review: REVIEWS_QUERYResult[number]): Article => ({
   type: ContentType.REVIEW,
   title: review.title ?? 'Untitled Article',
   subtitle: review.excerpt ?? '',
-  image: review.mainImage?.asset?.url ?? `https://picsum.photos/seed/${review._id}/600/600`,
+  image: imagePresets.card(review.mainImage) ?? `https://picsum.photos/seed/${review._id}/600/600`,
   date: formatDate(review.publishedAt),
   author: review.author
     ? {
         id: review.author._id,
         name: review.author.name ?? 'Anonymous',
         role: 'Critic',
-        image: review.author.photo?.asset?.url ?? '',
+        image: imagePresets.avatar(review.author.photo) ?? '',
       }
     : undefined,
 });
@@ -372,13 +373,13 @@ const mapGuideToCard = (guide: GUIDES_QUERYResult[number]): Guide => ({
   title: guide.title ?? 'Untitled Guide',
   subtitle: guide.description ?? guide.stops?.[0]?.summary ?? '',
   city: guide.city ?? 'City',
-  image: guide.coverImage?.asset?.url ?? `https://picsum.photos/seed/${guide._id}/600/600`,
+  image: imagePresets.card(guide.coverImage) ?? `https://picsum.photos/seed/${guide._id}/600/600`,
   author: undefined,
   steps: (guide.stops ?? []).map((stop) => ({
     id: stop._key ?? `${guide._id}-stop`,
     title: stop.title ?? 'Featured stop',
     description: stop.summary ?? stop.notes ?? '',
-    image: guide.coverImage?.asset?.url ?? `https://picsum.photos/seed/${guide._id}-stop/600/600`,
+    image: imagePresets.card(guide.coverImage) ?? `https://picsum.photos/seed/${guide._id}-stop/600/600`,
     location: stop.externalGallery?.city ?? stop.externalGallery?.address ?? guide.city ?? 'City',
   })),
 });
@@ -394,7 +395,7 @@ const mapAuthorToCard = (author: AUTHORS_QUERYResult[number]): Author => ({
   slug: author.slug?.current ?? author._id,
   name: author.name ?? 'Ambassador',
   role: (author.role && ROLE_LABELS[author.role]) || 'Contributor',
-  image: author.photo?.asset?.url ?? `https://picsum.photos/seed/${author._id}/400/400`,
+  image: imagePresets.avatar(author.photo) ?? `https://picsum.photos/seed/${author._id}/400/400`,
   bio: author.bio ?? '',
 });
 

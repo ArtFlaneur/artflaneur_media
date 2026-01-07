@@ -9,6 +9,7 @@ import type { GUIDE_QUERYResult, ExternalGalleryReference } from '../sanity/type
 import PortableTextRenderer from '../components/PortableTextRenderer';
 import SecureImage from '../components/SecureImage';
 import { useSeo } from '../lib/useSeo';
+import { imagePresets, getOptimizedImageUrl } from '../lib/imageBuilder';
  
 type SanityGuideStop = NonNullable<NonNullable<GUIDE_QUERYResult['stops']>[number]>;
 type RawGuideStop = Omit<SanityGuideStop, 'externalGallery'> & {
@@ -44,8 +45,8 @@ const GuideView: React.FC = () => {
             };
         }
 
-        const coverImageUrl = guide.coverImage?.asset?.url;
-        const appScreenshotUrl = guide.appScreenshot?.asset?.url;
+        const coverImageUrl = imagePresets.hero(guide.coverImage);
+        const appScreenshotUrl = getOptimizedImageUrl(guide.appScreenshot, { width: 800 });
 
         const seoTitle = (guide.seo?.metaTitle || guide.title || 'City Guide').trim();
         const fullSeoTitle = seoTitle.toLowerCase().includes('art flaneur') ? seoTitle : `${seoTitle} | Art Flaneur`;

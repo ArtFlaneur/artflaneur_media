@@ -20,7 +20,14 @@ const resolveImageUrl = (block: Record<string, any>): string | null => {
   if (typeof assetRef !== 'string' || !assetRef.length) return null;
 
   try {
-    return urlBuilder.image({ asset: { _ref: assetRef, _type: 'reference' } }).width(1600).fit('max').url();
+    // Оптимизированные параметры для изображений в контенте
+    return urlBuilder
+      .image({ asset: { _ref: assetRef, _type: 'reference' } })
+      .width(1200)
+      .quality(82)
+      .format('webp')
+      .fit('max')
+      .url();
   } catch {
     return null;
   }

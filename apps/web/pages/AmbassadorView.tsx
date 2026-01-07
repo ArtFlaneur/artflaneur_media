@@ -5,6 +5,7 @@ import { Instagram, Twitter, Mail } from 'lucide-react';
 import { client } from '../sanity/lib/client';
 import { AUTHOR_QUERY } from '../sanity/lib/queries';
 import { Article, ContentType } from '../types';
+import { imagePresets } from '../lib/imageBuilder';
 
 type AuthorQueryResponse = {
   _id: string;
@@ -77,7 +78,7 @@ const AmbassadorView: React.FC = () => {
     );
   }
 
-  const portrait = author.photo?.asset?.url;
+  const portrait = imagePresets.avatar(author.photo);
   const fallbackImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600"%3E%3Crect width="600" height="600" fill="%23f4f4f4"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="24" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E';
   const authorArticles: Article[] = (author.posts ?? []).map((post) => ({
     id: post._id,
@@ -92,7 +93,7 @@ const AmbassadorView: React.FC = () => {
       image: portrait || fallbackImage,
     },
     date: post.publishedAt || undefined,
-    image: post.mainImage?.asset?.url || fallbackImage,
+    image: imagePresets.card(post.mainImage) || fallbackImage,
   }));
 
   return (

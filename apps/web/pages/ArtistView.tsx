@@ -5,6 +5,7 @@ import { client } from '../sanity/lib/client';
 import { ARTIST_STORY_BY_GRAPHQL_ID_QUERY } from '../sanity/lib/queries';
 import { ARTIST_STORY_BY_GRAPHQL_ID_QUERYResult, BlockContent } from '../sanity/types';
 import { useSeo } from '../lib/useSeo';
+import { imagePresets, getOptimizedImageUrl } from '../lib/imageBuilder';
 
 /**
  * Extract artist ID from URL slug.
@@ -90,7 +91,7 @@ const getVideoEmbedDetails = (url?: string | null): VideoEmbedDetails | null => 
 
 const renderMultimediaMedia = (section: StoryMultimediaSection): React.ReactNode => {
   const embed = getVideoEmbedDetails(section.videoUrl);
-  const fallbackUrl = section.fallbackImage?.asset?.url ?? null;
+  const fallbackUrl = getOptimizedImageUrl(section.fallbackImage, { width: 1200, quality: 85 });
   const fallbackAlt = section.fallbackImage?.alt ?? section.title ?? 'Artist feature still';
 
   if (embed?.type === 'iframe') {
@@ -216,7 +217,7 @@ const ArtistView: React.FC = () => {
     [artistStory?.artworkGallery],
   );
 
-  const storyPortraitUrl = artistStory?.portrait?.asset?.url ?? null;
+  const storyPortraitUrl = imagePresets.hero(artistStory?.portrait);
 
   const storySponsor = useMemo(() => {
     const sponsorship = artistStory?.sponsorship;
@@ -226,7 +227,7 @@ const ArtistView: React.FC = () => {
       label:
         sponsorship.customDisclaimer ??
         (sponsor?.name ? `Presented by ${sponsor.name}` : 'Sponsored Feature'),
-      logo: sponsor?.logo?.asset?.url ?? null,
+      logo: imagePresets.logo(sponsor?.logo) ?? null,
       alt: sponsor?.logo?.alt ?? sponsor?.name ?? 'Sponsor logo',
       color: sponsor?.brandColor?.hex ?? undefined,
     };
