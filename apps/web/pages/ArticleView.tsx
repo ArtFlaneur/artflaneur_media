@@ -250,14 +250,23 @@ type FilmReviewEntryType = NonNullable<ARTICLE_QUERYResult['filmReviews']>[numbe
 
 const slugifyAnchor = (value: string) =>
   value
+    .toString()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .trim();
 
 const getFilmAnchorId = (film: FilmReviewEntryType | null, index: number) => {
-  const fallback = film?.title ? slugifyAnchor(film.title) || `film-${index}` : `film-${index}`;
-  return film?.slug?.current ?? fallback;
+  const normalizedKey = film?._key ? slugifyAnchor(film._key) : '';
+  if (normalizedKey) {
+    return `film-${normalizedKey}`;
+  }
+  const normalizedTitle = film?.title ? slugifyAnchor(film.title) : '';
+  const suffix = (index + 1).toString().padStart(2, '0');
+  if (normalizedTitle) {
+    return `${normalizedTitle}-${suffix}`;
+  }
+  return `film-${suffix}`;
 };
 
 const isArticleStory = (
@@ -962,9 +971,6 @@ const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) =
           }
           if (film?.duration) {
             metaBits.push(`${film.duration} min`);
-          }
-          if (film?.country) {
-            metaBits.push(film.country);
           }
           const ratingValue = typeof film?.rating === 'number' ? film.rating : null;
           const imageUrl = film?.still?.asset?.url ?? null;
