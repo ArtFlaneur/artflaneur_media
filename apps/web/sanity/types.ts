@@ -13,6 +13,18 @@
  */
 
 // Source: schema.json
+export type FilmReviewEntry = {
+  _type: "filmReviewEntry";
+  title?: string;
+  director?: string;
+  summary?: string;
+  rating?: number;
+  releaseYear?: number;
+  duration?: number;
+  whereToWatch?: string;
+  filmLink?: string;
+};
+
 export type SiteSettings = {
   _id: string;
   _type: "siteSettings";
@@ -469,12 +481,9 @@ export type Article = {
   publishYear?: number;
   isbn?: string;
   purchaseLink?: string;
-  filmTitle?: string;
-  director?: string;
-  releaseYear?: number;
-  duration?: number;
-  whereToWatch?: string;
-  filmLink?: string;
+  filmReviews?: Array<{
+    _key: string;
+  } & FilmReviewEntry>;
   ctaText?: string;
   appCta?: {
     text?: string;
@@ -1224,7 +1233,7 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = SiteSettings | HomepageContent | LandingPage | ArtEvent | Article | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ExternalGalleryReference | ArtistStory | ExternalArtistReference | Review | Sponsor | Color | ExternalExhibitionReference | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = FilmReviewEntry | SiteSettings | HomepageContent | LandingPage | ArtEvent | Article | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ExternalGalleryReference | ArtistStory | ExternalArtistReference | Review | Sponsor | Color | ExternalExhibitionReference | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ../web/pages/ExhibitionView.tsx
 // Variable: reviewCheckQuery
@@ -1510,7 +1519,7 @@ export type LATEST_REVIEWS_QUERYResult = Array<{
   rating: number | null;
 }>;
 // Variable: ARTICLES_QUERY
-// Query: *[  _type == "article"  && publishStatus == "published"] | order(publishedAt desc) {  _id,  title,  slug,  contentType,  "excerpt": coalesce(summary, excerpt),  mainImage {    asset->{      _id,      url    },    alt  },  author->{    _id,    name,    slug,    photo {      asset->{        url      }    }  },  publishedAt,  rating,  newsSource,  bookTitle,  bookAuthor,  filmTitle,  director,  externalExhibition {    _type,    id,    title,    startDate,    endDate,    artist,    description,    eventType,    exhibitionType,    gallery {      id,      name,      city,      address,      website,      openingHours,      allowed,      specialEvent,      eventType    }  }}
+// Query: *[  _type == "article"  && publishStatus == "published"] | order(publishedAt desc) {  _id,  title,  slug,  contentType,  "excerpt": coalesce(summary, excerpt),  mainImage {    asset->{      _id,      url    },    alt  },  author->{    _id,    name,    slug,    photo {      asset->{        url      }    }  },  publishedAt,  rating,  newsSource,  bookTitle,  bookAuthor,  filmReviews[]{    _key,    title,    director,    summary,    rating,    releaseYear,    duration,    whereToWatch,    filmLink  },  externalExhibition {    _type,    id,    title,    startDate,    endDate,    artist,    description,    eventType,    exhibitionType,    gallery {      id,      name,      city,      address,      website,      openingHours,      allowed,      specialEvent,      eventType    }  }}
 export type ARTICLES_QUERYResult = Array<{
   _id: string;
   title: string | null;
@@ -1539,8 +1548,17 @@ export type ARTICLES_QUERYResult = Array<{
   newsSource: string | null;
   bookTitle: string | null;
   bookAuthor: string | null;
-  filmTitle: string | null;
-  director: string | null;
+  filmReviews: Array<{
+    _key: string;
+    title: string | null;
+    director: string | null;
+    summary: string | null;
+    rating: number | null;
+    releaseYear: number | null;
+    duration: number | null;
+    whereToWatch: string | null;
+    filmLink: string | null;
+  }> | null;
   externalExhibition: {
     _type: "externalExhibitionReference";
     id: string | null;
@@ -1565,7 +1583,7 @@ export type ARTICLES_QUERYResult = Array<{
   } | null;
 }>;
 // Variable: ARTICLE_QUERY
-// Query: *[  _type == "article"  && slug.current == $slug][0] {  _id,  title,  slug,  contentType,  "excerpt": coalesce(summary, excerpt),  mainImage {    asset->{      _id,      url    },    alt  },  heroSlider[]{    _key,    asset->{      _id,      url    },    alt,    caption  },  body[]{    ...,    _type == "image" => {      _key,      _type,      asset->{        _id,        url      },      alt,      caption    }  },  rating,  author->{    _id,    name,    slug,    photo {      asset->{        url      }    },    bio  },  externalExhibition {    _type,    id,    title,    startDate,    endDate,    artist,    description,    eventType,    exhibitionType,    gallery {      id,      name,      city,      address,      website,      openingHours,      allowed,      specialEvent,      eventType    }  },  newsDate,  newsSource,  externalLink,  bookTitle,  bookAuthor,  publisher,  publishYear,  isbn,  purchaseLink,  filmTitle,  director,  releaseYear,  duration,  whereToWatch,  filmLink,  relatedArticles[]->{    _id,    title,    slug,    contentType,    "excerpt": coalesce(summary, excerpt),    mainImage {      asset->{        url      }    },    author->{      _id,      name    }  },  ctaText,  appCta,  sponsorship {    enabled,    type,    customDisclaimer,    badgePlacement,    sponsor->{      _id,      name,      logo {        asset->{          url        },        alt      },      defaultBadgeTemplate,      brandColor {        hex      }    }  },  publishedAt}
+// Query: *[  _type == "article"  && slug.current == $slug][0] {  _id,  title,  slug,  contentType,  "excerpt": coalesce(summary, excerpt),  mainImage {    asset->{      _id,      url    },    alt  },  heroSlider[]{    _key,    asset->{      _id,      url    },    alt,    caption  },  body[]{    ...,    _type == "image" => {      _key,      _type,      asset->{        _id,        url      },      alt,      caption    }  },  rating,  author->{    _id,    name,    slug,    photo {      asset->{        url      }    },    bio  },  externalExhibition {    _type,    id,    title,    startDate,    endDate,    artist,    description,    eventType,    exhibitionType,    gallery {      id,      name,      city,      address,      website,      openingHours,      allowed,      specialEvent,      eventType    }  },  newsDate,  newsSource,  externalLink,  bookTitle,  bookAuthor,  publisher,  publishYear,  isbn,  purchaseLink,  filmReviews[]{    _key,    title,    director,    summary,    rating,    releaseYear,    duration,    whereToWatch,    filmLink  },  relatedArticles[]->{    _id,    title,    slug,    contentType,    "excerpt": coalesce(summary, excerpt),    mainImage {      asset->{        url      }    },    author->{      _id,      name    }  },  ctaText,  appCta,  sponsorship {    enabled,    type,    customDisclaimer,    badgePlacement,    sponsor->{      _id,      name,      logo {        asset->{          url        },        alt      },      defaultBadgeTemplate,      brandColor {        hex      }    }  },  publishedAt}
 export type ARTICLE_QUERYResult = {
   _id: string;
   title: string | null;
@@ -1680,12 +1698,17 @@ export type ARTICLE_QUERYResult = {
   publishYear: number | null;
   isbn: string | null;
   purchaseLink: string | null;
-  filmTitle: string | null;
-  director: string | null;
-  releaseYear: number | null;
-  duration: number | null;
-  whereToWatch: string | null;
-  filmLink: string | null;
+  filmReviews: Array<{
+    _key: string;
+    title: string | null;
+    director: string | null;
+    summary: string | null;
+    rating: number | null;
+    releaseYear: number | null;
+    duration: number | null;
+    whereToWatch: string | null;
+    filmLink: string | null;
+  }> | null;
   relatedArticles: Array<{
     _id: string;
     title: string | null;
@@ -2382,8 +2405,8 @@ declare module "@sanity/client" {
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...10] {\n  _id,\n  title,\n  slug,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating,\n  externalExhibition {\n    _type,\n    id,\n    title,\n    startDate,\n    endDate,\n    artist,\n    description,\n    eventType,\n    exhibitionType,\n    gallery {\n      id,\n      name,\n      city,\n      address,\n      website,\n      openingHours,\n      allowed,\n      specialEvent,\n      eventType\n    }\n  }\n}": REVIEWS_QUERYResult;
     "*[\n  _type == \"review\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  heroSlider[]{\n    _key,\n    asset->{\n      _id,\n      url\n    },\n    alt,\n    caption\n  },\n  galleryImages[]{\n    _key,\n    asset->{\n      _id,\n      url\n    },\n    alt,\n    caption,\n    credit\n  },\n  body[]{\n    ...,\n    _type == \"image\" => {\n      _key,\n      _type,\n      asset->{\n        _id,\n        url\n      },\n      alt,\n      caption\n    }\n  },\n  rating,\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    },\n    bio\n  },\n  externalExhibition {\n    _type,\n    id,\n    title,\n    startDate,\n    endDate,\n    artist,\n    description,\n    eventType,\n    exhibitionType,\n    gallery {\n      id,\n      name,\n      city,\n      address,\n      website,\n      openingHours,\n      allowed,\n      specialEvent,\n      eventType\n    }\n  },\n  relatedReviews[]->{\n    _id,\n    title,\n    slug,\n    \"excerpt\": coalesce(summary, excerpt),\n    mainImage {\n      asset->{\n        url\n      }\n    },\n    author->{\n      _id,\n      name\n    }\n  },\n  ctaText,\n  appCta,\n  sponsorship {\n    enabled,\n    type,\n    customDisclaimer,\n    badgePlacement,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      },\n      defaultBadgeTemplate,\n      brandColor {\n        hex\n      }\n    }\n  },\n  publishedAt\n}": REVIEW_QUERYResult;
     "*[\n  _type == \"review\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) [0...$limit] {\n  _id,\n  title,\n  slug,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating\n}": LATEST_REVIEWS_QUERYResult;
-    "*[\n  _type == \"article\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) {\n  _id,\n  title,\n  slug,\n  contentType,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating,\n  newsSource,\n  bookTitle,\n  bookAuthor,\n  filmTitle,\n  director,\n  externalExhibition {\n    _type,\n    id,\n    title,\n    startDate,\n    endDate,\n    artist,\n    description,\n    eventType,\n    exhibitionType,\n    gallery {\n      id,\n      name,\n      city,\n      address,\n      website,\n      openingHours,\n      allowed,\n      specialEvent,\n      eventType\n    }\n  }\n}": ARTICLES_QUERYResult;
-    "*[\n  _type == \"article\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  contentType,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  heroSlider[]{\n    _key,\n    asset->{\n      _id,\n      url\n    },\n    alt,\n    caption\n  },\n  body[]{\n    ...,\n    _type == \"image\" => {\n      _key,\n      _type,\n      asset->{\n        _id,\n        url\n      },\n      alt,\n      caption\n    }\n  },\n  rating,\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    },\n    bio\n  },\n  externalExhibition {\n    _type,\n    id,\n    title,\n    startDate,\n    endDate,\n    artist,\n    description,\n    eventType,\n    exhibitionType,\n    gallery {\n      id,\n      name,\n      city,\n      address,\n      website,\n      openingHours,\n      allowed,\n      specialEvent,\n      eventType\n    }\n  },\n  newsDate,\n  newsSource,\n  externalLink,\n  bookTitle,\n  bookAuthor,\n  publisher,\n  publishYear,\n  isbn,\n  purchaseLink,\n  filmTitle,\n  director,\n  releaseYear,\n  duration,\n  whereToWatch,\n  filmLink,\n  relatedArticles[]->{\n    _id,\n    title,\n    slug,\n    contentType,\n    \"excerpt\": coalesce(summary, excerpt),\n    mainImage {\n      asset->{\n        url\n      }\n    },\n    author->{\n      _id,\n      name\n    }\n  },\n  ctaText,\n  appCta,\n  sponsorship {\n    enabled,\n    type,\n    customDisclaimer,\n    badgePlacement,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      },\n      defaultBadgeTemplate,\n      brandColor {\n        hex\n      }\n    }\n  },\n  publishedAt\n}": ARTICLE_QUERYResult;
+    "*[\n  _type == \"article\"\n  && publishStatus == \"published\"\n] | order(publishedAt desc) {\n  _id,\n  title,\n  slug,\n  contentType,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  publishedAt,\n  rating,\n  newsSource,\n  bookTitle,\n  bookAuthor,\n  filmReviews[]{\n    _key,\n    title,\n    director,\n    summary,\n    rating,\n    releaseYear,\n    duration,\n    whereToWatch,\n    filmLink\n  },\n  externalExhibition {\n    _type,\n    id,\n    title,\n    startDate,\n    endDate,\n    artist,\n    description,\n    eventType,\n    exhibitionType,\n    gallery {\n      id,\n      name,\n      city,\n      address,\n      website,\n      openingHours,\n      allowed,\n      specialEvent,\n      eventType\n    }\n  }\n}": ARTICLES_QUERYResult;
+    "*[\n  _type == \"article\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  contentType,\n  \"excerpt\": coalesce(summary, excerpt),\n  mainImage {\n    asset->{\n      _id,\n      url\n    },\n    alt\n  },\n  heroSlider[]{\n    _key,\n    asset->{\n      _id,\n      url\n    },\n    alt,\n    caption\n  },\n  body[]{\n    ...,\n    _type == \"image\" => {\n      _key,\n      _type,\n      asset->{\n        _id,\n        url\n      },\n      alt,\n      caption\n    }\n  },\n  rating,\n  author->{\n    _id,\n    name,\n    slug,\n    photo {\n      asset->{\n        url\n      }\n    },\n    bio\n  },\n  externalExhibition {\n    _type,\n    id,\n    title,\n    startDate,\n    endDate,\n    artist,\n    description,\n    eventType,\n    exhibitionType,\n    gallery {\n      id,\n      name,\n      city,\n      address,\n      website,\n      openingHours,\n      allowed,\n      specialEvent,\n      eventType\n    }\n  },\n  newsDate,\n  newsSource,\n  externalLink,\n  bookTitle,\n  bookAuthor,\n  publisher,\n  publishYear,\n  isbn,\n  purchaseLink,\n  filmReviews[]{\n    _key,\n    title,\n    director,\n    summary,\n    rating,\n    releaseYear,\n    duration,\n    whereToWatch,\n    filmLink\n  },\n  relatedArticles[]->{\n    _id,\n    title,\n    slug,\n    contentType,\n    \"excerpt\": coalesce(summary, excerpt),\n    mainImage {\n      asset->{\n        url\n      }\n    },\n    author->{\n      _id,\n      name\n    }\n  },\n  ctaText,\n  appCta,\n  sponsorship {\n    enabled,\n    type,\n    customDisclaimer,\n    badgePlacement,\n    sponsor->{\n      _id,\n      name,\n      logo {\n        asset->{\n          url\n        },\n        alt\n      },\n      defaultBadgeTemplate,\n      brandColor {\n        hex\n      }\n    }\n  },\n  publishedAt\n}": ARTICLE_QUERYResult;
     "*[\n  _type == \"exhibition\"\n  && slug.current == $slug\n][0] {\n  _id,\n  title,\n  slug,\n  description,\n  startDate,\n  endDate,\n  gallery->{\n    _id,\n    name,\n    slug,\n    city,\n    address,\n    \"location\": coalesce(location, geopoint),\n    website,\n    \"openingHours\": coalesce(openingHours, workingHours)\n  },\n  artists[]->{\n    _id,\n    name,\n    slug,\n    bio,\n    photo {\n      asset->{\n        url\n      }\n    }\n  },\n  \"mainImage\": image{\n    asset->{\n      url\n    },\n    alt\n  },\n  ticketing{\n    access,\n    ticketPrice,\n    bookingUrl,\n    ctaLabel\n  }\n}": EXHIBITION_QUERYResult;
     "*[\n  _type == \"gallery\"\n] | order(name asc) {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  \"location\": coalesce(location, geopoint),\n  description,\n  \"mainImage\": coalesce(mainImage, image) {\n    asset->{\n      url\n    },\n    alt\n  }\n}": GALLERIES_QUERYResult;
     "*[\n  _type == \"gallery\"\n] | order(name asc) [$offset...$end] {\n  _id,\n  name,\n  slug,\n  city,\n  country,\n  address,\n  \"location\": coalesce(location, geopoint),\n  description,\n  \"mainImage\": coalesce(mainImage, image) {\n    asset->{\n      url\n    },\n    alt\n  }\n}": PAGINATED_GALLERIES_QUERYResult;

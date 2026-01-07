@@ -234,8 +234,17 @@ export const ARTICLES_QUERY = defineQuery(`*[
   newsSource,
   bookTitle,
   bookAuthor,
-  filmTitle,
-  director,
+  filmReviews[]{
+    _key,
+    title,
+    director,
+    summary,
+    rating,
+    releaseYear,
+    duration,
+    whereToWatch,
+    filmLink
+  },
   externalExhibition {
     _type,
     id,
@@ -341,12 +350,17 @@ export const ARTICLE_QUERY = defineQuery(`*[
   publishYear,
   isbn,
   purchaseLink,
-  filmTitle,
-  director,
-  releaseYear,
-  duration,
-  whereToWatch,
-  filmLink,
+  filmReviews[]{
+    _key,
+    title,
+    director,
+    summary,
+    rating,
+    releaseYear,
+    duration,
+    whereToWatch,
+    filmLink
+  },
   relatedArticles[]->{
     _id,
     title,

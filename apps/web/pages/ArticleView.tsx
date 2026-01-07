@@ -246,6 +246,20 @@ type EnrichedReview = StoryDocument & {
   _updatedAt?: string;
 };
 
+type FilmReviewEntryType = NonNullable<ARTICLE_QUERYResult['filmReviews']>[number];
+
+const isArticleStory = (
+  story: StoryDocument | EnrichedReview | null,
+): story is EnrichedReview & ARTICLE_QUERYResult => {
+  return Boolean(story && typeof story === 'object' && 'contentType' in story);
+};
+
+const isFilmReviewStory = (
+  story: StoryDocument | EnrichedReview | null,
+): story is EnrichedReview & ARTICLE_QUERYResult => {
+  return Boolean(isArticleStory(story) && story.contentType === 'film-review');
+};
+
 type GallerySlide = {
   url: string;
   alt: string;
@@ -351,6 +365,9 @@ const ArticleView: React.FC = () => {
 
   const sponsorBadge = useMemo(() => getSponsorBadge(review), [review]);
   const article = useMemo(() => (review ? mapReviewToArticle(review) : null), [review]);
+  const isFilmReview = isFilmReviewStory(review);
+  const filmEntries = isFilmReview ? review.filmReviews ?? [] : [];
+  const hasFilmEntries = filmEntries.length > 0;
   
   // Use heroSlider if available, otherwise fallback to mainImage
   const heroSlides = useMemo(() => {
@@ -724,8 +741,13 @@ const ArticleView: React.FC = () => {
             {/* Sidebar / Info */}
             <div className="lg:col-span-4 order-2 lg:order-1">
                  <div className="sticky top-32 p-6 border-2 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                     <h4 className="font-black uppercase text-lg mb-6 border-b-2 border-black pb-2">Details</h4>
-                     <div className="space-y-6 font-mono text-sm">
+                     <h4 className="font-black uppercase text-lg mb-6 border-b-2 border-black pb-2">
+                       {hasFilmEntries ? 'Film Stack' : 'Details'}
+                     </h4>
+                     {hasFilmEntries ? (
+                       <FilmReviewSidebar films={filmEntries} />
+                     ) : (
+                       <div className="space-y-6 font-mono text-sm">
                          {/* Exhibition Title and Dates */}
                          {exhibitionTitle && (
                            <div className="pb-4 border-b border-gray-200">
@@ -789,7 +811,8 @@ const ArticleView: React.FC = () => {
                              )}
                            </div>
                          </div>
-                     </div>
+                       </div>
+                     )}
                      {/* Save to App Button - с автоопределением платформы */}
                      <a 
                         href={getAppDownloadLink()}
@@ -802,9 +825,12 @@ const ArticleView: React.FC = () => {
                  </div>
             </div>
 
-            {/* Content Body */}
-            <div className="lg:col-span-8 lg:col-start-5 order-1 lg:order-2">
-                 <div className="prose prose-lg max-w-none">
+              {/* Content Body */}
+              <div className="lg:col-span-8 lg:col-start-5 order-1 lg:order-2">
+                {hasFilmEntries && (
+                  <FilmReviewGrid films={filmEntries} />
+                )}
+                <div className="prose prose-lg max-w-none">
                    <p className="font-serif text-lg md:text-xl leading-relaxed text-black mb-8 italic">
                         {article.subtitle}
                     </p>
@@ -829,6 +855,152 @@ const ArticleView: React.FC = () => {
           </div>
       </section>
     </div>
+  );
+};
+
+const FilmReviewSidebar: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) => {
+  const ratedFilms = films.filter((film) => typeof film?.rating === 'number');
+  const avgRating = ratedFilms.length
+    ? ratedFilms.reduce((sum, film) => sum + (film.rating ?? 0), 0) / ratedFilms.length
+    : null;
+  const releaseYears = films
+    .map((film) => film?.releaseYear)
+    .filter((year): year is number => typeof year === 'number');
+  const releaseLabel = releaseYears.length
+    ? releaseYears.length === 1
+      ? `${releaseYears[0]}`
+      : `${Math.min(...releaseYears)} – ${Math.max(...releaseYears)}`
+    : null;
+  const platforms = Array.from(
+    new Set(
+      films
+        .map((film) => film?.whereToWatch?.trim())
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+  const highlights = films
+    .map((film) => film?.title)
+    .filter((value): value is string => Boolean(value))
+    .slice(0, 3);
+
+  return (
+    <div className="space-y-6 font-mono text-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-gray-500 uppercase tracking-[0.3em]">Film Count</p>
+          <p className="text-3xl font-black">{films.length}</p>
+        </div>
+        {avgRating !== null && (
+          <div className="text-right">
+            <p className="text-xs text-gray-500 uppercase tracking-[0.3em]">Avg Rating</p>
+            <p className="text-2xl font-black">{avgRating.toFixed(1)}</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">out of 5</p>
+          </div>
+        )}
+      </div>
+
+      {highlights.length > 0 && (
+        <div>
+          <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Highlights</p>
+          <ul className="space-y-1">
+            {highlights.map((title) => (
+              <li key={title} className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-black inline-block"></span>
+                <span className="font-bold">{title}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {platforms.length > 0 && (
+        <div>
+          <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Where to Watch</p>
+          <p className="text-sm leading-relaxed">{platforms.join(' • ')}</p>
+        </div>
+      )}
+
+      {releaseLabel && (
+        <div>
+          <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Release Window</p>
+          <p className="text-base font-bold">{releaseLabel}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) => {
+  return (
+    <section className="mb-10">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 border-2 border-black rounded-full bg-art-yellow/80">
+          <Film className="w-4 h-4" />
+        </div>
+        <div>
+          <p className="text-xs font-mono uppercase tracking-[0.3em] text-gray-500">Film Lineup</p>
+          <h2 className="text-2xl font-black uppercase">{films.length} Films In Focus</h2>
+        </div>
+      </div>
+      <div className="grid gap-6">
+        {films.map((film, index) => {
+          const ratingValue = typeof film?.rating === 'number' ? film.rating : null;
+          const metaBits: string[] = [];
+          if (film?.releaseYear) {
+            metaBits.push(film.releaseYear.toString());
+          }
+          if (film?.duration) {
+            metaBits.push(`${film.duration} min`);
+          }
+          return (
+            <article
+              key={film?._key ?? `${film?.title ?? 'film'}-${index}`}
+              className="relative border-2 border-black bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+            >
+              <span className="absolute -top-3 -left-3 bg-black text-white w-10 h-10 flex items-center justify-center font-black text-lg">
+                {(index + 1).toString().padStart(2, '0')}
+              </span>
+              <div className="pl-8">
+                <h3 className="text-xl font-black uppercase mb-1">{film?.title ?? 'Untitled film'}</h3>
+                {film?.director && (
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">
+                    Directed by {film.director}
+                  </p>
+                )}
+                {metaBits.length > 0 && (
+                  <p className="text-xs font-mono text-gray-600 mb-3">{metaBits.join(' • ')}</p>
+                )}
+                {ratingValue !== null && (
+                  <p className="text-sm font-mono mb-3">
+                    Rating: {'⭐'.repeat(Math.round(ratingValue))} ({ratingValue.toFixed(1)})
+                  </p>
+                )}
+                {film?.summary && (
+                  <p className="text-base leading-relaxed mb-4">{film.summary}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase tracking-widest text-gray-600">
+                  {film?.whereToWatch && (
+                    <span className="bg-art-yellow px-3 py-1 border border-black text-black">
+                      {film.whereToWatch}
+                    </span>
+                  )}
+                  {film?.filmLink && (
+                    <a
+                      href={film.filmLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-black hover:text-art-blue"
+                    >
+                      Open link <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 };
 

@@ -48,8 +48,22 @@ const mapArticleToCard = (article: ARTICLES_QUERYResult[number]): Article => {
     subtitle = `${article.newsSource} • ${subtitle}`;
   } else if (contentType === 'book-review' && article.bookAuthor) {
     subtitle = `by ${article.bookAuthor}`;
-  } else if (contentType === 'film-review' && article.director) {
-    subtitle = `Directed by ${article.director}`;
+  } else if (contentType === 'film-review') {
+    const filmCount = Array.isArray(article.filmReviews) ? article.filmReviews.length : 0;
+    if (filmCount) {
+      const leadFilm = article.filmReviews?.[0];
+      const detailParts: string[] = [];
+      if (filmCount > 1) {
+        detailParts.push(`${filmCount} films`);
+      }
+      if (leadFilm?.title) {
+        detailParts.push(leadFilm.title);
+      }
+      if (leadFilm?.director) {
+        detailParts.push(`Dir. ${leadFilm.director}`);
+      }
+      subtitle = detailParts.join(' • ');
+    }
   }
 
   return {

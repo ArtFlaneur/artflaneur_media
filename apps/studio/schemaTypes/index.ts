@@ -15,6 +15,7 @@ import {artEvent} from './artEvent'
 import {externalGalleryReference} from './externalGalleryReference'
 import {externalExhibitionReference} from './externalExhibitionReference'
 import {externalArtistReference} from './externalArtistReference'
+import {filmReviewEntry} from './filmReviewEntry'
 
 // Old schemas (if needed)
 // import category from './category'
@@ -37,4 +38,5 @@ export const schemaTypes = [
   externalGalleryReference,
   externalExhibitionReference,
   externalArtistReference,
+  filmReviewEntry,
 ]

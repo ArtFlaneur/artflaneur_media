@@ -309,80 +309,30 @@ export const article = defineType({
 
     // Film Review specific fields
     defineField({
-      name: 'filmTitle',
-      title: 'Film Title',
-      type: 'string',
+      name: 'filmReviews',
+      title: 'Films In Focus',
+      type: 'array',
       group: 'typeSpecific',
+      description: 'Add 3-5 films that will render as structured cards on the story page',
       hidden: ({document}) => document?.contentType !== 'film-review',
+      of: [defineArrayMember({type: 'filmReviewEntry'})],
       validation: (Rule) => [
         Rule.custom((value, context) => {
           const contentType = (context.document as {contentType?: string} | undefined)?.contentType
-          if (contentType === 'film-review' && !value) {
-            return 'Film title is required for film reviews'
+          if (contentType !== 'film-review') {
+            return true
+          }
+          if (!Array.isArray(value) || value.length === 0) {
+            return 'Film reviews must highlight at least three films'
+          }
+          if (value.length < 3) {
+            return 'Add at least three films to publish this review'
+          }
+          if (value.length > 5) {
+            return 'Limit film reviews to five films to keep the page digestible'
           }
           return true
         }),
-      ],
-    }),
-    defineField({
-      name: 'director',
-      title: 'Director',
-      type: 'string',
-      group: 'typeSpecific',
-      hidden: ({document}) => document?.contentType !== 'film-review',
-      validation: (Rule) => [
-        Rule.custom((value, context) => {
-          const contentType = (context.document as {contentType?: string} | undefined)?.contentType
-          if (contentType === 'film-review' && !value) {
-            return 'Director is required for film reviews'
-          }
-          return true
-        }),
-      ],
-    }),
-    defineField({
-      name: 'releaseYear',
-      title: 'Release Year',
-      type: 'number',
-      group: 'typeSpecific',
-      hidden: ({document}) => document?.contentType !== 'film-review',
-      validation: (Rule) => [
-        Rule.integer().error('Year must be a whole number'),
-        Rule.min(1895)
-          .max(new Date().getFullYear() + 3)
-          .warning('Check the release year'),
-      ],
-    }),
-    defineField({
-      name: 'duration',
-      title: 'Duration (minutes)',
-      type: 'number',
-      group: 'typeSpecific',
-      hidden: ({document}) => document?.contentType !== 'film-review',
-      validation: (Rule) => [
-        Rule.integer().positive().error('Duration must be a positive number'),
-        Rule.min(1).max(500).warning('Check the duration'),
-      ],
-    }),
-    defineField({
-      name: 'whereToWatch',
-      title: 'Where to Watch',
-      type: 'string',
-      group: 'typeSpecific',
-      description: 'Streaming platform, cinema, or availability information',
-      hidden: ({document}) => document?.contentType !== 'film-review',
-    }),
-    defineField({
-      name: 'filmLink',
-      title: 'Film Link',
-      type: 'url',
-      group: 'typeSpecific',
-      description: 'Link to IMDb, streaming platform, or official site',
-      hidden: ({document}) => document?.contentType !== 'film-review',
-      validation: (Rule) => [
-        Rule.uri({
-          scheme: ['http', 'https'],
-        }).error('Must be a valid URL starting with http:// or https://'),
       ],
     }),
 
@@ -418,7 +368,7 @@ export const article = defineType({
       rating: 'rating',
       status: 'publishStatus',
       bookTitle: 'bookTitle',
-      filmTitle: 'filmTitle',
+      filmReviews: 'filmReviews',
       newsSource: 'newsSource',
     },
     prepare({
@@ -431,7 +381,7 @@ export const article = defineType({
       rating,
       status,
       bookTitle,
-      filmTitle,
+      filmReviews,
       newsSource,
     }) {
       const contentTypeMap: Record<string, string> = {
@@ -462,8 +412,13 @@ export const article = defineType({
       let typeInfo = ''
       if (contentType === 'book-review' && bookTitle) {
         typeInfo = ` • ${bookTitle}`
-      } else if (contentType === 'film-review' && filmTitle) {
-        typeInfo = ` • ${filmTitle}`
+      } else if (contentType === 'film-review') {
+        const filmCount = Array.isArray(filmReviews) ? filmReviews.length : 0
+        if (filmCount) {
+          const firstTitle = (filmReviews?.[0] as {title?: string} | undefined)?.title
+          const label = filmCount > 1 ? `${filmCount} films` : firstTitle || 'Film spotlight'
+          typeInfo = ` • ${label}`
+        }
       } else if (contentType === 'news' && newsSource) {
         typeInfo = ` • ${newsSource}`
       }
