@@ -83,7 +83,6 @@ export const review = defineType({
       group: 'content',
       description: '1-5 star rating',
       validation: (Rule) => [
-        Rule.required().error('Rating is required so the gallery knows how it performed'),
         Rule.min(1).max(5).error('Rating must be between 1 and 5'),
         Rule.precision(1),
       ],

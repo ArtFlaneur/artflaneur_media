@@ -99,22 +99,8 @@ export const structure = (S: StructureBuilder) =>
             .filter('_type == "article" && contentType == "film-review"')
             .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
         ),
-      
-      S.divider(),
-      
       S.listItem()
-        .title('🔗 Old Reviews (Legacy)')
-        .schemaType('review')
-        .child(
-          S.documentList()
-            .title('Legacy Reviews - Migrate to Articles')
-            .filter('_type == "review"')
-            .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
-        ),
-      
-      S.divider(),
-      S.listItem()
-        .title('Artist Stories')
+        .title('🧑‍🎨 Artist Stories')
         .schemaType('artistStory')
         .child(
           S.documentList()
@@ -122,6 +108,9 @@ export const structure = (S: StructureBuilder) =>
             .filter('_type == "artistStory"')
             .defaultOrdering([{field: 'publishedAt', direction: 'desc'}])
         ),
+
+      S.divider(),
+      
       S.listItem()
         .title('Guides')
         .schemaType('guide')
