@@ -680,11 +680,16 @@ const Home: React.FC = () => {
                 const enrichedExhibition = enrichedSpotlightExhibitions[exhibition.id];
                 const displayExhibition = enrichedExhibition ?? exhibition;
                 
-                const gallerySlug = buildGallerySlug(displayExhibition.gallery);
-                const galleryLabel = [displayExhibition.gallery?.name, displayExhibition.gallery?.city]
-                  .filter(Boolean)
-                  .join(' • ');
-                const dateLabel = formatExhibitionRange(displayExhibition);
+                // Type guard for Sanity exhibition with gallery object
+                const hasGalleryObject = 'gallery' in displayExhibition && displayExhibition.gallery && typeof displayExhibition.gallery === 'object';
+                const gallerySlug = hasGalleryObject ? buildGallerySlug(displayExhibition.gallery) : undefined;
+                const galleryLabel = hasGalleryObject 
+                  ? [displayExhibition.gallery?.name, displayExhibition.gallery?.city].filter(Boolean).join(' • ')
+                  : (displayExhibition as any).galleryname || '';
+                const dateLabel = formatExhibitionRange({
+                  startDate: (displayExhibition as any).datefrom || (displayExhibition as any).startDate,
+                  endDate: (displayExhibition as any).dateto || (displayExhibition as any).endDate
+                });
                 const cardImageUrl = displayExhibition.exhibition_img_url ?? null;
                 const cardImageAlt = `${displayExhibition.title ?? 'Exhibition'} artwork`;
 
@@ -730,9 +735,9 @@ const Home: React.FC = () => {
                           <p className="mt-6 text-sm leading-relaxed text-white/90">
                             {spotlight.featureCopy}
                           </p>
-                        ) : displayExhibition.description && (
+                        ) : (displayExhibition as any).description && (
                           <p className="mt-4 font-mono text-xs leading-relaxed line-clamp-4 text-white/90">
-                            {displayExhibition.description}
+                            {(displayExhibition as any).description}
                           </p>
                         )}
                       </div>
@@ -975,7 +980,10 @@ const Home: React.FC = () => {
                 const enrichedExhibition = enrichedComingSoonExhibitions[exhibition.id];
                 const displayExhibition = enrichedExhibition ?? exhibition;
                 
-                const dateLabel = formatExhibitionRange(displayExhibition);
+                const dateLabel = formatExhibitionRange({
+                  startDate: (displayExhibition as any).datefrom || (displayExhibition as any).startDate,
+                  endDate: (displayExhibition as any).dateto || (displayExhibition as any).endDate
+                });
                 const appLink = getAppDownloadLink();
                 const ctaHref = item.ctaUrl ?? appLink;
                 const isExternalCta = true; // App links are always external
@@ -1034,7 +1042,7 @@ const Home: React.FC = () => {
                           </span>
                         )}
                         <h3 className="text-2xl font-black uppercase leading-tight text-white">{displayExhibition.title ?? 'Upcoming exhibition'}</h3>
-                        {displayExhibition.gallery?.name && (
+                        {('gallery' in displayExhibition && displayExhibition.gallery?.name) && (
                           <p className="font-mono text-xs mt-1 text-white/90">
                             {displayExhibition.gallery.name}
                             {displayExhibition.gallery.city ? ` • ${displayExhibition.gallery.city}` : ''}
