@@ -35,7 +35,6 @@ export interface Article {
   type?: ContentType;
   contentType?: 'exhibition-review' | 'news' | 'book-review' | 'film-review';
   contentTypeLabel?: string;
-  rating?: number;
 }
 
 export interface Artist {

@@ -279,11 +279,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.art/galleries/apartamento-61-56</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://www.artflaneur.art/galleries/assiniboa-gallery-57</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -1634,11 +1629,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.art/galleries/ro-galeria-de-arte-411</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://www.artflaneur.art/galleries/theintuitivemachine-412</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -2724,7 +2714,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.art/galleries/atelier-adrian-moldovan-717</loc>
+    <loc>https://www.artflaneur.art/galleries/viktor-frankl-museum-717</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -2790,11 +2780,6 @@
   </url>
   <url>
     <loc>https://www.artflaneur.art/galleries/caloundra-regional-gallery-735</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.artflaneur.art/galleries/bellart-gallery-737</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -3204,11 +3189,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.art/galleries/lila-mitre-espacio-de-arte-853</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://www.artflaneur.art/galleries/chalk-horse-854</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -3229,7 +3209,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.artflaneur.art/galleries/esquisse-gallery-859</loc>
+    <loc>https://www.artflaneur.art/galleries/cafesjian-center-for-the-arts-859</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -58670,6 +58650,16 @@
   </url>
   <url>
     <loc>https://www.artflaneur.art/galleries/claude-monet-s-house-and-gardens-giverny-14837</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.artflaneur.art/galleries/saint-peter-s-basilica-14838</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.artflaneur.art/galleries/vatican-museums-14839</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

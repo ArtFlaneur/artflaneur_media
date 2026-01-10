@@ -135,26 +135,7 @@ export const article = defineType({
         }),
       ],
     }),
-    defineField({
-      name: 'externalExhibition',
-      title: 'GraphQL Exhibition',
-      type: 'externalExhibitionReference',
-      group: 'typeSpecific',
-      description: 'Search and select an exhibition from the global GraphQL catalogue',
-      hidden: ({document}) => document?.contentType !== 'exhibition-review',
-      components: {input: GraphqlExhibitionInput},
-      validation: (Rule) => [
-        Rule.custom((value, context) => {
-          const contentType = (context.document as {contentType?: string} | undefined)?.contentType
-          if (contentType === 'exhibition-review' && !value) {
-            return 'Select an exhibition from the GraphQL catalogue for exhibition reviews'
-          }
-          return true
-        }),
-        Rule.min(1).max(5).error('Rating must be between 1 and 5'),
-        Rule.precision(1),
-      ],
-    }),
+    
     defineField({
       name: 'relatedArticles',
       title: 'Related Articles',
@@ -367,7 +348,6 @@ export const article = defineType({
       media: 'mainImage',
       sponsorshipEnabled: 'sponsorship.enabled',
       sponsorName: 'sponsorship.sponsor->name',
-      rating: 'rating',
       status: 'publishStatus',
       bookTitle: 'bookTitle',
       filmReviews: 'filmReviews',
@@ -380,7 +360,6 @@ export const article = defineType({
       media,
       sponsorshipEnabled,
       sponsorName,
-      rating,
       status,
       bookTitle,
       filmReviews,
@@ -407,8 +386,6 @@ export const article = defineType({
       const statusEmoji = status ? statusEmojiMap[status] ?? '' : ''
 
       const sponsorLabel = sponsorshipEnabled ? `💰 ${sponsorName || 'Sponsored'}` : author || 'No author'
-      
-      const stars = rating && contentType === 'exhibition-review' ? '⭐'.repeat(Math.round(rating)) : ''
 
       // Show specific content info in subtitle based on type
       let typeInfo = ''
@@ -427,7 +404,7 @@ export const article = defineType({
 
       return {
         title: `${statusEmoji ? `${statusEmoji} ` : ''}${typeEmoji} ${title || 'Untitled'}`.trim(),
-        subtitle: `${sponsorLabel}${stars ? ` ${stars}` : ''}${typeInfo}`.trim(),
+        subtitle: `${sponsorLabel}${typeInfo}`.trim(),
         media,
       }
     },

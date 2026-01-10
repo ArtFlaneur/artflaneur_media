@@ -562,13 +562,6 @@ const ArticleView: React.FC = () => {
         '@type': 'WebPage',
         '@id': `https://www.artflaneur.art/stories/${article.slug}`,
       },
-      ...(review.rating && {
-        reviewRating: {
-          '@type': 'Rating',
-          ratingValue: review.rating,
-          bestRating: 5,
-        }
-      }),
       ...(exhibitionTitle && {
         about: {
           '@type': 'ExhibitionEvent',
@@ -875,10 +868,6 @@ const ArticleView: React.FC = () => {
 };
 
 const FilmReviewSidebar: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) => {
-  const ratedFilms = films.filter((film) => typeof film?.rating === 'number');
-  const avgRating = ratedFilms.length
-    ? ratedFilms.reduce((sum, film) => sum + (film.rating ?? 0), 0) / ratedFilms.length
-    : null;
   const releaseYears = films
     .map((film) => film?.releaseYear)
     .filter((year): year is number => typeof year === 'number');
@@ -903,18 +892,9 @@ const FilmReviewSidebar: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }
 
   return (
     <div className="space-y-6 font-mono text-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-[0.3em]">Film Count</p>
-          <p className="text-3xl font-black">{films.length}</p>
-        </div>
-        {avgRating !== null && (
-          <div className="text-right">
-            <p className="text-xs text-gray-500 uppercase tracking-[0.3em]">Avg Rating</p>
-            <p className="text-2xl font-black">{avgRating.toFixed(1)}</p>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">out of 5</p>
-          </div>
-        )}
+      <div>
+        <p className="text-xs text-gray-500 uppercase tracking-[0.3em]">Film Count</p>
+        <p className="text-3xl font-black">{films.length}</p>
       </div>
 
       {lineup.length > 0 && (
@@ -972,7 +952,6 @@ const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) =
           if (film?.duration) {
             metaBits.push(`${film.duration} min`);
           }
-          const ratingValue = typeof film?.rating === 'number' ? film.rating : null;
           const imageUrl = film?.still?.asset?.url ?? null;
           const imageAlt = film?.still?.alt ?? `${film?.title ?? 'Film'} still`;
           const imageCaption = film?.still?.caption;
@@ -1011,11 +990,6 @@ const FilmReviewGrid: React.FC<{ films: FilmReviewEntryType[] }> = ({ films }) =
                   )}
                   {metaBits.length > 0 && (
                     <p className="text-xs font-mono text-gray-600 mb-3">{metaBits.join(' • ')}</p>
-                  )}
-                  {ratingValue !== null && (
-                    <p className="text-sm font-mono mb-3">
-                      Rating: {'⭐'.repeat(Math.round(ratingValue))} ({ratingValue.toFixed(1)})
-                    </p>
                   )}
                   {film?.summary && (
                     <p className="font-mono text-base leading-relaxed mb-4">{film.summary}</p>

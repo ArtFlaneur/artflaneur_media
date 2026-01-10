@@ -84,7 +84,6 @@ const mapArticleToCard = (article: ARTICLES_QUERYResult[number]): Article => {
       : undefined,
     contentType: contentType,
     contentTypeLabel: CONTENT_TYPE_LABELS[contentType],
-    rating: contentType === 'exhibition-review' ? article.rating : undefined,
   };
 };
 
@@ -233,12 +232,6 @@ const StoryCard: React.FC<{ article: Article }> = ({ article }) => {
           </div>
         )}
 
-        {/* Rating Badge (only for reviews) */}
-        {article.rating && (
-          <div className="absolute top-0 right-0 bg-art-yellow px-3 py-1 text-xs font-mono font-bold border-b-2 border-l-2 border-black">
-            {'⭐'.repeat(Math.round(article.rating))}
-          </div>
-        )}
       </div>
 
       {/* Content */}

@@ -93,6 +93,25 @@ export const homepageContent = defineType({
               validation: (Rule) => [Rule.max(280).warning('Keep copy short for the homepage layout')],
             }),
             defineField({
+              name: 'cardImage',
+              title: 'Card Image',
+              type: 'image',
+              description: 'Optional background image for the Now Showing card',
+              options: {hotspot: true},
+              fields: [
+                defineField({
+                  name: 'alt',
+                  title: 'Alt Text',
+                  type: 'string',
+                  description: 'Describe the image for accessibility',
+                  validation: (Rule) => [
+                    Rule.required().error('Provide alt text for every card image'),
+                    Rule.max(120).warning('Keep alt text concise (max 120 characters)'),
+                  ],
+                }),
+              ],
+            }),
+            defineField({
               name: 'ctaText',
               title: 'CTA Label',
               type: 'string',

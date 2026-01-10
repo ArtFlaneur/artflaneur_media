@@ -618,39 +618,63 @@ const Home: React.FC = () => {
                   .filter(Boolean)
                   .join(' • ');
                 const dateLabel = formatExhibitionRange(exhibition);
+                const cardImageUrl = spotlight.cardImage?.asset?.url ?? null;
+                const cardImageAlt = spotlight.cardImage?.alt ?? exhibition.title ?? 'Exhibition image';
+                const ctaLabel = spotlight.ctaText?.trim() || 'View exhibition';
 
                 return (
                   <article
                     key={spotlight._key ?? exhibition.id}
-                    className="border-2 border-black bg-white p-6 flex flex-col justify-between shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                    className="relative border-2 border-black overflow-hidden min-h-[420px] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-white"
                   >
-                    <div>
-                      {spotlight.badge && (
-                        <span className="inline-block mb-4 bg-art-yellow text-black px-3 py-1 text-xs font-mono uppercase tracking-widest font-bold">
-                          {spotlight.badge}
-                        </span>
+                    <div className="absolute inset-0">
+                      {cardImageUrl ? (
+                        <SecureImage
+                          src={cardImageUrl}
+                          alt={cardImageAlt}
+                          className="w-full h-full object-cover scale-105 hover:scale-100 transition-transform duration-700"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-950 via-blue-800 to-blue-500" />
                       )}
-                      <h3 className="text-2xl font-black uppercase leading-snug">
-                        {exhibition.title ?? 'Untitled exhibition'}
-                      </h3>
-                      {galleryLabel && (
-                        <p className="font-mono text-xs text-gray-600 mt-2">{galleryLabel}</p>
-                      )}
-                      {dateLabel && (
-                        <p className="font-mono text-xs text-gray-500">{dateLabel}</p>
-                      )}
-                      {spotlight.featureCopy && (
-                        <p className="mt-6 text-sm leading-relaxed text-gray-700">
-                          {spotlight.featureCopy}
-                        </p>
-                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-900/80 to-transparent pointer-events-none" />
+                      <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-blue-900/80 via-blue-800/30 to-transparent pointer-events-none" />
                     </div>
-                    <Link
-                      to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
-                      className="mt-8 inline-flex items-center justify-center gap-2 border-2 border-black px-4 py-3 font-bold uppercase text-sm hover:bg-black hover:text-white transition-colors"
-                    >
-                      View <ArrowRight className="w-4 h-4" />
-                    </Link>
+                    <div className="relative z-10 h-full flex flex-col justify-between p-6">
+                      <div className="space-y-4">
+                        {spotlight.badge && (
+                          <span className="inline-flex items-center bg-white text-blue-900 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.3em] font-bold">
+                            {spotlight.badge}
+                          </span>
+                        )}
+                        <div>
+                          {galleryLabel && (
+                            <p className="font-mono text-xs uppercase tracking-[0.3em] text-blue-100">{galleryLabel}</p>
+                          )}
+                          <h3 className="text-3xl font-black uppercase leading-tight mt-2">
+                            {exhibition.title ?? 'Untitled exhibition'}
+                          </h3>
+                          {dateLabel && (
+                            <p className="font-mono text-xs text-blue-100/80 mt-1">{dateLabel}</p>
+                          )}
+                        </div>
+                        {spotlight.featureCopy && (
+                          <p className="text-sm leading-relaxed text-blue-50/95 line-clamp-4">
+                            {spotlight.featureCopy}
+                          </p>
+                        )}
+                      </div>
+                      <div className="pt-8">
+                        <Link
+                          to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
+                          className="inline-flex items-center justify-center gap-2 border-2 border-white bg-white text-black px-5 py-3 font-bold uppercase text-sm hover:bg-transparent hover:text-white transition-colors"
+                        >
+                          {ctaLabel}
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </div>
                   </article>
                 );
               })}
