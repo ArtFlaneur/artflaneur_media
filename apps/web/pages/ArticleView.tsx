@@ -618,10 +618,10 @@ const ArticleView: React.FC = () => {
       )}
       {/* Brutalist Header */}
       <div className="border-b-2 border-black bg-white">
-          <div className="container mx-auto px-4 md:px-6 pt-8 pb-6">
+          <div className="container mx-auto px-4 md:px-6 pt-4 md:pt-8 pb-3 md:pb-6">
             {sponsorBadge && (
               <div
-                className="mb-6 inline-flex items-center gap-3 px-4 py-2 border-2 border-black uppercase text-xs font-mono tracking-widest"
+                className="mb-3 md:mb-6 inline-flex items-center gap-3 px-4 py-2 border-2 border-black uppercase text-xs font-mono tracking-widest"
                 style={{backgroundColor: sponsorBadge.color ?? '#FFE8E8'}}
               >
                 {sponsorBadge.logoUrl && (
@@ -630,8 +630,8 @@ const ArticleView: React.FC = () => {
                 <span>{sponsorBadge.text}</span>
               </div>
             )}
-            <div className="flex flex-col gap-4 mb-8">
-                <span className="font-mono text-art-red font-bold uppercase tracking-widest text-sm border border-art-red self-start px-2 py-1">
+            <div className="flex flex-col gap-2 md:gap-4 mb-4 md:mb-8">
+                <span className="font-mono text-art-red font-bold uppercase tracking-widest text-xs md:text-sm border border-art-red self-start px-2 py-1">
                     {article.type}
                 </span>
                 <h1 className="text-2xl md:text-3xl font-black uppercase leading-tight max-w-4xl">
@@ -639,9 +639,9 @@ const ArticleView: React.FC = () => {
                 </h1>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 border-t-2 border-black pt-4 gap-4 font-mono text-xs uppercase">
+            <div className="grid grid-cols-2 md:grid-cols-4 border-t-2 border-black pt-2 md:pt-4 gap-2 md:gap-4 font-mono text-xs uppercase">
                 <div>
-                    <span className="text-gray-500 block mb-1">Author</span>
+                    <span className="text-gray-500 block mb-0.5 md:mb-1">Author</span>
                     {article.author ? (
                       authorProfilePath ? (
                         <Link to={authorProfilePath} className="font-bold hover:text-art-blue underline-offset-4 hover:underline">
@@ -655,15 +655,15 @@ const ArticleView: React.FC = () => {
                     )}
                 </div>
                 <div>
-                    <span className="text-gray-500 block mb-1">Date</span>
+                    <span className="text-gray-500 block mb-0.5 md:mb-1">Date</span>
                     <span className="font-bold">{article.date ?? '—'}</span>
                 </div>
                 <div>
-                    <span className="text-gray-500 block mb-1">Read Time</span>
+                    <span className="text-gray-500 block mb-0.5 md:mb-1">Read Time</span>
                     <span className="font-bold">6 Minutes</span>
                 </div>
                  <div>
-                    <span className="text-gray-500 block mb-1">Share</span>
+                    <span className="text-gray-500 block mb-0.5 md:mb-1">Share</span>
                     <div className="flex gap-2">
                         <button
                           type="button"
@@ -696,14 +696,14 @@ const ArticleView: React.FC = () => {
       </div>
 
       {/* Hero Gallery */}
-      <div className="border-b-2 border-black">
-        <div className="w-full h-[50vh] md:h-[70vh] relative overflow-hidden bg-black">
+      <div className="border-b border-black">
+        <div className="w-full min-h-[50vh] md:min-h-[60vh] max-h-[85vh] relative flex items-center justify-center bg-gray-50">
           {heroSlides.map((slide, index) => (
             <img
               key={`${slide.url}-${index}`}
               src={slide.url}
               alt={slide.alt}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+              className={`w-full h-auto max-h-[85vh] object-contain transition-opacity duration-700 ${
                 index === activeSlide ? 'opacity-100' : 'opacity-0'
               }`}
             />
@@ -743,7 +743,7 @@ const ArticleView: React.FC = () => {
           )}
         </div>
         {currentSlide?.caption && (
-          <div className="border-t-2 border-black bg-white px-4 py-3 text-xs font-mono uppercase tracking-[0.3em]">
+          <div className="border-t border-gray-200 bg-white px-4 py-3 text-xs font-mono uppercase tracking-[0.3em] text-gray-700">
             <span>{currentSlide.caption}</span>
           </div>
         )}
@@ -832,9 +832,9 @@ const ArticleView: React.FC = () => {
 
               {/* Content Body */}
               <div className="lg:col-span-8 lg:col-start-5 order-1 lg:order-2">
-                <div className="prose prose-lg max-w-none">
+                <div className="max-w-none">
                   {article.subtitle && (
-                    <p className="font-serif text-lg md:text-xl leading-relaxed text-black mb-8 italic">
+                    <p className="font-serif text-lg md:text-xl leading-relaxed text-black mb-8 italic text-left">
                       {article.subtitle}
                     </p>
                   )}

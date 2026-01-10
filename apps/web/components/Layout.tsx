@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, Smartphone } from 'lucide-react';
+import { Menu, X, Search, Smartphone, Apple } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
 import { client } from '../sanity/lib/client';
 import { HOMEPAGE_TICKER_QUERY } from '../sanity/lib/queries';
@@ -154,8 +154,30 @@ export const Header: React.FC = () => {
             </a>
         </div>
 
+        {/* Mobile App Download Buttons */}
+        <div className="lg:hidden flex items-stretch ml-auto">
+          <a 
+            href="https://apps.apple.com/au/app/art-flaneur-discover-art/id6449169783" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-center w-16 hover:bg-art-yellow transition-colors group"
+            aria-label="Download on App Store"
+          >
+            <Apple className="w-5 h-5" />
+          </a>
+          <a 
+            href="https://play.google.com/store/apps/details?id=com.artflaneur" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-center w-16 hover:bg-art-yellow transition-colors"
+            aria-label="Get it on Google Play"
+          >
+            <Smartphone className="w-5 h-5" />
+          </a>
+        </div>
+
         {/* Mobile Toggle */}
-        <button className="lg:hidden flex items-center px-4 border-l-2 border-black ml-auto" onClick={() => setIsOpen(!isOpen)}>
+        <button className="lg:hidden flex items-center justify-center w-16" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>

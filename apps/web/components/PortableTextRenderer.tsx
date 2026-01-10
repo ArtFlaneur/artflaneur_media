@@ -134,21 +134,21 @@ const InlineImageSlider: React.FC<{ block: SliderBlock }> = ({ block }) => {
 
   return (
     <>
-      <div className="my-12 border-2 border-black bg-white">
+      <div className="my-12 border border-black bg-white">
         {block.title && (
           <div className="px-4 pt-4 text-xs font-black tracking-[0.3em] uppercase text-gray-500">
             {block.title}
           </div>
         )}
         <div 
-          className="relative bg-gray-100 cursor-zoom-in"
-          style={{ height: '600px' }}
+          className="relative bg-gray-50 cursor-zoom-in flex items-center justify-center"
+          style={{ minHeight: '400px', maxHeight: '80vh' }}
           onClick={handleImageClick}
         >
           <img
             src={currentSlide.url}
             alt={currentSlide.alt}
-            className="w-full h-full object-contain grayscale hover:grayscale-0 transition-all select-none"
+            className="w-full h-auto max-h-[80vh] object-contain grayscale hover:grayscale-0 transition-all select-none"
             onContextMenu={preventContextMenu}
             onDragStart={preventDragStart}
             draggable={false}
@@ -189,7 +189,7 @@ const InlineImageSlider: React.FC<{ block: SliderBlock }> = ({ block }) => {
           )}
         </div>
         {(currentSlide.caption || block.caption) && (
-          <div className="px-4 py-4 space-y-2">
+          <div className="px-4 py-4 space-y-2 bg-white border-t border-gray-200">
             {currentSlide.caption && (
               <p className="font-mono text-xs text-gray-500 uppercase">{currentSlide.caption}</p>
             )}
@@ -203,13 +203,14 @@ const InlineImageSlider: React.FC<{ block: SliderBlock }> = ({ block }) => {
       {/* Lightbox Modal */}
       {isLightboxOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+          style={{ top: 0, left: 0, right: 0, bottom: 0, position: 'fixed' }}
           onClick={handleCloseLightbox}
         >
           <button
             type="button"
             onClick={handleCloseLightbox}
-            className="absolute top-4 right-4 bg-white/80 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center text-2xl font-black transition-colors z-50"
+            className="fixed top-4 right-4 bg-white/80 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center text-2xl font-black transition-colors z-[10000]"
             aria-label="Close fullscreen view"
           >
             ×
@@ -379,26 +380,26 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
           switch (style) {
             case 'h2':
               return (
-                <h2 key={key} className="text-3xl md:text-4xl font-black uppercase mt-12 mb-6 leading-tight">
+                <h2 key={key} className="text-3xl md:text-4xl font-black uppercase mt-12 mb-6 leading-tight text-left">
                   {content}
                 </h2>
               );
             case 'h3':
               return (
-                <h3 key={key} className="text-2xl md:text-3xl font-bold uppercase mt-8 mb-4">
+                <h3 key={key} className="text-2xl md:text-3xl font-bold uppercase mt-8 mb-4 text-left">
                   {content}
                 </h3>
               );
             case 'h4':
               return (
-                <h4 key={key} className="text-xl font-bold uppercase mt-6 mb-3">
+                <h4 key={key} className="text-xl font-bold uppercase mt-6 mb-3 text-left">
                   {content}
                 </h4>
               );
             case 'blockquote':
               return (
                 <blockquote key={key} className="border-l-4 border-art-blue pl-6 my-12 bg-gray-100 p-8 border-y-2 border-r-2 border-gray-200">
-                  <p className="font-black uppercase text-xl not-italic">{content}</p>
+                  <p className="font-black uppercase text-xl not-italic text-left">{content}</p>
                 </blockquote>
               );
             case 'normal':
@@ -406,13 +407,13 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
               // First paragraph gets drop cap
               if (blockIndex === 0) {
                 return (
-                  <p key={key} className="text-base leading-7">
+                  <p key={key} className="text-base leading-7 text-justify mb-4">
                     {content}
                   </p>
                 );
               }
               return (
-                <p key={key} className="text-base leading-7">
+                <p key={key} className="text-base leading-7 text-justify mb-4">
                   {content}
                 </p>
               );
