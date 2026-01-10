@@ -80,6 +80,7 @@ const InlineImageSlider: React.FC<{ block: SliderBlock }> = ({ block }) => {
   }, [block]);
 
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (slides.length === 0 && currentIndex !== 0) {
@@ -88,6 +89,17 @@ const InlineImageSlider: React.FC<{ block: SliderBlock }> = ({ block }) => {
       setCurrentIndex(0);
     }
   }, [slides.length, currentIndex]);
+
+  React.useEffect(() => {
+    if (isLightboxOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isLightboxOpen]);
 
   if (!slides.length) {
     return null;
@@ -101,59 +113,166 @@ const InlineImageSlider: React.FC<{ block: SliderBlock }> = ({ block }) => {
     setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
 
+  const handleImageClick = () => {
+    setIsLightboxOpen(true);
+  };
+
+  const handleCloseLightbox = () => {
+    setIsLightboxOpen(false);
+  };
+
+  const preventContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+  };
+
+  const preventDragStart = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
   const currentSlide = slides[currentIndex] ?? slides[0];
   const showControls = slides.length > 1;
 
   return (
-    <div className="my-12 border-2 border-black bg-white">
-      {block.title && (
-        <div className="px-4 pt-4 text-xs font-black tracking-[0.3em] uppercase text-gray-500">
-          {block.title}
+    <>
+      <div className="my-12 border-2 border-black bg-white">
+        {block.title && (
+          <div className="px-4 pt-4 text-xs font-black tracking-[0.3em] uppercase text-gray-500">
+            {block.title}
+          </div>
+        )}
+        <div 
+          className="relative bg-gray-100 cursor-zoom-in"
+          style={{ height: '600px' }}
+          onClick={handleImageClick}
+        >
+          <img
+            src={currentSlide.url}
+            alt={currentSlide.alt}
+            className="w-full h-full object-contain grayscale hover:grayscale-0 transition-all select-none"
+            onContextMenu={preventContextMenu}
+            onDragStart={preventDragStart}
+            draggable={false}
+          />
+          {/* Protection overlay */}
+          <div className="absolute inset-0 pointer-events-none" />
+          
+          {showControls && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrev();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-black hover:text-white border border-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-colors z-10"
+                aria-label="Previous slide"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNext();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-black hover:text-white border border-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-colors z-10"
+                aria-label="Next slide"
+              >
+                ›
+              </button>
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 px-3 py-1 rounded-full border border-black text-xs font-bold z-10">
+                <span>{currentIndex + 1}</span>
+                <span className="text-gray-500">/</span>
+                <span>{slides.length}</span>
+              </div>
+            </>
+          )}
         </div>
-      )}
-      <div className="relative">
-        <img
-          src={currentSlide.url}
-          alt={currentSlide.alt}
-          className="w-full grayscale hover:grayscale-0 transition-all"
-        />
-        {showControls && (
-          <>
-            <button
-              type="button"
-              onClick={handlePrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-black hover:text-white border border-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-colors"
-              aria-label="Previous slide"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-black hover:text-white border border-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-colors"
-              aria-label="Next slide"
-            >
-              ›
-            </button>
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 px-3 py-1 rounded-full border border-black text-xs font-bold">
-              <span>{currentIndex + 1}</span>
-              <span className="text-gray-500">/</span>
-              <span>{slides.length}</span>
-            </div>
-          </>
+        {(currentSlide.caption || block.caption) && (
+          <div className="px-4 py-4 space-y-2">
+            {currentSlide.caption && (
+              <p className="font-mono text-xs text-gray-500 uppercase">{currentSlide.caption}</p>
+            )}
+            {block.caption && (
+              <p className="font-mono text-xs text-gray-500 uppercase">{block.caption}</p>
+            )}
+          </div>
         )}
       </div>
-      {(currentSlide.caption || block.caption) && (
-        <div className="px-4 py-4 space-y-2">
+
+      {/* Lightbox Modal */}
+      {isLightboxOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={handleCloseLightbox}
+        >
+          <button
+            type="button"
+            onClick={handleCloseLightbox}
+            className="absolute top-4 right-4 bg-white/80 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center text-2xl font-black transition-colors z-50"
+            aria-label="Close fullscreen view"
+          >
+            ×
+          </button>
+          
+          <div 
+            className="relative max-w-[95vw] max-h-[95vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={currentSlide.url}
+              alt={currentSlide.alt}
+              className="max-w-full max-h-[95vh] object-contain select-none"
+              onContextMenu={preventContextMenu}
+              onDragStart={preventDragStart}
+              draggable={false}
+            />
+            {/* Protection overlay for lightbox */}
+            <div className="absolute inset-0 pointer-events-none" />
+            
+            {showControls && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrev();
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black border border-black rounded-full w-12 h-12 flex items-center justify-center text-2xl font-black transition-colors z-10"
+                  aria-label="Previous slide"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNext();
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black border border-black rounded-full w-12 h-12 flex items-center justify-center text-2xl font-black transition-colors z-10"
+                  aria-label="Next slide"
+                >
+                  ›
+                </button>
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full border border-black text-sm font-bold z-10">
+                  <span>{currentIndex + 1}</span>
+                  <span className="text-gray-500">/</span>
+                  <span>{slides.length}</span>
+                </div>
+              </>
+            )}
+          </div>
+          
           {currentSlide.caption && (
-            <p className="font-mono text-xs text-gray-500 uppercase">{currentSlide.caption}</p>
-          )}
-          {block.caption && (
-            <p className="font-mono text-xs text-gray-500 uppercase">{block.caption}</p>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-2xl px-4">
+              <p className="font-mono text-xs text-white text-center uppercase bg-black/80 px-4 py-2 rounded">
+                {currentSlide.caption}
+              </p>
+            </div>
           )}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
