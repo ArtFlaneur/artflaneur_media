@@ -49,3 +49,4 @@ codegen.yaml
 
 # Sensitive docs
 CLIENT_GRAPHQL_API_ACCESS.md
+.env*.local

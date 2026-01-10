@@ -8,6 +8,7 @@ const TOKEN_ENDPOINT = IS_DEV
   ? '/api/token'
   : 'https://hgito8qnb0.execute-api.ap-southeast-2.amazonaws.com/dev/token';
 const ASSETS_BASE = IS_DEV ? '/api/assets' : 'https://assets.artflaneur.com.au';
+const SECURE_IMAGE_PROXY_ENDPOINT = '/api/secure-image';
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
 let ongoingTokenRequest: Promise<string> | null = null;
@@ -73,6 +74,17 @@ const rewriteUrlForProxy = (src: string): string => {
 };
 
 const fetchSecureBlob = async (src: string, allowRetry = true): Promise<Blob> => {
+  if (!IS_DEV) {
+    const proxyUrl = `${SECURE_IMAGE_PROXY_ENDPOINT}?src=${encodeURIComponent(src)}`;
+    const response = await fetch(proxyUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to load secure image via proxy (${response.status}).`);
+    }
+
+    return response.blob();
+  }
+
   const token = await getValidToken();
   const proxiedSrc = rewriteUrlForProxy(src);
   const response = await fetch(proxiedSrc, {
