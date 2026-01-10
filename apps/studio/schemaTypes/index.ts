@@ -5,6 +5,7 @@ import {author} from './author'
 import {blockContent} from './blockContent'
 import {factTable} from './factTable'
 import {keyInsights} from './keyInsights'
+import {imageSliderBlock} from './imageSliderBlock'
 import {artistStory} from './artistStory'
 import {guide} from './guide/index'
 import {landingPage} from './landingPage'
@@ -25,6 +26,7 @@ export const schemaTypes = [
   blockContent,
   factTable,
   keyInsights,
+  imageSliderBlock,
   sponsor,
   article, // New unified article type
   review, // Keep temporarily for migration

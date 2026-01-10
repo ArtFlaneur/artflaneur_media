@@ -97,6 +97,11 @@ export const blockContent = defineType({
       title: 'Key Insights',
     }),
     defineArrayMember({
+      type: 'imageSliderBlock',
+      title: 'Image Slider',
+      description: 'Embed a swipeable gallery that mixes multiple related images inside the article body.',
+    }),
+    defineArrayMember({
       type: 'image',
       title: 'Image',
       options: {hotspot: true},

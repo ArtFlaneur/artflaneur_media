@@ -33,6 +33,130 @@ const resolveImageUrl = (block: Record<string, any>): string | null => {
   }
 };
 
+type SliderImage = {
+  _key?: string;
+  alt?: string;
+  caption?: string;
+  asset?: {
+    _ref?: string;
+    url?: string;
+  };
+};
+
+type SliderBlock = {
+  _key?: string;
+  title?: string;
+  caption?: string;
+  images?: SliderImage[];
+};
+
+type InlineSlide = {
+  _key?: string;
+  url: string;
+  alt: string;
+  caption?: string;
+};
+
+const InlineImageSlider: React.FC<{ block: SliderBlock }> = ({ block }) => {
+  const slides = React.useMemo(() => {
+    if (!Array.isArray(block?.images)) {
+      return [];
+    }
+
+    return block.images
+      .map<InlineSlide | null>((image) => {
+        if (!image) return null;
+        const url = resolveImageUrl(image as Record<string, any>);
+        if (!url) return null;
+
+        return {
+          _key: image._key,
+          url,
+          alt: image.alt || block.title || 'Slider image',
+          caption: image.caption,
+        };
+      })
+      .filter((slide): slide is InlineSlide => Boolean(slide));
+  }, [block]);
+
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    if (slides.length === 0 && currentIndex !== 0) {
+      setCurrentIndex(0);
+    } else if (slides.length > 0 && currentIndex > slides.length - 1) {
+      setCurrentIndex(0);
+    }
+  }, [slides.length, currentIndex]);
+
+  if (!slides.length) {
+    return null;
+  }
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  };
+
+  const currentSlide = slides[currentIndex] ?? slides[0];
+  const showControls = slides.length > 1;
+
+  return (
+    <div className="my-12 border-2 border-black bg-white">
+      {block.title && (
+        <div className="px-4 pt-4 text-xs font-black tracking-[0.3em] uppercase text-gray-500">
+          {block.title}
+        </div>
+      )}
+      <div className="relative">
+        <img
+          src={currentSlide.url}
+          alt={currentSlide.alt}
+          className="w-full grayscale hover:grayscale-0 transition-all"
+        />
+        {showControls && (
+          <>
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-black hover:text-white border border-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-colors"
+              aria-label="Previous slide"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-black hover:text-white border border-black rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-colors"
+              aria-label="Next slide"
+            >
+              ›
+            </button>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/90 px-3 py-1 rounded-full border border-black text-xs font-bold">
+              <span>{currentIndex + 1}</span>
+              <span className="text-gray-500">/</span>
+              <span>{slides.length}</span>
+            </div>
+          </>
+        )}
+      </div>
+      {(currentSlide.caption || block.caption) && (
+        <div className="px-4 py-4 space-y-2">
+          {currentSlide.caption && (
+            <p className="font-mono text-xs text-gray-500 uppercase">{currentSlide.caption}</p>
+          )}
+          {block.caption && (
+            <p className="font-mono text-xs text-gray-500 uppercase">{block.caption}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) => {
   if (!value?.length) {
     return null;
@@ -63,6 +187,15 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({ value }) =>
                 <p className="font-mono text-xs text-gray-500 mt-2 uppercase">{caption}</p>
               )}
             </div>
+          );
+        }
+
+        if (block._type === 'imageSliderBlock') {
+          return (
+            <InlineImageSlider
+              key={block._key ?? `slider-${blockIndex}`}
+              block={block}
+            />
           );
         }
 

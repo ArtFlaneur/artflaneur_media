@@ -440,6 +440,8 @@ export type Article = {
   } & FactTable | {
     _key: string;
   } & KeyInsights | {
+    _key: string;
+  } & ImageSliderBlock | {
     asset?: {
       _ref: string;
       _type: "reference";
@@ -523,6 +525,27 @@ export type Article = {
   };
 };
 
+export type ImageSliderBlock = {
+  _type: "imageSliderBlock";
+  title?: string;
+  images?: Array<{
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    caption?: string;
+    _type: "image";
+    _key: string;
+  }>;
+  caption?: string;
+};
+
 export type KeyInsights = {
   _type: "keyInsights";
   heading?: string;
@@ -566,6 +589,8 @@ export type BlockContent = Array<{
 } & FactTable | {
   _key: string;
 } & KeyInsights | {
+  _key: string;
+} & ImageSliderBlock | {
   asset?: {
     _ref: string;
     _type: "reference";
@@ -1247,7 +1272,7 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = FilmReviewEntry | SiteSettings | HomepageContent | LandingPage | ArtEvent | Article | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ExternalGalleryReference | ArtistStory | ExternalArtistReference | Review | Sponsor | Color | ExternalExhibitionReference | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = FilmReviewEntry | SiteSettings | HomepageContent | LandingPage | ArtEvent | Article | ImageSliderBlock | KeyInsights | FactTable | BlockContent | GeopointRadius | Table | TableRow | RgbaColor | HsvaColor | HslaColor | TranslationMetadata | InternationalizedArrayReferenceValue | Guide | ExternalGalleryReference | ArtistStory | ExternalArtistReference | Review | Sponsor | Color | ExternalExhibitionReference | Author | InternationalizedArrayReference | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ../web/pages/ExhibitionView.tsx
 // Variable: reviewCheckQuery
@@ -1420,6 +1445,26 @@ export type REVIEW_QUERYResult = {
     caption: string | null;
     _type: "image";
     _key: string;
+  } | {
+    _key: string;
+    _type: "imageSliderBlock";
+    title?: string;
+    images?: Array<{
+      asset?: {
+        _ref: string;
+        _type: "reference";
+        _weak?: boolean;
+        [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+      };
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      caption?: string;
+      _type: "image";
+      _key: string;
+    }>;
+    caption?: string;
   } | {
     _key: string;
     _type: "keyInsights";
@@ -1667,6 +1712,26 @@ export type ARTICLE_QUERYResult = {
     caption: string | null;
     _type: "image";
     _key: string;
+  } | {
+    _key: string;
+    _type: "imageSliderBlock";
+    title?: string;
+    images?: Array<{
+      asset?: {
+        _ref: string;
+        _type: "reference";
+        _weak?: boolean;
+        [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+      };
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      caption?: string;
+      _type: "image";
+      _key: string;
+    }>;
+    caption?: string;
   } | {
     _key: string;
     _type: "keyInsights";
