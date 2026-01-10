@@ -511,7 +511,8 @@ const GalleryView: React.FC = () => {
                         </div>
                       </Link>
 
-                      <div className="p-5 flex gap-4">                        <Link
+                      <div className="p-5 flex gap-4">
+                        <Link
                           to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
                           className="min-w-0 flex-1 space-y-2"
                         >

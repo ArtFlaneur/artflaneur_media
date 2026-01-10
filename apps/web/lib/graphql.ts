@@ -1,7 +1,12 @@
 import { normalizeCountry } from './countries';
 
-// Using proxy endpoint to protect API key
-const GRAPHQL_PROXY_URL = import.meta.env.VITE_API_PROXY_URL || '/api/graphql';
+// In production we always talk to the local /api/graphql edge proxy.
+// During local development there is no Node layer that can add x-api-key headers,
+// so we fall back to the hosted proxy unless the developer overrides it.
+const isProdBuild = import.meta.env.PROD;
+const devFallbackProxy = import.meta.env.VITE_DEV_GRAPHQL_PROXY_URL || 'https://www.artflaneur.art/api/graphql';
+const defaultProxyUrl = isProdBuild ? '/api/graphql' : devFallbackProxy;
+const GRAPHQL_PROXY_URL = import.meta.env.VITE_API_PROXY_URL || defaultProxyUrl;
 const GRAPHQL_TENANT_ID = import.meta.env.VITE_GRAPHQL_TENANT_ID || 'artflaneur';
 
 if (!GRAPHQL_PROXY_URL) {

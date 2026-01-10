@@ -53,12 +53,23 @@ const buildHeroImage = (exhibition: GraphqlExhibition | null) => {
   return exhibition.exhibition_img_url ?? exhibition.logo_img_url ?? FALLBACK_IMAGE;
 };
 
+const EXHIBITION_REVIEW_LOOKUP_QUERY = defineQuery(`*[
+  publishStatus == "published"
+  && externalExhibition.id == $exhibitionId
+  && (
+    _type == "review"
+    || (_type == "article" && contentType == "exhibition-review")
+  )
+] | order(publishedAt desc, _updatedAt desc)[0]{
+  "slug": slug.current
+}`);
+
 const ExhibitionView: React.FC = () => {
   const { id: slugParam } = useParams<{ id: string }>();
   const [exhibition, setExhibition] = useState<GraphqlExhibition | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasReview, setHasReview] = useState<boolean>(false);
+  const [reviewSlug, setReviewSlug] = useState<string | null>(null);
 
   const exhibitionId = useMemo(() => {
     if (!slugParam) return '';
@@ -72,6 +83,7 @@ const ExhibitionView: React.FC = () => {
       if (!exhibitionId) return;
       setLoading(true);
       setError(null);
+      setReviewSlug(null);
 
       try {
         let found: GraphqlExhibition | null = null;
@@ -95,16 +107,17 @@ const ExhibitionView: React.FC = () => {
           setExhibition(found);
           setError(null);
           
-          // Check if review exists for this exhibition
+          // Fetch the latest published review or article connected to this exhibition
           try {
-            const reviewCheckQuery = defineQuery(`count(*[_type == "review" && publishStatus == "published" && externalExhibition.id == $exhibitionId])`);
-            const reviewCount = await client.fetch<number>(reviewCheckQuery, { exhibitionId: exhibitionId });
+            const reviewDoc = await client.fetch<{ slug?: string | null } | null>(EXHIBITION_REVIEW_LOOKUP_QUERY, {
+              exhibitionId,
+            });
             if (isMounted) {
-              setHasReview(reviewCount > 0);
+              setReviewSlug(reviewDoc?.slug ?? null);
             }
           } catch (err) {
-            console.error('Failed to check review existence:', err);
-            if (isMounted) setHasReview(false);
+            console.error('Failed to fetch linked review slug:', err);
+            if (isMounted) setReviewSlug(null);
           }
         }
       } catch (err) {
@@ -214,6 +227,7 @@ const ExhibitionView: React.FC = () => {
   }
 
   const title = exhibition.title ?? 'Untitled exhibition';
+  const hasReview = Boolean(reviewSlug);
   const venueLabel = [exhibition.galleryname, exhibition.city].filter(Boolean).join(', ');
   const artistLabel = exhibition.artist?.trim() || null;
   const description = exhibition.description?.trim() || null;
@@ -302,7 +316,7 @@ const ExhibitionView: React.FC = () => {
                   </a>
                   {hasReview ? (
                     <Link
-                      to={`/stories/${exhibition.id}`}
+                      to={`/stories/${reviewSlug!}`}
                       className="inline-flex items-center justify-between w-full gap-3 px-4 py-3 border-2 border-black font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
                     >
                       Read review

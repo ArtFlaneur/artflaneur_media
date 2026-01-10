@@ -24,6 +24,7 @@ interface GraphqlExhibition {
   description?: string | null
   eventtype?: string | null
   exhibition_type?: string[] | string | null
+  exhibition_img_url?: string | null
 }
 
 interface GraphqlGallery {
