@@ -132,6 +132,8 @@ const Home: React.FC = () => {
   const [displayAds, setDisplayAds] = useState<DisplayAd[]>([]);
   const [partnerGalleriesByKey, setPartnerGalleriesByKey] = useState<Record<string, GraphqlGallery>>({});
   const [partnerExhibitionsById, setPartnerExhibitionsById] = useState<Record<string, GraphqlExhibition>>({});
+  const [enrichedSpotlightExhibitions, setEnrichedSpotlightExhibitions] = useState<Record<string, GraphqlExhibition>>({});
+  const [enrichedComingSoonExhibitions, setEnrichedComingSoonExhibitions] = useState<Record<string, GraphqlExhibition>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -297,6 +299,66 @@ const Home: React.FC = () => {
       isMounted = false;
     };
   }, [featuredGalleries]);
+
+  // Enrich spotlight and coming soon exhibitions with full GraphQL data
+  useEffect(() => {
+    let isMounted = true;
+
+    const enrichExhibitions = async () => {
+      const spotlightIds = (spotlightExhibitions ?? [])
+        .map(s => s?.exhibition?.id)
+        .filter((id): id is string => Boolean(id));
+      
+      const comingSoonIds = (comingSoonEvents ?? [])
+        .map(c => c?.exhibition?.id)
+        .filter((id): id is string => Boolean(id));
+
+      const allIds = [...new Set([...spotlightIds, ...comingSoonIds])];
+      
+      if (!allIds.length) {
+        setEnrichedSpotlightExhibitions({});
+        setEnrichedComingSoonExhibitions({});
+        return;
+      }
+
+      const enrichedById: Record<string, GraphqlExhibition> = {};
+
+      await Promise.all(
+        allIds.map(async (id) => {
+          try {
+            const exhibition = await fetchExhibitionById(id);
+            if (exhibition) {
+              enrichedById[id] = exhibition;
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch exhibition ${id}:`, err);
+          }
+        })
+      );
+
+      if (!isMounted) return;
+
+      const spotlightEnriched: Record<string, GraphqlExhibition> = {};
+      const comingSoonEnriched: Record<string, GraphqlExhibition> = {};
+
+      spotlightIds.forEach(id => {
+        if (enrichedById[id]) spotlightEnriched[id] = enrichedById[id];
+      });
+
+      comingSoonIds.forEach(id => {
+        if (enrichedById[id]) comingSoonEnriched[id] = enrichedById[id];
+      });
+
+      setEnrichedSpotlightExhibitions(spotlightEnriched);
+      setEnrichedComingSoonExhibitions(comingSoonEnriched);
+    };
+
+    enrichExhibitions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [spotlightExhibitions, comingSoonEvents]);
 
   const heroArticle = featuredArticle;
   const heroLink = heroArticle ? `/stories/${heroArticle.slug}` : null;
@@ -608,70 +670,78 @@ const Home: React.FC = () => {
         <section className="py-24 border-y-2 border-black bg-art-paper">
           <div className="container mx-auto px-4 md:px-6">
             <SectionHeader title="Now Showing" linkText="Browse Exhibitions" linkTo="/exhibitions" />
-            <p className="text-sm font-mono text-gray-600 mb-8 max-w-2xl">Exhibitions handpicked by our editorial team, happening right now in galleries worldwide.</p>
+            <p className="text-sm font-mono text-gray-600 mb-8">Exhibitions handpicked by our editorial team, happening right now in galleries worldwide.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {spotlightExhibitions.map((spotlight) => {
                 const exhibition = spotlight?.exhibition;
                 if (!exhibition?.id) return null;
-                const gallerySlug = buildGallerySlug(exhibition.gallery);
-                const galleryLabel = [exhibition.gallery?.name, exhibition.gallery?.city]
+                
+                // Use enriched GraphQL data if available, otherwise fall back to Sanity snapshot
+                const enrichedExhibition = enrichedSpotlightExhibitions[exhibition.id];
+                const displayExhibition = enrichedExhibition ?? exhibition;
+                
+                const gallerySlug = buildGallerySlug(displayExhibition.gallery);
+                const galleryLabel = [displayExhibition.gallery?.name, displayExhibition.gallery?.city]
                   .filter(Boolean)
                   .join(' • ');
-                const dateLabel = formatExhibitionRange(exhibition);
-                const cardImageUrl = spotlight.cardImage?.asset?.url ?? null;
-                const cardImageAlt = spotlight.cardImage?.alt ?? exhibition.title ?? 'Exhibition image';
-                const ctaLabel = spotlight.ctaText?.trim() || 'View exhibition';
+                const dateLabel = formatExhibitionRange(displayExhibition);
+                const cardImageUrl = displayExhibition.exhibition_img_url ?? null;
+                const cardImageAlt = `${displayExhibition.title ?? 'Exhibition'} artwork`;
 
                 return (
-                  <article
-                    key={spotlight._key ?? exhibition.id}
-                    className="relative border-2 border-black overflow-hidden min-h-[420px] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-white"
-                  >
-                    <div className="absolute inset-0">
-                      {cardImageUrl ? (
+                    <article
+                      key={spotlight._key ?? exhibition.id}
+                      className="relative border-2 border-black overflow-hidden min-h-[420px] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                    >
+                    {cardImageUrl ? (
+                      <>
                         <SecureImage
                           src={cardImageUrl}
                           alt={cardImageAlt}
-                          className="w-full h-full object-cover scale-105 hover:scale-100 transition-transform duration-700"
-                          draggable={false}
+                          className="absolute inset-0 w-full h-full object-cover"
                         />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-950 via-blue-800 to-blue-500" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-900/80 to-transparent pointer-events-none" />
-                      <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-blue-900/80 via-blue-800/30 to-transparent pointer-events-none" />
-                    </div>
-                    <div className="relative z-10 h-full flex flex-col justify-between p-6">
-                      <div className="space-y-4">
+                        <div 
+                          className="absolute inset-0" 
+                          style={{
+                            background: 'linear-gradient(to bottom, #2539e9 0%, #2539e9 20%, rgba(37, 57, 233, 0.1) 100%)'
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-200" />
+                    )}
+                    <div className="relative z-10 h-full p-6 flex flex-col justify-between">
+                      <div>
                         {spotlight.badge && (
-                          <span className="inline-flex items-center bg-white text-blue-900 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.3em] font-bold">
+                          <span className="inline-block mb-4 bg-art-yellow text-black px-3 py-1 text-xs font-mono uppercase tracking-widest font-bold">
                             {spotlight.badge}
                           </span>
                         )}
-                        <div>
-                          {galleryLabel && (
-                            <p className="font-mono text-xs uppercase tracking-[0.3em] text-blue-100">{galleryLabel}</p>
-                          )}
-                          <h3 className="text-3xl font-black uppercase leading-tight mt-2">
-                            {exhibition.title ?? 'Untitled exhibition'}
-                          </h3>
-                          {dateLabel && (
-                            <p className="font-mono text-xs text-blue-100/80 mt-1">{dateLabel}</p>
-                          )}
-                        </div>
-                        {spotlight.featureCopy && (
-                          <p className="text-sm leading-relaxed text-blue-50/95 line-clamp-4">
+                        <h3 className="text-2xl font-black uppercase leading-snug text-white">
+                          {displayExhibition.title ?? 'Untitled exhibition'}
+                        </h3>
+                        {galleryLabel && (
+                          <p className="font-mono text-xs text-white/90 mt-2">{galleryLabel}</p>
+                        )}
+                        {dateLabel && (
+                          <p className="font-mono text-xs text-white/80">{dateLabel}</p>
+                        )}
+                        {spotlight.featureCopy ? (
+                          <p className="mt-6 text-sm leading-relaxed text-white/90">
                             {spotlight.featureCopy}
+                          </p>
+                        ) : displayExhibition.description && (
+                          <p className="mt-4 font-mono text-xs leading-relaxed line-clamp-4 text-white/90">
+                            {displayExhibition.description}
                           </p>
                         )}
                       </div>
-                      <div className="pt-8">
+                      <div className="mt-8">
                         <Link
-                          to={`/exhibitions/${buildExhibitionSlug({ id: exhibition.id, title: exhibition.title })}`}
-                          className="inline-flex items-center justify-center gap-2 border-2 border-white bg-white text-black px-5 py-3 font-bold uppercase text-sm hover:bg-transparent hover:text-white transition-colors"
+                          to={`/exhibitions/${buildExhibitionSlug({ id: displayExhibition.id, title: displayExhibition.title })}`}
+                          className="inline-flex items-center justify-center gap-2 border-2 border-white px-5 py-3 font-bold uppercase text-sm text-white hover:bg-white hover:text-blue-900 transition-colors"
                         >
-                          {ctaLabel}
-                          <ArrowRight className="w-4 h-4" />
+                          View <ArrowRight className="w-4 h-4" />
                         </Link>
                       </div>
                     </div>
@@ -900,11 +970,19 @@ const Home: React.FC = () => {
               {comingSoonEvents.map((item) => {
                 const exhibition = item?.exhibition;
                 if (!exhibition?.id) return null;
-                const dateLabel = formatExhibitionRange(exhibition);
+                
+                // Use enriched GraphQL data if available, otherwise fall back to Sanity snapshot
+                const enrichedExhibition = enrichedComingSoonExhibitions[exhibition.id];
+                const displayExhibition = enrichedExhibition ?? exhibition;
+                
+                const dateLabel = formatExhibitionRange(displayExhibition);
                 const appLink = getAppDownloadLink();
                 const ctaHref = item.ctaUrl ?? appLink;
                 const isExternalCta = true; // App links are always external
                 const ctaLabel = item.ctaText ?? 'Get notified';
+                const cardImageUrl = displayExhibition.exhibition_img_url ?? null;
+                const cardImageAlt = `${displayExhibition.title ?? 'Exhibition'} artwork`;
+                const ctaClassName = 'inline-flex items-center gap-3 border-2 border-white px-4 py-2 font-bold uppercase text-xs text-white hover:bg-white hover:text-blue-900 transition-colors';
 
                 const ctaButton = ctaHref ? (
                   isExternalCta ? (
@@ -912,14 +990,14 @@ const Home: React.FC = () => {
                       href={ctaHref}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-3 border-2 border-black px-4 py-2 font-bold uppercase text-xs bg-white hover:bg-black hover:text-white transition-colors"
+                      className={ctaClassName}
                     >
                       {ctaLabel} <ArrowRight className="w-4 h-4" />
                     </a>
                   ) : (
                     <Link
                       to={ctaHref}
-                      className="inline-flex items-center gap-3 border-2 border-black px-4 py-2 font-bold uppercase text-xs bg-white hover:bg-black hover:text-white transition-colors"
+                      className={ctaClassName}
                     >
                       {ctaLabel} <ArrowRight className="w-4 h-4" />
                     </Link>
@@ -927,42 +1005,61 @@ const Home: React.FC = () => {
                 ) : null;
 
                 return (
-                  <article
-                    key={item._key ?? exhibition.id}
-                    className="border-2 border-black bg-white p-6 flex flex-col justify-between"
-                  >
-                    <div>
-                      {item.urgencyLabel && (
-                        <span className="inline-block mb-3 bg-black text-white px-3 py-1 text-xs font-mono uppercase tracking-[0.3em]">
-                          {item.urgencyLabel}
-                        </span>
-                      )}
-                      <h3 className="text-2xl font-black uppercase leading-tight">{exhibition.title ?? 'Upcoming exhibition'}</h3>
-                      {exhibition.gallery?.name && (
-                        <p className="font-mono text-xs text-gray-600 mt-1">
-                          {exhibition.gallery.name}
-                          {exhibition.gallery.city ? ` • ${exhibition.gallery.city}` : ''}
-                        </p>
-                      )}
-                      {dateLabel && (
-                        <p className="font-mono text-xs text-gray-500">{dateLabel}</p>
-                      )}
-                      <p className="mt-4 font-mono text-xs leading-relaxed text-gray-700 line-clamp-4">
-                        {exhibition.description ?? 'Be the first to know when this show opens its doors.'}
-                      </p>
-                    </div>
-                    <div className="mt-6 flex items-center justify-between">
-                      <div className="text-xs font-mono text-gray-500">
-                        {item.sponsor?.logo?.asset?.url ? (
-                          <div className="flex items-center gap-2">
-                            <span>Partner</span>
-                            <img src={item.sponsor.logo.asset.url} alt={item.sponsor.logo.alt ?? item.sponsor.name ?? 'Sponsor'} className="h-6 object-contain" />
-                          </div>
-                        ) : (
-                          <span>Presented by Art Flaneur</span>
+                    <article
+                      key={item._key ?? exhibition.id}
+                      className="relative border-2 border-black overflow-hidden min-h-[420px]"
+                    >
+                    {cardImageUrl ? (
+                      <>
+                        <SecureImage
+                          src={cardImageUrl}
+                          alt={cardImageAlt}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div 
+                          className="absolute inset-0" 
+                          style={{
+                            background: 'linear-gradient(to bottom, #2539e9 0%, #2539e9 20%, rgba(37, 57, 233, 0.1) 100%)'
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-200" />
+                    )}
+                    <div className="relative z-10 h-full p-6 flex flex-col justify-between">
+                      <div>
+                        {item.urgencyLabel && (
+                          <span className="inline-block mb-3 bg-art-yellow text-black px-3 py-1 text-xs font-mono uppercase tracking-[0.3em] font-bold">
+                            {item.urgencyLabel}
+                          </span>
                         )}
+                        <h3 className="text-2xl font-black uppercase leading-tight text-white">{displayExhibition.title ?? 'Upcoming exhibition'}</h3>
+                        {displayExhibition.gallery?.name && (
+                          <p className="font-mono text-xs mt-1 text-white/90">
+                            {displayExhibition.gallery.name}
+                            {displayExhibition.gallery.city ? ` • ${displayExhibition.gallery.city}` : ''}
+                          </p>
+                        )}
+                        {dateLabel && (
+                          <p className="font-mono text-xs text-white/80">{dateLabel}</p>
+                        )}
+                        <p className="mt-4 font-mono text-xs leading-relaxed line-clamp-4 text-white/90">
+                          {displayExhibition.description ?? 'Be the first to know when this show opens its doors.'}
+                        </p>
                       </div>
-                      {ctaButton}
+                      <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
+                        {item.sponsor?.logo?.asset?.url && (
+                          <div className="text-xs font-mono flex items-center gap-2 text-white/90">
+                            <span>Partner</span>
+                            <img
+                              src={item.sponsor.logo.asset.url}
+                              alt={item.sponsor.logo.alt ?? item.sponsor.name ?? 'Sponsor'}
+                              className="h-6 object-contain bg-white rounded px-2"
+                            />
+                          </div>
+                        )}
+                        {ctaButton}
+                      </div>
                     </div>
                   </article>
                 );

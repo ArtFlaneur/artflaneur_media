@@ -50,6 +50,28 @@ export default defineConfig(({ mode }) => {
       secure: true,
       rewrite: (path: string) => path.replace(/^\/api\/token/, '/dev/token'),
     };
+
+    // Proxy for GraphQL API
+    if (env.VITE_GRAPHQL_ENDPOINT) {
+      proxyConfig['/api/graphql'] = {
+        target: env.VITE_GRAPHQL_ENDPOINT.replace('/graphql', ''),
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path: string) => path.replace(/^\/api\/graphql/, '/graphql'),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            if (env.VITE_GRAPHQL_API_KEY) {
+              proxyReq.setHeader('x-api-key', env.VITE_GRAPHQL_API_KEY);
+            }
+            if (env.VITE_GRAPHQL_TENANT_ID) {
+              proxyReq.setHeader('x-tenant-id', env.VITE_GRAPHQL_TENANT_ID);
+            }
+          });
+        },
+      };
+    } else {
+      console.warn('⚠️ VITE_GRAPHQL_ENDPOINT not set. GraphQL proxy disabled.');
+    }
     
     return {
       server: {

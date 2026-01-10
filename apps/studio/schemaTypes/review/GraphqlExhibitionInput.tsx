@@ -68,6 +68,7 @@ const SEARCH_EXHIBITIONS_QUERY = `#graphql
         description
         eventtype
         exhibition_type
+        exhibition_img_url
       }
       nextToken
     }
@@ -306,6 +307,7 @@ const GraphqlExhibitionInput: React.FC<ObjectInputProps> = (props) => {
           eventType: exhibition.eventtype ?? undefined,
           exhibitionType: normalizedExhibitionType,
           description: exhibition.description ?? undefined,
+          exhibition_img_url: exhibition.exhibition_img_url ?? undefined,
           gallery: {
             _type: 'object',
             id: exhibition.gallery_id ?? galleryDetails?.id ?? undefined,

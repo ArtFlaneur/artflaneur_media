@@ -27,6 +27,7 @@ export const REVIEWS_QUERY = defineQuery(`*[
     }
   },
   publishedAt,
+  rating,
   externalExhibition {
     _type,
     id,
@@ -98,6 +99,7 @@ export const REVIEW_QUERY = defineQuery(`*[
       caption
     }
   },
+  rating,
   author->{
     _id,
     name,
@@ -196,7 +198,8 @@ export const LATEST_REVIEWS_QUERY = defineQuery(`*[
       }
     }
   },
-  publishedAt
+  publishedAt,
+  rating
 }`)
 
 // Articles queries (new unified content type)
@@ -227,6 +230,7 @@ export const ARTICLES_QUERY = defineQuery(`*[
     }
   },
   publishedAt,
+  rating,
   newsSource,
   bookTitle,
   bookAuthor,
@@ -235,6 +239,7 @@ export const ARTICLES_QUERY = defineQuery(`*[
     title,
     director,
     summary,
+    rating,
     releaseYear,
     duration,
     whereToWatch,
@@ -310,6 +315,7 @@ export const ARTICLE_QUERY = defineQuery(`*[
       caption
     }
   },
+  rating,
   author->{
     _id,
     name,
@@ -357,6 +363,7 @@ export const ARTICLE_QUERY = defineQuery(`*[
     title,
     director,
     summary,
+    rating,
     releaseYear,
     duration,
     whereToWatch,
@@ -814,17 +821,12 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
     badge,
     featureCopy,
     ctaText,
-    cardImage{
-      asset->{
-        url
-      },
-      alt
-    },
     exhibition{
       id,
       title,
       startDate,
       endDate,
+      exhibition_img_url,
       gallery{
         id,
         name,
@@ -975,6 +977,7 @@ export const HOMEPAGE_QUERY = defineQuery(`*[
       description,
       startDate,
       endDate,
+      exhibition_img_url,
       gallery{
         id,
         name,

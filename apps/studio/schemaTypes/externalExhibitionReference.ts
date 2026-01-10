@@ -34,6 +34,12 @@ export const externalExhibitionReference = defineType({
       type: 'string',
       description: 'Comma separated snapshot of the exhibition types reported by GraphQL',
     }),
+    defineField({
+      name: 'exhibition_img_url',
+      title: 'Exhibition Image URL',
+      type: 'url',
+      description: 'Image URL from GraphQL API',
+    }),
     defineField({name: 'description', title: 'Description', type: 'text'}),
     defineField({
       name: 'gallery',

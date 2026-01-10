@@ -93,23 +93,27 @@ export const homepageContent = defineType({
               validation: (Rule) => [Rule.max(280).warning('Keep copy short for the homepage layout')],
             }),
             defineField({
-              name: 'cardImage',
-              title: 'Card Image',
+              name: 'announcementImage',
+              title: 'Announcement Image',
               type: 'image',
-              description: 'Optional background image for the Now Showing card',
               options: {hotspot: true},
+              description: 'Upload press-ready artwork shown behind the Now Showing card',
               fields: [
                 defineField({
                   name: 'alt',
-                  title: 'Alt Text',
+                  title: 'Alternative text',
                   type: 'string',
-                  description: 'Describe the image for accessibility',
-                  validation: (Rule) => [
-                    Rule.required().error('Provide alt text for every card image'),
-                    Rule.max(120).warning('Keep alt text concise (max 120 characters)'),
-                  ],
+                  validation: (Rule) => [Rule.required().error('Alt text is required for the announcement image')],
+                }),
+                defineField({
+                  name: 'credit',
+                  title: 'Image credit',
+                  type: 'string',
+                  description: 'Optional credit line shown in CMS only',
+                  validation: (Rule) => [Rule.max(140).warning('Keep credit lines concise')],
                 }),
               ],
+              validation: (Rule) => [Rule.warning('Add an announcement image to unlock the immersive card layout')],
             }),
             defineField({
               name: 'ctaText',
@@ -344,6 +348,28 @@ export const homepageContent = defineType({
               name: 'ctaUrl',
               title: 'CTA URL',
               type: 'url',
+            }),
+            defineField({
+              name: 'announcementImage',
+              title: 'Announcement Image',
+              type: 'image',
+              options: {hotspot: true},
+              description: 'Artwork or teaser visual displayed behind the Coming Soon card',
+              fields: [
+                defineField({
+                  name: 'alt',
+                  title: 'Alternative text',
+                  type: 'string',
+                  validation: (Rule) => [Rule.required().error('Alt text is required for the announcement image')],
+                }),
+                defineField({
+                  name: 'credit',
+                  title: 'Image credit',
+                  type: 'string',
+                  validation: (Rule) => [Rule.max(140).warning('Keep credit lines concise')],
+                }),
+              ],
+              validation: (Rule) => [Rule.warning('Add imagery so the Coming Soon card feels immersive')],
             }),
           ],
           preview: {
