@@ -136,16 +136,18 @@ export const article = defineType({
       ],
     }),
     defineField({
-      name: 'rating',
-      type: 'number',
+      name: 'externalExhibition',
+      title: 'GraphQL Exhibition',
+      type: 'externalExhibitionReference',
       group: 'typeSpecific',
-      description: '1-5 star rating for exhibition reviews',
+      description: 'Search and select an exhibition from the global GraphQL catalogue',
       hidden: ({document}) => document?.contentType !== 'exhibition-review',
+      components: {input: GraphqlExhibitionInput},
       validation: (Rule) => [
         Rule.custom((value, context) => {
           const contentType = (context.document as {contentType?: string} | undefined)?.contentType
           if (contentType === 'exhibition-review' && !value) {
-            return 'Rating is required for exhibition reviews'
+            return 'Select an exhibition from the GraphQL catalogue for exhibition reviews'
           }
           return true
         }),

@@ -64,15 +64,6 @@ export const filmReviewEntry = defineType({
       ],
     }),
     defineField({
-      name: 'rating',
-      type: 'number',
-      description: '1-5 rating specific to this film',
-      validation: (Rule) => [
-        Rule.min(1).max(5).warning('Use a 1-5 scale for ratings'),
-        Rule.precision(1),
-      ],
-    }),
-    defineField({
       name: 'releaseYear',
       type: 'number',
       fieldset: 'releaseWindow',
@@ -115,14 +106,12 @@ export const filmReviewEntry = defineType({
     select: {
       title: 'title',
       director: 'director',
-      rating: 'rating',
       media: 'still',
     },
-    prepare({title, director, rating, media}) {
-      const ratingLabel = typeof rating === 'number' ? `${rating.toFixed(1)}/5` : 'No rating'
+    prepare({title, director, media}) {
       return {
         title: title || 'Untitled film',
-        subtitle: [director, ratingLabel].filter(Boolean).join(' • '),
+        subtitle: director || 'Unknown director',
         media: media || PlayIcon,
       }
     },

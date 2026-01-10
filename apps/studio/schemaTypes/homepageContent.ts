@@ -31,7 +31,7 @@ export const homepageContent = defineType({
         defineField({
           name: 'featuredReview',
           type: 'reference',
-          to: [{type: 'review'}],
+          to: [{type: 'review'}, {type: 'article'}],
           title: 'Featured Review',
           validation: (Rule) => [Rule.required().error('Featured review is required for the hero')],
         }),
@@ -48,7 +48,7 @@ export const homepageContent = defineType({
       title: 'Latest Reviews',
       type: 'array',
       group: 'hero',
-      of: [defineArrayMember({type: 'reference', to: [{type: 'review'}]})],
+      of: [defineArrayMember({type: 'reference', to: [{type: 'review'}, {type: 'article'}]})],
       validation: (Rule) => [Rule.max(6).warning('Homepage supports up to 6 curated reviews')],
     }),
     defineField({

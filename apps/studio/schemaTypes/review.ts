@@ -77,16 +77,6 @@ export const review = defineType({
       group: 'content',
       validation: (Rule) => [Rule.required().error('Body content is required')],
     }),
-    defineField({
-      name: 'rating',
-      type: 'number',
-      group: 'content',
-      description: '1-5 star rating',
-      validation: (Rule) => [
-        Rule.min(1).max(5).error('Rating must be between 1 and 5'),
-        Rule.precision(1),
-      ],
-    }),
     ...workflowFields().map((field) => ({
       ...field,
       group: 'workflow',
@@ -161,12 +151,10 @@ export const review = defineType({
       media: 'mainImage',
       sponsorshipEnabled: 'sponsorship.enabled',
       sponsorName: 'sponsorship.sponsor->name',
-      rating: 'rating',
       status: 'publishStatus',
     },
-    prepare({title, author, media, sponsorshipEnabled, sponsorName, rating, status}) {
+    prepare({title, author, media, sponsorshipEnabled, sponsorName, status}) {
       const sponsorLabel = sponsorshipEnabled ? `💰 ${sponsorName || 'Sponsored'}` : author || 'No author'
-      const stars = rating ? '⭐'.repeat(Math.round(rating)) : ''
       const statusEmojiMap: Record<string, string> = {
         draft: '📝',
         inReview: '👁️',
@@ -180,7 +168,7 @@ export const review = defineType({
 
       return {
         title: `${statusEmoji ? `${statusEmoji} ` : ''}${title}`.trim(),
-        subtitle: `${sponsorLabel} ${stars}`.trim(),
+        subtitle: sponsorLabel,
         media,
       }
     },
