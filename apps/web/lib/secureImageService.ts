@@ -1,6 +1,9 @@
 const SECURE_HOST_PATTERN = /assets\.artflaneur\.com\.au/i;
 const TOKEN_REFRESH_BUFFER_MS = 30_000;
 const DEFAULT_TOKEN_TTL_MS = 4 * 60 * 1000;
+const MAX_CONCURRENT_REQUESTS = 6;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
 
 // In development, use Vite proxy to bypass CORS
 const IS_DEV = import.meta.env.DEV;
@@ -13,6 +16,11 @@ const SECURE_IMAGE_PROXY_ENDPOINT = '/api/secure-image';
 let cachedToken: { value: string; expiresAt: number } | null = null;
 let ongoingTokenRequest: Promise<string> | null = null;
 const imageCache = new Map<string, string>();
+const pendingRequests = new Map<string, Promise<string>>();
+
+// Throttle concurrent requests
+let activeRequests = 0;
+const requestQueue: Array<() => void> = [];
 
 const decodeTokenExpiry = (token: string): number | null => {
   try {
@@ -73,6 +81,28 @@ const rewriteUrlForProxy = (src: string): string => {
   return src;
 };
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const waitForSlot = (): Promise<void> => {
+  return new Promise((resolve) => {
+    if (activeRequests < MAX_CONCURRENT_REQUESTS) {
+      activeRequests++;
+      resolve();
+    } else {
+      requestQueue.push(() => {
+        activeRequests++;
+        resolve();
+      });
+    }
+  });
+};
+
+const releaseSlot = () => {
+  activeRequests--;
+  const next = requestQueue.shift();
+  if (next) next();
+};
+
 const fetchSecureBlob = async (src: string, allowRetry = true): Promise<Blob> => {
   if (!IS_DEV) {
     const proxyUrl = `${SECURE_IMAGE_PROXY_ENDPOINT}?src=${encodeURIComponent(src)}`;
@@ -105,6 +135,21 @@ const fetchSecureBlob = async (src: string, allowRetry = true): Promise<Blob> =>
   return response.blob();
 };
 
+const fetchSecureBlobWithRetry = async (src: string, retries = MAX_RETRIES): Promise<Blob> => {
+  try {
+    await waitForSlot();
+    return await fetchSecureBlob(src);
+  } catch (error) {
+    if (retries > 0 && error instanceof Error && error.message.includes('502')) {
+      await sleep(RETRY_DELAY_MS * (MAX_RETRIES - retries + 1));
+      return fetchSecureBlobWithRetry(src, retries - 1);
+    }
+    throw error;
+  } finally {
+    releaseSlot();
+  }
+};
+
 export const shouldUseSecureImage = (src?: string | null): src is string => {
   return Boolean(src && SECURE_HOST_PATTERN.test(src));
 };
@@ -118,10 +163,24 @@ export const resolveSecureImageUrl = async (src: string): Promise<string> => {
     return imageCache.get(src)!;
   }
 
-  const blob = await fetchSecureBlob(src);
-  const objectUrl = URL.createObjectURL(blob);
-  imageCache.set(src, objectUrl);
-  return objectUrl;
+  // Deduplicate concurrent requests for the same image
+  if (pendingRequests.has(src)) {
+    return pendingRequests.get(src)!;
+  }
+
+  const promise = (async () => {
+    try {
+      const blob = await fetchSecureBlobWithRetry(src);
+      const objectUrl = URL.createObjectURL(blob);
+      imageCache.set(src, objectUrl);
+      return objectUrl;
+    } finally {
+      pendingRequests.delete(src);
+    }
+  })();
+
+  pendingRequests.set(src, promise);
+  return promise;
 };
 
 export const clearSecureImageCache = () => {
