@@ -255,7 +255,7 @@ const GuideView: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-screen">
             {/* List / Steps */}
-            <div className="lg:col-span-7 p-6 md:p-8">
+            <div className="lg:col-span-8 p-6 md:p-8">
                 {/* Mobile App Promotion */}
                 <div className="lg:hidden mb-8 flex flex-col items-center bg-white border-2 border-black p-6">
                     {/* Device Frame + Screenshot */}
@@ -265,7 +265,7 @@ const GuideView: React.FC = () => {
                             {/* Notch */}
                             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-20 h-5 bg-black rounded-b-2xl z-10"></div>
                             {/* Screen */}
-                            <div className="relative w-full h-full bg-white rounded-[2rem] overflow-hidden">
+                            <div className="relative w-full h-full bg-white rounded-[1.5rem] overflow-hidden">
                                 {appScreenshotUrl ? (
                                     <img 
                                         src={appScreenshotUrl} 
@@ -364,7 +364,7 @@ const GuideView: React.FC = () => {
                                     <p className="text-xs font-mono text-gray-500 mb-3 flex items-center gap-1">
                                                                             <MapPin className="w-3 h-3 flex-shrink-0" /> <span>{galleryAddress}</span>
                                     </p>
-                                                                        <p className="text-sm font-mono text-gray-700 leading-relaxed mb-2">{step.summary || step.notes || 'Details coming soon.'}</p>
+                                                                        <p className="text-sm font-mono text-gray-700 leading-relaxed mb-2 whitespace-pre-line">{step.summary || step.notes || 'Details coming soon.'}</p>
                                                                         {curatorQuote && (
                                                                             <p className="text-xs italic text-gray-600 border-l-2 border-art-yellow pl-2 mt-2">
                                                                                 "{curatorQuote}"
@@ -388,7 +388,7 @@ const GuideView: React.FC = () => {
                                     <p className="text-xs font-mono text-gray-500 mb-3 flex items-center gap-1">
                                                                             <MapPin className="w-3 h-3 flex-shrink-0" /> <span>{galleryAddress}</span>
                                     </p>
-                                                                        <p className="text-sm font-mono text-gray-700 leading-relaxed mb-2">{step.summary || step.notes || 'Details coming soon.'}</p>
+                                                                        <p className="text-sm font-mono text-gray-700 leading-relaxed mb-2 whitespace-pre-line">{step.summary || step.notes || 'Details coming soon.'}</p>
                                                                         {curatorQuote && (
                                                                             <p className="text-xs italic text-gray-600 border-l-2 border-art-yellow pl-2 mt-2">
                                                                                 "{curatorQuote}"
@@ -413,14 +413,14 @@ const GuideView: React.FC = () => {
             </div>
 
             {/* App Promotion Sidebar */}
-            <div className="lg:col-span-5 border-l-2 border-black relative bg-white hidden lg:block">
-                 <div className="sticky top-20 h-[calc(100vh-80px)] w-full flex flex-col items-center justify-center p-8">
+            <div className="lg:col-span-4 border-l-2 border-black relative bg-white hidden lg:block">
+                 <div className="sticky top-20 h-[calc(100vh-80px)] w-full flex flex-col items-center justify-center p-6">
                      {/* Device Frame + Screenshot */}
-                     <div className="relative mb-8">
+                     <div className="relative mb-6">
                         {/* Phone Frame */}
-                        <div className="relative w-[220px] h-[440px] bg-black rounded-[2.5rem] p-2.5 shadow-2xl">
+                        <div className="relative w-[180px] h-[360px] bg-black rounded-[2rem] p-2 shadow-2xl">
                             {/* Notch */}
-                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-5 bg-black rounded-b-2xl z-10"></div>
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-4 bg-black rounded-b-xl z-10"></div>
                             {/* Screen */}
                             <div className="relative w-full h-full bg-white rounded-[2rem] overflow-hidden">
                                 {appScreenshotUrl ? (
@@ -443,8 +443,8 @@ const GuideView: React.FC = () => {
                      </div>
 
                      {/* CTA Section */}
-                     <div className="w-full max-w-sm space-y-4">
-                        <h3 className="text-2xl font-black uppercase text-center">Navigate with the App</h3>
+                     <div className="w-full max-w-xs space-y-3">
+                        <h3 className="text-lg font-black uppercase text-center">Navigate with the App</h3>
                         <div className="grid grid-cols-3 gap-2 text-center">
                             <div className="bg-white border-2 border-black p-2 rounded">
                                 <MapPin className="w-5 h-5 mx-auto mb-1" />
@@ -463,9 +463,9 @@ const GuideView: React.FC = () => {
                             href={appDownloadLink}
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="block w-full bg-art-blue text-white py-4 px-6 font-mono text-sm uppercase tracking-widest text-center hover:bg-black transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+                            className="block w-full bg-art-blue text-white py-3 px-4 font-mono text-xs uppercase tracking-widest text-center hover:bg-black transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
                         >
-                            Download Art Flaneur App
+                            Download App
                         </a>
                      </div>
                  </div>
